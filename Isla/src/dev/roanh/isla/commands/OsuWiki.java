@@ -109,7 +109,7 @@ public class OsuWiki extends Command{
 				switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
 			}catch(Throwable e){
 				event.logError(e, "[OsuWiki] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
-				event.sendChannel("An internal error occurred.");
+				event.internalError();
 			}finally{
 				busy.set(false);
 			}

@@ -38,7 +38,8 @@ public class Main{
 					
 					req.sendResponseHeaders(200, 0);
 					req.close();
-				}catch(InterruptedException ignore){
+					System.out.println("Request handled.");
+				}catch(Throwable ignore){
 					ignore.printStackTrace();
 				}
 			}

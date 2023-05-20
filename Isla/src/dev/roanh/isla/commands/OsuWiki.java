@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpRequest.Builder;
+import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.HashMap;
@@ -181,10 +182,12 @@ public class OsuWiki extends Command{
 	private static void updateSite(String command) throws IOException, InterruptedException{
 		Builder request = HttpRequest.newBuilder();
 		request = request.timeout(Duration.ofMinutes(10));
-		request = request.uri(URI.create("http://192.168.2.19/"));
+		request = request.uri(URI.create("http://192.168.2.19:8999/"));
 		request = request.POST(BodyPublishers.ofString(command));
-		if(client.send(request.build(), BodyHandlers.discarding()).statusCode() != 200){
-			throw new IOException();
+		
+		HttpResponse<Void> resp = client.send(request.build(), BodyHandlers.discarding());
+		if(resp.statusCode() != 200){
+			throw new IOException("Status: " + resp.statusCode());
 		}
 	}
 	

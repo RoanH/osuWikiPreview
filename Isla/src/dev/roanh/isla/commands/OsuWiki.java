@@ -12,8 +12,9 @@ import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.api.Git;
@@ -28,7 +29,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
@@ -42,6 +42,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
+import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
@@ -70,7 +71,11 @@ public class OsuWiki extends Command{
 	/**
 	 * Cached list of remotes.
 	 */
-	private static Map<String, RemoteConfig> remotes = new HashMap<String, RemoteConfig>();
+	private static Set<String> remotes = new HashSet<String>();
+	/**
+	 * Cached list of recent refs.
+	 */
+	private static Set<String> refs = new HashSet<String>();
 	/**
 	 * The SSH connection to use.
 	 */
@@ -91,8 +96,8 @@ public class OsuWiki extends Command{
 	public OsuWiki() throws IOException{
 		super("wiki", "Update the osu! wiki / news preview site.", CommandPermission.forRole(1109514462794358815L), false);
 		
-		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100);
-		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100);
+		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100, new SimpleAutoCompleteHandler(()->new ArrayList<String>(remotes)));
+		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100, new SimpleAutoCompleteHandler(()->new ArrayList<String>(refs)));
 		
 		git = Git.open(WIKI_PATH);
 	}
@@ -144,6 +149,7 @@ public class OsuWiki extends Command{
 			updateWiki("wikisync", "wikisynccopy");
 			
 			lastRef = full;
+			refs.add(ref);
 		}
 		
 		//reset to the new branch
@@ -290,24 +296,19 @@ public class OsuWiki extends Command{
 	}
 	
 	/**
-	 * Finds the remote with the given name.
+	 * Finds the remote with the given name or creates it.
 	 * @param name The name of the remote.
-	 * @return The remote with the given name.
 	 * @throws GitAPIException When a git exception occurs.
 	 * @throws URISyntaxException When a URI is invalid.
 	 */
-	private static RemoteConfig findRemote(String name) throws GitAPIException, URISyntaxException{
-		RemoteConfig remote = remotes.get(name);
-		if(remote == null){
-			remote = git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().orElse(null);
-			if(remote == null){
-				remote = git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/osu-wiki.git")).call();
+	private static void findRemote(String name) throws GitAPIException, URISyntaxException{
+		if(!remotes.contains(name)){
+			if(git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().isEmpty()){
+				git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/osu-wiki.git")).call();
 			}
 			
-			remotes.put(name, remote);
+			remotes.add(name);
 		}
-		
-		return remote;
 	}
 
 	static{

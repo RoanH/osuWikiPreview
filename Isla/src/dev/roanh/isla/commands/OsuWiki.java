@@ -175,41 +175,41 @@ public class OsuWiki extends Command{
 	 */
 	private static MessageEmbed buildDiff(String name, String ref, ObjectId from, ObjectId to, boolean fastForward) throws IOException, GitAPIException{
 		Repository repo = git.getRepository();
-	    ObjectReader reader = repo.newObjectReader();
-		
+		ObjectReader reader = repo.newObjectReader();
+
 		CanonicalTreeParser oldTree = new CanonicalTreeParser();
-	    oldTree.reset(reader, from);
-	    
-	    CanonicalTreeParser newTree = new CanonicalTreeParser();
-	    newTree.reset(reader, to);
-	    
+		oldTree.reset(reader, from);
+
+		CanonicalTreeParser newTree = new CanonicalTreeParser();
+		newTree.reset(reader, to);
+
 		EmbedBuilder embed = new EmbedBuilder();
 		embed.setColor(new Color(255, 142, 230));
 		embed.setAuthor("Ref: " + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
 		embed.setFooter("HEAD: " + (fastForward ? (to.getName() + " (fast-forward)") : to.getName()));
-		
+
 		StringBuilder desc = embed.getDescriptionBuilder();
-	    for(DiffEntry item : git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call()){
-	    	if(item.getChangeType() != ChangeType.DELETE){
-	    		int len = desc.length();
-	    		desc.append("- [");
-	    		desc.append(item.getNewPath());
-	    		desc.append("](https://github.com/");
-	    		desc.append(name);
-	    		desc.append("/osu-wiki/blob/");
-	    		desc.append(ref);
-	    		desc.append('/');
-	    		desc.append(item.getNewPath());
-	    		desc.append(")\n");
-	    		if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
-	    			desc.delete(len, desc.length());
-	    			desc.append("\n_more_");
-	    			break;
-	    		}
-	    	}
-	    }
-	    
-	    return embed.build();
+		for(DiffEntry item : git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call()){
+			if(item.getChangeType() != ChangeType.DELETE){
+				int len = desc.length();
+				desc.append("- [");
+				desc.append(item.getNewPath());
+				desc.append("](https://github.com/");
+				desc.append(name);
+				desc.append("/osu-wiki/blob/");
+				desc.append(ref);
+				desc.append('/');
+				desc.append(item.getNewPath());
+				desc.append(")\n");
+				if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
+					desc.delete(len, desc.length());
+					desc.append("\n_more_");
+					break;
+				}
+			}
+		}
+
+		return embed.build();
 	}
 	
 	/**

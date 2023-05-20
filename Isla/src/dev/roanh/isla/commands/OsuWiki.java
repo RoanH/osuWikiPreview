@@ -88,7 +88,7 @@ public class OsuWiki extends Command{
 		);
 		
 		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100);
-		addOptionString("ref", "The ref to switch in the given name space (branch/hash/tag).", 100);
+		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100);
 		
 		git = Git.open(WIKI_PATH);
 	}

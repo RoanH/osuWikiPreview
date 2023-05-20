@@ -2,9 +2,17 @@ package dev.roanh.isla.commands;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpRequest.Builder;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,12 +37,16 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 
 public class OsuWiki{
 	private static final Path WIKI_PATH = Paths.get("C:\\Users\\roanh\\Downloads\\osu-wiki");
+	/**
+	 * HTTP client to use for requests.
+	 */
+	private static final HttpClient client = HttpClient.newBuilder().build();
 	private static Git git;
 	private static Map<String, RemoteConfig> remotes = new HashMap<String, RemoteConfig>();
 	private static TransportConfigCallback transport;
 	
 	
-	public static void main(String[] args) throws IOException, RevisionSyntaxException, InvalidRemoteException, TransportException, GitAPIException, URISyntaxException{
+	public static void main(String[] args) throws IOException, RevisionSyntaxException, InvalidRemoteException, TransportException, GitAPIException, URISyntaxException, InterruptedException{
 		git = Git.open(WIKI_PATH.toFile());
 		
 		
@@ -55,29 +67,7 @@ public class OsuWiki{
 		
 		
 		
-//		C:\Users\roanh\Downloads\osu-wiki
-		
-		
-//		try{
-//			String name = "Walavouchey";
-//			String ref = "action-multiline-colour-test";
-//			
-//			RemoteConfig remote = findRemote(name);
-//			git.fetch().setTransportConfigCallback(transport).setRemote(name).setForceUpdate(true).setRemoveDeletedRefs(true).call();
-//			
-//			
-//			git.reset().setMode(ResetType.HARD).setRef(name + "/" + ref).call();
-//			
-//			git.push().setTransportConfigCallback(transport).add("wikisync").setForce(true).setRemote("origin").call();
-//			
-////			git.fetch().setRemote("origin").setForceUpdate(true).setRemoveDeletedRefs(true).setRefSpecs("news").call();
-//
-//		}catch(GitAPIException | URISyntaxException e){
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
-		
+
 			
 			
 		switchBranch("RoanH", "testb");
@@ -85,7 +75,7 @@ public class OsuWiki{
 	}
 	
 	//name - user/org, ref - branch name
-	private static void switchBranch(String name, String ref) throws InvalidRemoteException, TransportException, GitAPIException, RevisionSyntaxException, AmbiguousObjectException, IncorrectObjectTypeException, IOException, URISyntaxException{
+	private static void switchBranch(String name, String ref) throws InvalidRemoteException, TransportException, GitAPIException, RevisionSyntaxException, AmbiguousObjectException, IncorrectObjectTypeException, IOException, URISyntaxException, InterruptedException{
 		//copy the current state
 		forcePush("wikisynccopy");
 		
@@ -96,14 +86,7 @@ public class OsuWiki{
 		String from = getHead();
 		
 		//roll back the website
-		System.err.println(new WikiUpdate("wikisync", "wikisynccopy").toTinkerCommand());//TODO exec
-		try{
-			Thread.sleep(30000);
-			System.out.println("continue");
-		}catch(InterruptedException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		updateSite("wikisync", "wikisynccopy");
 		
 		//reset to the new branch
 		findRemote(name);
@@ -113,8 +96,18 @@ public class OsuWiki{
 		
 		//update the website
 		String to = getHead();
-		System.err.println(new WikiUpdate(from, to).toTinkerCommand());//TODO exec
+		updateSite(from, to);
 		
+	}
+	
+	private static void updateSite(String from, String to) throws IOException, InterruptedException{
+		Builder request = HttpRequest.newBuilder();
+		request = request.timeout(Duration.ofMinutes(10));
+		request = request.uri(URI.create("http://192.168.2.19/"));
+		request = request.POST(BodyPublishers.ofString(from + " " + to));
+		if(client.send(request.build(), BodyHandlers.discarding()).statusCode() != 200){
+			throw new IOException();
+		}
 	}
 	
 	private static void reset(String name, String ref) throws CheckoutConflictException, GitAPIException{
@@ -145,12 +138,5 @@ public class OsuWiki{
 		}
 		
 		return remote;
-	}
-	
-	private static final record WikiUpdate(String from, String to){
-		
-		public String toTinkerCommand(){
-			return "OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])";
-		}
 	}
 }

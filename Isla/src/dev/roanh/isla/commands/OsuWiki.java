@@ -1,5 +1,6 @@
 package dev.roanh.isla.commands;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -21,7 +22,11 @@ import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.SshTransport;
@@ -29,12 +34,15 @@ import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.permission.CommandPermission;
-import dev.roanh.isla.permission.DevPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 
@@ -71,22 +79,17 @@ public class OsuWiki extends Command{
 	 * Lock to present simultaneous command runs.
 	 */
 	private volatile AtomicBoolean busy = new AtomicBoolean(false);
+	/**
+	 * Target ref for the last update.
+	 */
+	private String lastRef = null;
 	
 	/**
 	 * Constructs a new osu! wiki command.
 	 * @throws IOException When some IO exception occurs.
 	 */
 	public OsuWiki() throws IOException{
-		super(
-			"wiki",
-			"Update the osu! wiki / news preview site.",
-			DevPermission.INSTANCE.or(//Roan
-				CommandPermission.forUser(255090458332495872L),//Walavouchey
-				CommandPermission.forUser(286947276826345472L),//RockRoller
-				CommandPermission.forUser(495362111032131594L)//0x84f
-			),
-			false
-		);
+		super("wiki", "Update the osu! wiki / news preview site.", CommandPermission.forRole(1109514462794358815L), false);
 		
 		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100);
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100);
@@ -95,21 +98,22 @@ public class OsuWiki extends Command{
 	}
 	
 	@Override
-	public void execute(CommandMap args, CommandEvent event){
+	public void execute(CommandMap args, CommandEvent original){
 		if(busy.getAndSet(true)){
-			event.reply("Already running an update, please try again later.");
+			original.reply("Already running an update, please try again later.");
 			return;
 		}
 		
-		try{
-			event.reply("Starting site update...");
-			switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
-		}catch(Throwable e){
-			event.logError(e, "[OsuWiki] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
-			event.sendChannel("An internal error occurred.");
-		}finally{
-			busy.set(false);
-		}
+		original.deferReply(event->{
+			try{
+				switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
+			}catch(Throwable e){
+				event.logError(e, "[OsuWiki] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+				event.sendChannel("An internal error occurred.");
+			}finally{
+				busy.set(false);
+			}
+		});
 	}
 	
 	/**
@@ -119,38 +123,93 @@ public class OsuWiki extends Command{
 	 * @param event The command event for progress updates.
 	 * @throws Throwable When some exception occurs.
 	 */
-	private static void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
-		//copy the current state
-		event.sendChannel("Resetting branch...");
-		forcePush("wikisynccopy");
+	private void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
+		String full = name + "/" + ref;
+		boolean ff = full.equalsIgnoreCase(lastRef);
 		
-		//reset to ppy master
-		forceFetch("ppy");
-		reset("ppy", "master");
-		forcePush("wikisync");
-		String from = getHead();
-		
-		//roll back the website
-		event.sendChannel("Rolling back site...");
-		updateWiki("wikisync", "wikisynccopy");
+		ObjectId from;
+		if(ff){
+			from = getHead();
+		}else{
+			//copy the current state
+			forcePush("wikisynccopy");
+			
+			//reset to ppy master
+			forceFetch("ppy");
+			reset("ppy", "master");
+			forcePush("wikisync");
+			from = getHead();
+			
+			//roll back the website
+			updateWiki("wikisync", "wikisynccopy");
+			
+			lastRef = full;
+		}
 		
 		//reset to the new branch
-		event.sendChannel("Resetting to new ref...");
 		findRemote(name);
 		forceFetch(name);
 		reset(name, ref);
 		forcePush("wikisync");
 		
 		//update the website wiki
-		event.sendChannel("Updating site wiki...");
-		String to = getHead();
-		updateWiki(from, to);
+		ObjectId to = getHead();
+		updateWiki(from.getName(), to.getName());
 		
 		//update the website news
-		event.sendChannel("Updating site news...");
 		updateNews();
 		
-		event.sendChannel("Done!");
+		event.replyEmbeds(buildDiff(name, ref, from, to, ff));
+	}
+	
+	/**
+	 * Builds an embed showing changes compared to the last time.
+	 * @param name The namespace for the new ref.
+	 * @param ref The new ref on the site.
+	 * @param from The old ref.
+	 * @param to The new ref.
+	 * @param fastForward If the update was a fast forward instead of a reset.
+	 * @return A message embed describing the update.
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When some git exception occurs.
+	 */
+	private static MessageEmbed buildDiff(String name, String ref, ObjectId from, ObjectId to, boolean fastForward) throws IOException, GitAPIException{
+		Repository repo = git.getRepository();
+	    ObjectReader reader = repo.newObjectReader();
+		
+		CanonicalTreeParser oldTree = new CanonicalTreeParser();
+	    oldTree.reset(reader, from);
+	    
+	    CanonicalTreeParser newTree = new CanonicalTreeParser();
+	    newTree.reset(reader, to);
+	    
+		EmbedBuilder embed = new EmbedBuilder();
+		embed.setColor(new Color(255, 142, 230));
+		embed.setAuthor("Ref: " + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
+		embed.setFooter("HEAD: " + (fastForward ? (to.getName() + " (fast-forward)") : to.getName()));
+		
+		StringBuilder desc = embed.getDescriptionBuilder();
+	    for(DiffEntry item : git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call()){
+	    	if(item.getChangeType() != ChangeType.DELETE){
+	    		int len = desc.length();
+	    		desc.append("- [");
+	    		desc.append(item.getNewPath());
+	    		desc.append("](https://github.com/");
+	    		desc.append(name);
+	    		desc.append("/osu-wiki/blob/");
+	    		desc.append(ref);
+	    		desc.append('/');
+	    		desc.append(item.getNewPath());
+	    		desc.append(")\n");
+	    		if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
+	    			desc.delete(len, desc.length());
+	    			desc.append("\n_more_");
+	    			break;
+	    		}
+	    	}
+	    }
+	    
+	    return embed.build();
 	}
 	
 	/**
@@ -215,8 +274,8 @@ public class OsuWiki extends Command{
 	 * @return The HEAD SHA hash.
 	 * @throws IOException When an IO exception occurs.
 	 */
-	private static String getHead() throws IOException{
-		return git.getRepository().resolve(Constants.HEAD).getName();
+	private static ObjectId getHead() throws IOException{
+		return git.getRepository().resolve("HEAD^{tree}");
 	}
 	
 	/**

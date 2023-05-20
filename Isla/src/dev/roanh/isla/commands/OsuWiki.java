@@ -125,7 +125,7 @@ public class OsuWiki extends Command{
 	 */
 	private void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
 		String full = name + "/" + ref;
-		boolean ff = full.equalsIgnoreCase(lastRef);
+		boolean ff = full.equals(lastRef);
 		
 		ObjectId from;
 		if(ff){

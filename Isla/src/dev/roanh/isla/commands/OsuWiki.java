@@ -270,8 +270,8 @@ public class OsuWiki extends Command{
 	}
 	
 	/**
-	 * Gets the SHA hash of the current HEAD ref.
-	 * @return The HEAD SHA hash.
+	 * Gets the tree object for the current HEAD ref.
+	 * @return The HEAD object.
 	 * @throws IOException When an IO exception occurs.
 	 */
 	private static ObjectId getHead() throws IOException{

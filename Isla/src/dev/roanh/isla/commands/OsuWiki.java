@@ -8,13 +8,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpRequest.Builder;
-import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -35,8 +33,17 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 
-public class OsuWiki{
-	private static final Path WIKI_PATH = Paths.get("C:\\Users\\roanh\\Downloads\\osu-wiki");
+import dev.roanh.isla.command.slash.Command;
+import dev.roanh.isla.command.slash.CommandEvent;
+import dev.roanh.isla.command.slash.CommandMap;
+import dev.roanh.isla.permission.CommandPermission;
+import dev.roanh.isla.permission.DevPermission;
+import dev.roanh.isla.reporting.Priority;
+import dev.roanh.isla.reporting.Severity;
+
+public class OsuWiki extends Command{
+	private static final File WIKI_PATH = new File("/home/roan/discord/Isla/osu-wiki");
+	private static final File AUTH_PATH = new File("/home/roan/discord/Isla/auth");
 	/**
 	 * HTTP client to use for requests.
 	 */
@@ -44,39 +51,48 @@ public class OsuWiki{
 	private static Git git;
 	private static Map<String, RemoteConfig> remotes = new HashMap<String, RemoteConfig>();
 	private static TransportConfigCallback transport;
+	private volatile AtomicBoolean busy = new AtomicBoolean(false);
 	
+	public OsuWiki(String name, String description, CommandPermission permission, boolean guild) throws IOException{
+		super(
+			"wiki",
+			"Update the osu! wiki / news preview site.",
+			DevPermission.INSTANCE.or(//Roan
+				CommandPermission.forUser(255090458332495872L),//Walavouchey
+				CommandPermission.forUser(286947276826345472L),//RockRoller
+				CommandPermission.forUser(495362111032131594L)//0x84f
+			),
+			false
+		);
+		
+		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100);
+		addOptionString("ref", "The ref to switch in the given name space (branch/hash/tag).", 100);
+		
+		git = Git.open(WIKI_PATH);
+	}
 	
-	public static void main(String[] args) throws IOException, RevisionSyntaxException, InvalidRemoteException, TransportException, GitAPIException, URISyntaxException, InterruptedException{
-		git = Git.open(WIKI_PATH.toFile());
+	@Override
+	public void execute(CommandMap args, CommandEvent event){
+		if(busy.getAndSet(true)){
+			event.reply("Already running an update, please try again later.");
+			return;
+		}
 		
-		
-		SshdSessionFactory sshSessionFactory = new SshdSessionFactoryBuilder()
-	        .setPreferredAuthentications("publickey")
-	        .setHomeDirectory(new File("C:\\Users\\roanh\\Downloads\\auth"))
-	        .setSshDirectory(new File("C:\\Users\\roanh\\Downloads\\auth"))
-	        .build(null);
-		
-
-			 transport = new TransportConfigCallback() {
-			  @Override
-			  public void configure( Transport transport ) {
-			    SshTransport sshTransport = ( SshTransport )transport;
-			    sshTransport.setSshSessionFactory( sshSessionFactory );
-			  }
-			} ;
-		
-		
-		
-
-			
-			
-		switchBranch("RoanH", "testb");
-		
+		try{
+			event.reply("Starting site update...");
+			switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
+		}catch(Throwable e){
+			event.logError(e, "[OsuWiki] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+			event.sendChannel("An internal error occurred.");
+		}finally{
+			busy.set(false);
+		}
 	}
 	
 	//name - user/org, ref - branch name
-	private static void switchBranch(String name, String ref) throws InvalidRemoteException, TransportException, GitAPIException, RevisionSyntaxException, AmbiguousObjectException, IncorrectObjectTypeException, IOException, URISyntaxException, InterruptedException{
+	private static void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
 		//copy the current state
+		event.sendChannel("Resetting branch...");
 		forcePush("wikisynccopy");
 		
 		//reset to ppy master
@@ -86,25 +102,41 @@ public class OsuWiki{
 		String from = getHead();
 		
 		//roll back the website
-		updateSite("wikisync", "wikisynccopy");
+		event.sendChannel("Rolling back site...");
+		updateWiki("wikisync", "wikisynccopy");
 		
 		//reset to the new branch
+		event.sendChannel("Resetting to new ref...");
 		findRemote(name);
 		forceFetch(name);
 		reset(name, ref);
 		forcePush("wikisync");
 		
-		//update the website
+		//update the website wiki
+		event.sendChannel("Updating site wiki...");
 		String to = getHead();
-		updateSite(from, to);
+		updateWiki(from, to);
 		
+		//update the website news
+		event.sendChannel("Updating site news...");
+		updateNews();
+		
+		event.sendChannel("Done!");
 	}
 	
-	private static void updateSite(String from, String to) throws IOException, InterruptedException{
+	private static void updateNews() throws IOException, InterruptedException{
+		updateSite("news");
+	}
+	
+	private static void updateWiki(String from, String to) throws IOException, InterruptedException{
+		updateSite(from + " " + to);
+	}
+	
+	private static void updateSite(String command) throws IOException, InterruptedException{
 		Builder request = HttpRequest.newBuilder();
 		request = request.timeout(Duration.ofMinutes(10));
 		request = request.uri(URI.create("http://192.168.2.19/"));
-		request = request.POST(BodyPublishers.ofString(from + " " + to));
+		request = request.POST(BodyPublishers.ofString(command));
 		if(client.send(request.build(), BodyHandlers.discarding()).statusCode() != 200){
 			throw new IOException();
 		}
@@ -138,5 +170,16 @@ public class OsuWiki{
 		}
 		
 		return remote;
+	}
+
+	static{
+		SshdSessionFactory sshSessionFactory = new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(AUTH_PATH).setSshDirectory(AUTH_PATH).build(null);
+		transport = new TransportConfigCallback(){
+			@Override
+			public void configure(Transport transport){
+				SshTransport sshTransport = (SshTransport)transport;
+				sshTransport.setSshSessionFactory(sshSessionFactory);
+			}
+		};
 	}
 }

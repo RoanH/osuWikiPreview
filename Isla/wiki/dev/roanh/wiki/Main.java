@@ -21,6 +21,7 @@ public class Main{
 	 * @throws IOException When an IOException occurs.
 	 */
 	public static void main(String[] args) throws IOException{
+		System.out.println("Starting osu! web server IPC.");
 		HttpServer server = HttpServer.create(new InetSocketAddress(8999), 1);
 		server.createContext("/", req->{
 			if(req.getRequestMethod().equals("POST")){

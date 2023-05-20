@@ -234,7 +234,7 @@ public class OsuWiki extends Command{
 	 * @throws GitAPIException When a git exception occurs.
 	 * @throws URISyntaxException When a URI is invalid.
 	 */
-	private static RemoteConfig findRemote(String name) throws GitAPIException, URISyntaxException{//user to org
+	private static RemoteConfig findRemote(String name) throws GitAPIException, URISyntaxException{
 		RemoteConfig remote = remotes.get(name);
 		if(remote == null){
 			remote = git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().orElse(null);

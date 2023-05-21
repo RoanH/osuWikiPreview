@@ -11,4 +11,12 @@
     </Or>
   </Match>
   
+  <Match>
+    <Or>
+      <Class name="dev.roanh.wiki.OsuWiki"/>
+      <Class name="dev.roanh.wiki.OsuWeb"/>
+    </Or>
+    <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
+  </Match>
+  
 </FindBugsFilter>

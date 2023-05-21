@@ -9,8 +9,17 @@ import java.nio.charset.StandardCharsets;
 
 import com.sun.net.httpserver.HttpServer;
 
+/**
+ * Standalone webserver to receive commands and run commands.
+ * @author Roan
+ */
 public class Main{
 	
+	/**
+	 * Starts the webserver.
+	 * @param args Command line arguments.
+	 * @throws IOException When an IOException occurs.
+	 */
 	public static void main(String[] args) throws IOException{
 		HttpServer server = HttpServer.create(new InetSocketAddress(8999), 1);
 		server.createContext("/", req->{
@@ -34,14 +43,32 @@ public class Main{
 		server.start();
 	}
 	
+	/**
+	 * Updates all osu! web news articles.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	private static void runNewsUpdate() throws InterruptedException, IOException{
 		runArtisan("NewsPost::syncAll()");
 	}
 	
+	/**
+	 * Updates all osu! web wiki articles in the given ref range.
+	 * @param from The current wiki ref.
+	 * @param to The new wiki ref.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	private static void runWikiUpdate(String from, String to) throws InterruptedException, IOException{
 		runArtisan("OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])");
 	}
 	
+	/**
+	 * Runs an osu! web artisan command.
+	 * @param cmd The command to run.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	private static void runArtisan(String cmd) throws InterruptedException, IOException{
 		new ProcessBuilder(
 			"docker",

@@ -17,13 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.TransportConfigCallback;
-import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -41,19 +37,45 @@ import dev.roanh.isla.permission.DevPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 
+/**
+ * Command to update the osu! wiki instance.
+ * @author Roan
+ */
 public class OsuWiki extends Command{
+	/**
+	 * Path to the osu! web wiki.
+	 */
 	private static final File WIKI_PATH = new File("/home/roan/discord/Isla/osu-wiki");
+	/**
+	 * Path to the osu! web deploy key.
+	 */
 	private static final File AUTH_PATH = new File("/home/roan/discord/Isla/auth");
 	/**
 	 * HTTP client to use for requests.
 	 */
 	private static final HttpClient client = HttpClient.newBuilder().build();
+	/**
+	 * Wiki repository bound git instance.
+	 */
 	private static Git git;
+	/**
+	 * Cached list of remotes.
+	 */
 	private static Map<String, RemoteConfig> remotes = new HashMap<String, RemoteConfig>();
+	/**
+	 * The SSH connection to use.
+	 */
 	private static TransportConfigCallback transport;
+	/**
+	 * Lock to present simultaneous command runs.
+	 */
 	private volatile AtomicBoolean busy = new AtomicBoolean(false);
 	
-	public OsuWiki(String name, String description, CommandPermission permission, boolean guild) throws IOException{
+	/**
+	 * Constructs a new osu! wiki command.
+	 * @throws IOException When some IO exception occurs.
+	 */
+	public OsuWiki() throws IOException{
 		super(
 			"wiki",
 			"Update the osu! wiki / news preview site.",
@@ -89,7 +111,13 @@ public class OsuWiki extends Command{
 		}
 	}
 	
-	//name - user/org, ref - branch name
+	/**
+	 * Switch the site to the given ref from the given namespace.
+	 * @param name The namespace for the ref (user / organisation).
+	 * @param ref The reference to switch to.
+	 * @param event The command event for progress updates.
+	 * @throws Throwable When some exception occurs.
+	 */
 	private static void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
 		//copy the current state
 		event.sendChannel("Resetting branch...");
@@ -124,14 +152,32 @@ public class OsuWiki extends Command{
 		event.sendChannel("Done!");
 	}
 	
+	/**
+	 * Updates all news articles.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	private static void updateNews() throws IOException, InterruptedException{
 		updateSite("news");
 	}
 	
+	/**
+	 * Updates wiki articles in the given ref range.
+	 * @param from The starting ref.
+	 * @param to The end ref.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	private static void updateWiki(String from, String to) throws IOException, InterruptedException{
 		updateSite(from + " " + to);
 	}
 	
+	/**
+	 * Runs a site command.
+	 * @param command The command to run.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	private static void updateSite(String command) throws IOException, InterruptedException{
 		Builder request = HttpRequest.newBuilder();
 		request = request.timeout(Duration.ofMinutes(10));
@@ -142,22 +188,52 @@ public class OsuWiki extends Command{
 		}
 	}
 	
-	private static void reset(String name, String ref) throws CheckoutConflictException, GitAPIException{
+	/**
+	 * Resets the current branch to the given state.
+	 * @param name The namespace for the ref.
+	 * @param ref The ref to reset to.
+	 * @throws GitAPIException When a git exception occurs.
+	 */
+	private static void reset(String name, String ref) throws GitAPIException{
 		git.reset().setMode(ResetType.HARD).setRef(name + "/" + ref).call();
 	}
 	
-	private static void forcePush(String targetRef) throws InvalidRemoteException, TransportException, GitAPIException{
+	/**
+	 * Force pushes to the given target ref.
+	 * @param targetRef The upstream ref to push to.
+	 * @throws GitAPIException When a git exception occurs.
+	 */
+	private static void forcePush(String targetRef) throws GitAPIException{
 		git.push().setTransportConfigCallback(transport).setRefSpecs(new RefSpec("wikisync:" + targetRef)).setForce(true).setRemote("origin").call();
 	}
 	
-	private static String getHead() throws RevisionSyntaxException, AmbiguousObjectException, IncorrectObjectTypeException, IOException{
+	/**
+	 * Gets the SHA hash of the current HEAD ref.
+	 * @return The HEAD SHA hash.
+	 * @throws IOException When an IO exception occurs.
+	 */
+	private static String getHead() throws IOException{
 		return git.getRepository().resolve(Constants.HEAD).getName();
 	}
 	
-	private static void forceFetch(String remote) throws InvalidRemoteException, TransportException, GitAPIException{
+	/**
+	 * Force fetch all refs from the given remote.
+	 * @param remote The remote to fetch from.
+	 * @throws InvalidRemoteException When the remote is invalid.
+	 * @throws TransportException When something goes wrong during transport.
+	 * @throws GitAPIException When a git exception occurs.
+	 */
+	private static void forceFetch(String remote) throws GitAPIException{
 		git.fetch().setTransportConfigCallback(transport).setRemote(remote).setForceUpdate(true).setRemoveDeletedRefs(true).call();
 	}
 	
+	/**
+	 * Finds the remote with the given name.
+	 * @param name The name of the remote.
+	 * @return The remote with the given name.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws URISyntaxException When a URI is invalid.
+	 */
 	private static RemoteConfig findRemote(String name) throws GitAPIException, URISyntaxException{//user to org
 		RemoteConfig remote = remotes.get(name);
 		if(remote == null){

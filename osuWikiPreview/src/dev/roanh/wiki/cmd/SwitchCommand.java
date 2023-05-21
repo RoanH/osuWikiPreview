@@ -11,6 +11,10 @@ import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWiki;
 
+/**
+ * Command to switch the active preview branch.
+ * @author Roan
+ */
 public class SwitchCommand extends Command{
 	/**
 	 * Lock to present simultaneous command runs.

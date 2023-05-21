@@ -1,4 +1,4 @@
-package dev.roanh.isla.commands;
+package dev.roanh.wiki;
 
 import java.awt.Color;
 import java.io.File;

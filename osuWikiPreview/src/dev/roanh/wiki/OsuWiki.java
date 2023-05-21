@@ -66,11 +66,11 @@ public class OsuWiki extends Command{
 	/**
 	 * Path to the osu! web wiki.
 	 */
-	private static final File WIKI_PATH = new File("/home/roan/discord/Isla/osu-wiki");
+	private static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
 	/**
 	 * Path to the osu! web deploy key.
 	 */
-	private static final File AUTH_PATH = new File("/home/roan/discord/Isla/auth");
+	private static final File AUTH_PATH = new File("/home/roan/wiki/auth");
 	/**
 	 * Wiki repository bound git instance.
 	 */

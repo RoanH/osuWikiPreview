@@ -59,4 +59,8 @@ public class OsuWeb{
 			"bash",	"-c", "docker compose exec php /app/docker/development/entrypoint.sh artisan tinker --execute=\"" + cmd + "\""
 		).directory(new File("/home/roan/wiki/osu-web")).inheritIO().start().waitFor();
 	}
+	
+	public static void start(){
+		
+	}
 }

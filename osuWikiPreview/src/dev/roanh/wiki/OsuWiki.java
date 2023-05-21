@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -50,19 +50,13 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
-import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
-import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
-import dev.roanh.isla.permission.CommandPermission;
-import dev.roanh.isla.reporting.Priority;
-import dev.roanh.isla.reporting.Severity;
 
 /**
  * Command to update the osu! wiki instance.
  * @author Roan
  */
-public class OsuWiki extends Command{
+public class OsuWiki{
 	/**
 	 * Path to the osu! web wiki.
 	 */
@@ -88,44 +82,32 @@ public class OsuWiki extends Command{
 	 */
 	private static TransportConfigCallback transport;
 	/**
-	 * Lock to present simultaneous command runs.
-	 */
-	private volatile AtomicBoolean busy = new AtomicBoolean(false);
-	/**
 	 * Target ref for the last update.
 	 */
-	private String lastRef = null;
+	private static String lastRef = null;
 	
 	/**
 	 * Constructs a new osu! wiki command.
 	 * @throws IOException When some IO exception occurs.
 	 */
-	public OsuWiki() throws IOException{
-		super("wiki", "Update the osu! wiki / news preview site.", CommandPermission.forRole(1109514462794358815L), false);
-		
-		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100, new SimpleAutoCompleteHandler(()->new ArrayList<String>(remotes)));
-		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100, new SimpleAutoCompleteHandler(()->new ArrayList<String>(refs)));
-		
+	public static void init() throws IOException{
 		git = Git.open(WIKI_PATH);
 	}
 	
-	@Override
-	public void execute(CommandMap args, CommandEvent original){
-		if(busy.getAndSet(true)){
-			original.reply("Already running an update, please try again later.");
-			return;
-		}
-		
-		original.deferReply(event->{
-			try{
-				switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
-			}catch(Throwable e){
-				event.logError(e, "[OsuWiki] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
-				event.internalError();
-			}finally{
-				busy.set(false);
-			}
-		});
+	/**
+	 * Gets a list of recently used remotes.
+	 * @return The recently used remotes.
+	 */
+	public static List<String> getRecentRemotes(){
+		return new ArrayList<String>(remotes);
+	}
+	
+	/**
+	 * Gets a list of recently used refs.
+	 * @return The recently used refs.
+	 */
+	public static List<String> getRecentRefs(){
+		return new ArrayList<String>(refs);
 	}
 	
 	/**
@@ -135,7 +117,7 @@ public class OsuWiki extends Command{
 	 * @param event The command event for progress updates.
 	 * @throws Throwable When some exception occurs.
 	 */
-	private void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
+	public static void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
 		String full = name + "/" + ref;
 		boolean ff = full.equals(lastRef);
 		

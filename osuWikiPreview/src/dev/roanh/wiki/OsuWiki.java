@@ -22,15 +22,7 @@ package dev.roanh.wiki;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpRequest.Builder;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -79,10 +71,6 @@ public class OsuWiki extends Command{
 	 * Path to the osu! web deploy key.
 	 */
 	private static final File AUTH_PATH = new File("/home/roan/discord/Isla/auth");
-	/**
-	 * HTTP client to use for requests.
-	 */
-	private static final HttpClient client = HttpClient.newBuilder().build();
 	/**
 	 * Wiki repository bound git instance.
 	 */
@@ -165,7 +153,7 @@ public class OsuWiki extends Command{
 			from = getHead();
 			
 			//roll back the website
-			updateWiki("wikisync", "wikisynccopy");
+			OsuWeb.runWikiUpdate("wikisync", "wikisynccopy");
 			
 			lastRef = full;
 			refs.add(ref);
@@ -179,10 +167,10 @@ public class OsuWiki extends Command{
 		
 		//update the website wiki
 		ObjectId to = getHead();
-		updateWiki(from.getName(), to.getName());
+		OsuWeb.runWikiUpdate(from.getName(), to.getName());
 		
 		//update the website news
-		updateNews();
+		OsuWeb.runNewsUpdate();
 		
 		event.replyEmbeds(buildDiff(name, ref, from, to, ff));
 	}
@@ -235,44 +223,6 @@ public class OsuWiki extends Command{
 		}
 
 		return embed.build();
-	}
-	
-	/**
-	 * Updates all news articles.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	private static void updateNews() throws IOException, InterruptedException{
-		updateSite("news");
-	}
-	
-	/**
-	 * Updates wiki articles in the given ref range.
-	 * @param from The starting ref.
-	 * @param to The end ref.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	private static void updateWiki(String from, String to) throws IOException, InterruptedException{
-		updateSite(from + " " + to);
-	}
-	
-	/**
-	 * Runs a site command.
-	 * @param command The command to run.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	private static void updateSite(String command) throws IOException, InterruptedException{
-		Builder request = HttpRequest.newBuilder();
-		request = request.timeout(Duration.ofMinutes(10));
-		request = request.uri(URI.create("http://192.168.2.19:8999/"));
-		request = request.POST(BodyPublishers.ofString(command));
-		
-		HttpResponse<Void> resp = client.send(request.build(), BodyHandlers.discarding());
-		if(resp.statusCode() != 200){
-			throw new IOException("Status: " + resp.statusCode());
-		}
 	}
 	
 	/**

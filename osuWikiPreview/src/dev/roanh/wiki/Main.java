@@ -1,100 +1,37 @@
-/*
- * osu! wiki preview site
- * Copyright (C) 2023  Roan Hofland (roan@roanh.dev) and contributors.
- * GitHub Repository: https://github.com/RoanH/osuWikiPreview
- * GitLab Repository: https://git.roanh.dev/roan/osuwikipreview
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package dev.roanh.wiki;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 
-import com.sun.net.httpserver.HttpServer;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+
+import dev.roanh.isla.DiscordBot;
+import dev.roanh.isla.reporting.Priority;
+import dev.roanh.isla.reporting.Severity;
 
 /**
- * Standalone webserver to receive commands and run commands.
+ * Main entry point of the application that starts the Discord bot.
  * @author Roan
  */
 public class Main{
-	
 	/**
-	 * Starts the webserver.
-	 * @param args Command line arguments.
-	 * @throws IOException When an IOException occurs.
+	 * Discord bot instance.
 	 */
-	public static void main(String[] args) throws IOException{
-		System.out.println("Starting osu! web server IPC.");
-		HttpServer server = HttpServer.create(new InetSocketAddress(8999), 1);
-		server.createContext("/", req->{
-			if(req.getRequestMethod().equals("POST")){
-				try(BufferedReader reader = new BufferedReader(new InputStreamReader(req.getRequestBody(), StandardCharsets.UTF_8))){
-					String arg = reader.readLine();
-					System.out.println("Handling request for: " + arg);
-					
-					if(arg.equals("news")){
-						runNewsUpdate();
-					}else{
-						String[] refs = arg.split(" ");
-						runWikiUpdate(refs[0], refs[1]);
-					}
-					
-					req.sendResponseHeaders(200, 0);
-					req.close();
-					System.out.println("Request handled.");
-				}catch(Throwable ignore){
-					ignore.printStackTrace();
-				}
-			}
-		});
-		server.start();
-	}
-	
+	public static DiscordBot client;
+
 	/**
-	 * Updates all osu! web news articles.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * Starts the Discord bot.
+	 * @param args No valid arguments.
 	 */
-	private static void runNewsUpdate() throws InterruptedException, IOException{
-		runArtisan("NewsPost::syncAll()");
-	}
-	
-	/**
-	 * Updates all osu! web wiki articles in the given ref range.
-	 * @param from The current wiki ref.
-	 * @param to The new wiki ref.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	private static void runWikiUpdate(String from, String to) throws InterruptedException, IOException{
-		runArtisan("OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])");
-	}
-	
-	/**
-	 * Runs an osu! web artisan command.
-	 * @param cmd The command to run.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	private static void runArtisan(String cmd) throws InterruptedException, IOException{
-		new ProcessBuilder(
-			"bash",	"-c", "docker compose exec php /app/docker/development/entrypoint.sh artisan tinker --execute=\"" + cmd + "\""
-		).directory(new File("/home/roan/osu-web")).inheritIO().start().waitFor();
+	public static final void main(String[] args){
+		client = new DiscordBot("/help", "!w", true, 569, 8999);
+		
+		try{
+			client.registerCommand(new OsuWiki());
+		}catch(IOException e){
+			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
+		}
+		
+		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
+		client.login();
 	}
 }

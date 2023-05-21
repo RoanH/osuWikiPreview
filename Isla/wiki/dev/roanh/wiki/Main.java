@@ -26,6 +26,8 @@ public class Main{
 			if(req.getRequestMethod().equals("POST")){
 				try(BufferedReader reader = new BufferedReader(new InputStreamReader(req.getRequestBody(), StandardCharsets.UTF_8))){
 					String arg = reader.readLine();
+					System.out.println("Handling request for: " + arg);
+					
 					if(arg.equals("news")){
 						runNewsUpdate();
 					}else{
@@ -35,8 +37,8 @@ public class Main{
 					
 					req.sendResponseHeaders(200, 0);
 					req.close();
-				}catch(InterruptedException e){
-					e.printStackTrace();
+				}catch(InterruptedException ignore){
+					ignore.printStackTrace();
 				}
 			}
 		});

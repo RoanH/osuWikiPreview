@@ -55,12 +55,34 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	private static void runArtisan(String cmd) throws InterruptedException, IOException{
-		new ProcessBuilder(
-			"bash",	"-c", "docker compose exec php /app/docker/development/entrypoint.sh artisan tinker --execute=\"" + cmd + "\""
-		).directory(new File("/home/roan/wiki/osu-web")).inheritIO().start().waitFor();
+		runCommand("docker compose exec php /app/docker/development/entrypoint.sh artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
-	public static void start(){
-		
+	/**
+	 * Runs a command to start the osu! web instance.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public static void start() throws InterruptedException, IOException{
+		runCommand("bin/docker_dev.sh -d");
+	}
+	
+	/**
+	 * Runs a command to stop the osu! web instance.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public static void stop() throws InterruptedException, IOException{
+		runCommand("docker compose down --rmi all");
+	}
+	
+	/**
+	 * Runs a command on the server.
+	 * @param cmd The command to run.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	private static void runCommand(String cmd) throws InterruptedException, IOException{
+		new ProcessBuilder("bash", "-c", cmd).directory(new File("/home/roan/wiki/osu-web")).inheritIO().start().waitFor();
 	}
 }

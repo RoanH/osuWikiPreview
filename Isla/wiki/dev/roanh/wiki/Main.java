@@ -75,14 +75,7 @@ public class Main{
 	 */
 	private static void runArtisan(String cmd) throws InterruptedException, IOException{
 		new ProcessBuilder(
-			"docker",
-			"compose",
-			"exec",
-			"php",
-			"/app/docker/development/entrypoint.sh",
-			"artisan",
-			"tinker",
-			"--execute=\"" + cmd + "\""
+			"bash",	"-c", "docker compose exec php /app/docker/development/entrypoint.sh artisan tinker --execute=\"" + cmd + "\""
 		).directory(new File("/home/roan/osu-web")).inheritIO().start().waitFor();
 	}
 }

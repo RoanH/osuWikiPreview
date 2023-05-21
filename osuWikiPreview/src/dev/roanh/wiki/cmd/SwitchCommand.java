@@ -37,7 +37,7 @@ public class SwitchCommand extends Command{
 			try{
 				OsuWiki.switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
 			}catch(Throwable e){
-				event.logError(e, "[OsuWiki] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+				event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();
 			}finally{
 				busy.set(false);

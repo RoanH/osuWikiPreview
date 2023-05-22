@@ -19,7 +19,13 @@
  */
 package dev.roanh.wiki.cmd;
 
+import java.awt.Color;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.eclipse.jgit.diff.DiffEntry;
+
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -29,6 +35,7 @@ import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWiki;
+import dev.roanh.wiki.OsuWiki.SwitchResult;
 
 /**
  * Command to switch the active preview branch.
@@ -58,7 +65,35 @@ public class SwitchCommand extends Command{
 		
 		original.deferReply(event->{
 			try{
-				OsuWiki.switchBranch(args.get("namespace").getAsString(), args.get("ref").getAsString(), event);
+				String name = args.get("namespace").getAsString();
+				String ref = args.get("ref").getAsString();
+				SwitchResult diff = OsuWiki.switchBranch(name, ref);
+				
+				EmbedBuilder embed = new EmbedBuilder();
+				embed.setColor(new Color(255, 142, 230));
+				embed.setAuthor("Ref: " + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
+				embed.setFooter("HEAD: " + (diff.ff() ? (diff.head() + " (fast-forward)") : diff.head()));
+
+				StringBuilder desc = embed.getDescriptionBuilder();
+				for(DiffEntry item : diff.diff()){
+					int len = desc.length();
+					desc.append("- [");
+					desc.append(item.getNewPath());
+					desc.append("](https://github.com/");
+					desc.append(name);
+					desc.append("/osu-wiki/blob/");
+					desc.append(ref);
+					desc.append('/');
+					desc.append(item.getNewPath());
+					desc.append(")\n");
+					if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
+						desc.delete(len, desc.length());
+						desc.append("_more_");
+						break;
+					}
+				}
+				
+				event.replyEmbeds(embed.build());
 			}catch(Throwable e){
 				event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();

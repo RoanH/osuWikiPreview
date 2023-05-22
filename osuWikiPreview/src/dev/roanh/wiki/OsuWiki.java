@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -50,11 +49,6 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-
-import dev.roanh.isla.command.slash.CommandEvent;
 
 /**
  * Command to update the osu! wiki instance.
@@ -118,15 +112,16 @@ public class OsuWiki{
 	 * Switch the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
 	 * @param ref The reference to switch to.
-	 * @param event The command event for progress updates.
+	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
 	 */
-	public static void switchBranch(String name, String ref, CommandEvent event) throws Throwable{
+	public static SwitchResult switchBranch(String name, String ref) throws Throwable{
 		String full = name + "/" + ref;
 		boolean ff = full.equals(lastRef);
 		
 		ObjectId from;
 		if(ff){
+			//if the last switch was to the same branch we do not roll back
 			from = getHead();
 		}else{
 			//copy the current state
@@ -158,21 +153,21 @@ public class OsuWiki{
 		//update the website news
 		OsuWeb.runNewsUpdate();
 		
-		event.replyEmbeds(buildDiff(name, ref, from, to, ff));
+		//return the diff
+		return new SwitchResult(computeDiff(from, to), to.getName(), ff);
 	}
 	
 	/**
-	 * Builds an embed showing changes compared to the last time.
-	 * @param name The namespace for the new ref.
-	 * @param ref The new ref on the site.
+	 * Builds an embed showing changed files between the given two refs. This function
+	 * is equivalent to {@code git diff --diff-filter=d --name-only A...B} and in addition
+	 * also only returns <code>.md</code> files.
 	 * @param from The old ref.
 	 * @param to The new ref.
-	 * @param fastForward If the update was a fast forward instead of a reset.
-	 * @return A message embed describing the update.
+	 * @return A list of changed files.
 	 * @throws IOException When an IOException occurs.
 	 * @throws GitAPIException When some git exception occurs.
 	 */
-	private static MessageEmbed buildDiff(String name, String ref, ObjectId from, ObjectId to, boolean fastForward) throws IOException, GitAPIException{
+	private static List<DiffEntry> computeDiff(ObjectId from, ObjectId to) throws IOException, GitAPIException{
 		Repository repo = git.getRepository();
 		try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
 			//attempt to find the merge base of both commits
@@ -189,42 +184,10 @@ public class OsuWiki{
 			CanonicalTreeParser newTree = new CanonicalTreeParser();
 			newTree.reset(reader, target.getTree());
 
-			EmbedBuilder embed = new EmbedBuilder();
-			embed.setColor(new Color(255, 142, 230));
-			embed.setAuthor("Ref: " + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
-			embed.setFooter("HEAD: " + (fastForward ? (to.getName() + " (fast-forward)") : to.getName()));
-
-			StringBuilder desc = embed.getDescriptionBuilder();
-			for(DiffEntry item : git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call()){
-				if(item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md")){
-					int len = desc.length();
-					desc.append("- [");
-					desc.append(item.getNewPath());
-					desc.append("](https://github.com/");
-					desc.append(name);
-					desc.append("/osu-wiki/blob/");
-					desc.append(ref);
-					desc.append('/');
-					desc.append(item.getNewPath());
-					desc.append(")\n");
-					if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
-						desc.delete(len, desc.length());
-						desc.append("_more_");
-						break;
-					}
-				}
-			}
-			
-			return embed.build();
+			return git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call().stream().filter(item->{
+				return item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md");
+			}).toList();
 		}
-	}
-	
-	public static void main(String[] args) throws IOException, GitAPIException{
-		git = Git.open(new File("C:\\Users\\roanh\\Downloads\\osu-wiki"));
-		ObjectId from = git.getRepository().resolve("refs/remotes/ppy/master");
-		ObjectId to = git.getRepository().resolve("refs/heads/wikisync");
-		
-		System.out.println(buildDiff(null, null, from, to, false).getDescription());
 	}
 	
 	/**
@@ -280,6 +243,9 @@ public class OsuWiki{
 			
 			remotes.add(name);
 		}
+	}
+	
+	public static final record SwitchResult(List<DiffEntry> diff, String head, boolean ff){
 	}
 
 	static{

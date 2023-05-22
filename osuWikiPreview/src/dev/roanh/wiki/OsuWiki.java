@@ -36,9 +36,13 @@ import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.Transport;
@@ -170,41 +174,57 @@ public class OsuWiki{
 	 */
 	private static MessageEmbed buildDiff(String name, String ref, ObjectId from, ObjectId to, boolean fastForward) throws IOException, GitAPIException{
 		Repository repo = git.getRepository();
-		ObjectReader reader = repo.newObjectReader();
+		try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
+			//attempt to find the merge base of both commits
+			RevCommit target = repo.parseCommit(to);
+			rev.markStart(repo.parseCommit(from));
+			rev.markStart(target);
+			rev.setRevFilter(RevFilter.MERGE_BASE);
 
-		CanonicalTreeParser oldTree = new CanonicalTreeParser();
-		oldTree.reset(reader, from);
+			//base tree
+			CanonicalTreeParser oldTree = new CanonicalTreeParser();
+			oldTree.reset(reader, rev.next().getTree());
 
-		CanonicalTreeParser newTree = new CanonicalTreeParser();
-		newTree.reset(reader, to);
+			//current head tree
+			CanonicalTreeParser newTree = new CanonicalTreeParser();
+			newTree.reset(reader, target.getTree());
 
-		EmbedBuilder embed = new EmbedBuilder();
-		embed.setColor(new Color(255, 142, 230));
-		embed.setAuthor("Ref: " + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
-		embed.setFooter("HEAD: " + (fastForward ? (to.getName() + " (fast-forward)") : to.getName()));
+			EmbedBuilder embed = new EmbedBuilder();
+			embed.setColor(new Color(255, 142, 230));
+			embed.setAuthor("Ref: " + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
+			embed.setFooter("HEAD: " + (fastForward ? (to.getName() + " (fast-forward)") : to.getName()));
 
-		StringBuilder desc = embed.getDescriptionBuilder();
-		for(DiffEntry item : git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call()){
-			if(item.getChangeType() != ChangeType.DELETE){
-				int len = desc.length();
-				desc.append("- [");
-				desc.append(item.getNewPath());
-				desc.append("](https://github.com/");
-				desc.append(name);
-				desc.append("/osu-wiki/blob/");
-				desc.append(ref);
-				desc.append('/');
-				desc.append(item.getNewPath());
-				desc.append(")\n");
-				if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
-					desc.delete(len, desc.length());
-					desc.append("\n_more_");
-					break;
+			StringBuilder desc = embed.getDescriptionBuilder();
+			for(DiffEntry item : git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call()){
+				if(item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md")){
+					int len = desc.length();
+					desc.append("- [");
+					desc.append(item.getNewPath());
+					desc.append("](https://github.com/");
+					desc.append(name);
+					desc.append("/osu-wiki/blob/");
+					desc.append(ref);
+					desc.append('/');
+					desc.append(item.getNewPath());
+					desc.append(")\n");
+					if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
+						desc.delete(len, desc.length());
+						desc.append("_more_");
+						break;
+					}
 				}
 			}
+			
+			return embed.build();
 		}
-
-		return embed.build();
+	}
+	
+	public static void main(String[] args) throws IOException, GitAPIException{
+		git = Git.open(new File("C:\\Users\\roanh\\Downloads\\osu-wiki"));
+		ObjectId from = git.getRepository().resolve("refs/remotes/ppy/master");
+		ObjectId to = git.getRepository().resolve("refs/heads/wikisync");
+		
+		System.out.println(buildDiff(null, null, from, to, false).getDescription());
 	}
 	
 	/**
@@ -227,12 +247,12 @@ public class OsuWiki{
 	}
 	
 	/**
-	 * Gets the tree object for the current HEAD ref.
+	 * Gets the current HEAD ref.
 	 * @return The HEAD object.
 	 * @throws IOException When an IO exception occurs.
 	 */
 	private static ObjectId getHead() throws IOException{
-		return git.getRepository().resolve("HEAD^{tree}");
+		return git.getRepository().resolve(Constants.HEAD);
 	}
 	
 	/**

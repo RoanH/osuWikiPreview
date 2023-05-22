@@ -245,6 +245,14 @@ public class OsuWiki{
 		}
 	}
 	
+	/**
+	 * Record with information about a branch switch.
+	 * @author Roan
+	 * @param diff A diff with all changed files.
+	 * @param head The new head commit hash.
+	 * @param ff True if the update was a fast forward.
+	 * @see OsuWiki#switchBranch(String, String)
+	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head, boolean ff){
 	}
 

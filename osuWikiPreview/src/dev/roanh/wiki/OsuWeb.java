@@ -27,6 +27,10 @@ import java.io.IOException;
  * @author Roan
  */
 public class OsuWeb{
+	/**
+	 * The domain the preview site is available at.
+	 */
+	public static final String DOMAIN = "https://osu.roanh.dev/";
 	
 	/**
 	 * Updates all osu! web news articles.

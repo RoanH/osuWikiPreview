@@ -34,6 +34,7 @@ import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
 
@@ -76,20 +77,19 @@ public class SwitchCommand extends Command{
 
 				StringBuilder desc = embed.getDescriptionBuilder();
 				for(DiffEntry item : diff.diff()){
-					int len = desc.length();
-					desc.append("- [");
-					desc.append(item.getNewPath());
-					desc.append("](https://github.com/");
-					desc.append(name);
-					desc.append("/osu-wiki/blob/");
-					desc.append(ref);
-					desc.append('/');
-					desc.append(item.getNewPath());
-					desc.append(")\n");
-					if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
-						desc.delete(len, desc.length());
-						desc.append("_more_");
-						break;
+					String path = resolveSitePath(item.getNewPath());
+					if(path != null){
+						int len = desc.length();
+						desc.append("- [");
+						desc.append(item.getNewPath());
+						desc.append("](");
+						desc.append(path);
+						desc.append(")\n");
+						if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
+							desc.delete(len, desc.length());
+							desc.append("_more_");
+							break;
+						}
 					}
 				}
 				
@@ -101,5 +101,33 @@ public class SwitchCommand extends Command{
 				busy.set(false);
 			}
 		});
+	}
+	
+	/**
+	 * Determines the osu! web site path for the given file path
+	 * inside the osu! wiki repository.
+	 * @param repoPath The path of the markdown file in the osu! wiki
+	 *        repository, this path is assumed to end with <code>.md</code>.
+	 * @return The osu! web path for the given osu! wiki path or
+	 *         <code>null</code> if the given path does not point to
+	 *         a file that is visible on the website.
+	 */
+	private static final String resolveSitePath(String repoPath){
+		int pathEnd = repoPath.lastIndexOf('/');
+		if(pathEnd == -1){
+			//some markdown file at the root of the repository
+			return null;
+		}
+		
+		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
+		if(repoPath.startsWith("news/")){
+			return OsuWeb.DOMAIN + "home/news/" + filename;
+		}else if(repoPath.startsWith("wiki/Legal/")){
+			return OsuWeb.DOMAIN + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+		}else if(repoPath.startsWith("wiki/")){
+			return OsuWeb.DOMAIN + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
+		}else{
+			return null;
+		}
 	}
 }

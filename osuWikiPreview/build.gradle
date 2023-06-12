@@ -44,7 +44,7 @@ repositories{
 
 dependencies{
 	//Isla Lib
-	implementation "dev.roanh.islalib:islalib:7.12"
+	implementation "dev.roanh.islalib:islalib:7.13"
 	
 	//JGit
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'

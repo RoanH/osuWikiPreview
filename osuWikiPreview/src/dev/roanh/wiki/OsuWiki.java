@@ -112,6 +112,7 @@ public class OsuWiki{
 	 * Switch the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
 	 * @param ref The reference to switch to.
+	 * @param instance The osu! web instance to update with the changes.
 	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
 	 */
@@ -251,7 +252,7 @@ public class OsuWiki{
 	 * @param diff A diff with all changed files.
 	 * @param head The new head commit hash.
 	 * @param ff True if the update was a fast forward.
-	 * @see OsuWiki#switchBranch(String, String)
+	 * @see OsuWiki#switchBranch(String, String, OsuWeb)
 	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head, boolean ff){
 	}

@@ -43,8 +43,14 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static DiscordBot client;
+	/**
+	 * Legacy osu! web dev instance.
+	 */
 	@SuppressWarnings("deprecation")
 	public static OsuWeb DEV_INSTANCE = new OsuWebDev();
+	/**
+	 * First osu! web deploy instance.
+	 */
 	public static OsuWeb OSU2 = new OsuWeb("https://osu2.roanh.dev/");
 
 	/**

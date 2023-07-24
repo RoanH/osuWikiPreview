@@ -7,27 +7,48 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Main controller for an osu! web instance.
  * @author Roan
- *
  */
 public class OsuWeb{
+	/**
+	 * The domain this instance can be browsed at.
+	 */
 	private final String domain;
 	/**
 	 * Lock to present simultaneous command runs.
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
 	
+	/**
+	 * Constructs a new osu! web instance with the given domain.
+	 * @param domain The site domain.
+	 */
 	public OsuWeb(String domain){
 		this.domain = domain;
 	}
 	
+	/**
+	 * Attempts to lock this instance for exclusive use.
+	 * @return True if instance was already locked and thus
+	 *         should not be used.
+	 * @see #unlock()
+	 */
 	public boolean tryLock(){
 		return busy.getAndSet(true);
 	}
 	
+	/**
+	 * Unlocks this instance for use by other threads, should
+	 * only be called after succesfully locking this instance.
+	 * @see #tryLock()
+	 */
 	public void unlock(){
 		busy.set(false);
 	}
 	
+	/**
+	 * Gets the website domain for this instance.
+	 * @return The domain for this instance.
+	 */
 	public String getDomain(){
 		return domain;
 	}

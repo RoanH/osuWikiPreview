@@ -102,7 +102,7 @@ public class SwitchCommand extends Command{
 				}
 				
 				event.replyEmbeds(embed.build());
-			}catch(InvalidRemoteException | NoRemoteRepositoryException e){
+			}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
 				event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
 			}catch(Throwable e){
 				event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);

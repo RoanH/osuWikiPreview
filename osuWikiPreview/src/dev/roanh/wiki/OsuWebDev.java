@@ -30,6 +30,9 @@ import java.io.IOException;
 @Deprecated
 public class OsuWebDev extends OsuWeb{
 	
+	/**
+	 * Constructs a new controller for an osu! web dev instance.
+	 */
 	public OsuWebDev(){
 		super("https://osu.roanh.dev/");
 	}

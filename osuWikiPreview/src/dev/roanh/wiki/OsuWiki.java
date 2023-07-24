@@ -96,7 +96,7 @@ public class OsuWiki{
 	 * Gets a list of recently used remotes.
 	 * @return The recently used remotes.
 	 */
-	public static List<String> getRecentRemotes(){
+	public synchronized static List<String> getRecentRemotes(){
 		return new ArrayList<String>(remotes);
 	}
 	
@@ -104,7 +104,7 @@ public class OsuWiki{
 	 * Gets a list of recently used refs.
 	 * @return The recently used refs.
 	 */
-	public static List<String> getRecentRefs(){
+	public synchronized static List<String> getRecentRefs(){
 		return new ArrayList<String>(refs);
 	}
 	
@@ -115,7 +115,7 @@ public class OsuWiki{
 	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
 	 */
-	public static SwitchResult switchBranch(String name, String ref) throws Throwable{
+	public synchronized static SwitchResult switchBranch(String name, String ref) throws Throwable{
 		String full = name + "/" + ref;
 		boolean ff = full.equals(lastRef);
 		

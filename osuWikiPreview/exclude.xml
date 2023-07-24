@@ -15,6 +15,7 @@
     <Or>
       <Class name="dev.roanh.wiki.OsuWiki"/>
       <Class name="dev.roanh.wiki.OsuWeb"/>
+      <Class name="dev.roanh.wiki.OsuWebDev"/>
     </Or>
     <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
   </Match>

@@ -27,7 +27,6 @@ import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
-import dev.roanh.wiki.OsuWebDev;
 
 /**
  * Command to restart the entire osu! web instance.
@@ -46,9 +45,9 @@ public class RestartCommand extends Command{
 	public void execute(CommandMap args, CommandEvent original){
 		original.deferReply(event->{
 			try{
-				OsuWebDev.stop();
-				OsuWebDev.start();
-				event.reply("osu! web instance succesfully restarted.");
+				Main.DEV_INSTANCE.stop();
+				Main.DEV_INSTANCE.start();
+				event.reply("osu! dev web instance succesfully restarted.");
 			}catch(IOException | InterruptedException e){
 				event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
 				event.internalError();

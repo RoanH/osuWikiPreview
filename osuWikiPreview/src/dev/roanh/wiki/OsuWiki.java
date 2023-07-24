@@ -115,7 +115,7 @@ public class OsuWiki{
 	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref) throws Throwable{
+	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
 		String full = name + "/" + ref;
 		boolean ff = full.equals(lastRef);
 		
@@ -134,7 +134,7 @@ public class OsuWiki{
 			from = getHead();
 			
 			//roll back the website
-			OsuWebDev.runWikiUpdate("wikisync", "wikisynccopy");
+			instance.runWikiUpdate("wikisync", "wikisynccopy");
 			
 			lastRef = full;
 			refs.add(ref);
@@ -148,10 +148,10 @@ public class OsuWiki{
 		
 		//update the website wiki
 		ObjectId to = getHead();
-		OsuWebDev.runWikiUpdate(from.getName(), to.getName());
+		instance.runWikiUpdate(from.getName(), to.getName());
 		
 		//update the website news
-		OsuWebDev.runNewsUpdate();
+		instance.runNewsUpdate();
 		
 		//return the diff
 		return new SwitchResult(computeDiff(from, to), to.getName(), ff);

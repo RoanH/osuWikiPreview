@@ -43,6 +43,9 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static DiscordBot client;
+	@SuppressWarnings("deprecation")
+	public static OsuWeb DEV_INSTANCE = new OsuWebDev();
+	public static OsuWeb OSU2 = new OsuWeb("https://osu2.roanh.dev/");
 
 	/**
 	 * Starts the Discord bot.

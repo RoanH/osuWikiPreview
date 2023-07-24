@@ -23,42 +23,19 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Standalone webserver to receive commands and run commands.
+ * Main control class for a dev osu! web instance.
  * @author Roan
+ * @deprecated Legacy dev instance implementation.
  */
-public class OsuWebDev{
-	/**
-	 * The domain the preview site is available at.
-	 */
-	public static final String DOMAIN = "https://osu.roanh.dev/";
+@Deprecated
+public class OsuWebDev extends OsuWeb{
 	
-	/**
-	 * Updates all osu! web news articles.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	public static void runNewsUpdate() throws InterruptedException, IOException{
-		runArtisan("NewsPost::syncAll()");
+	public OsuWebDev(){
+		super("https://osu.roanh.dev/");
 	}
 	
-	/**
-	 * Updates all osu! web wiki articles in the given ref range.
-	 * @param from The current wiki ref.
-	 * @param to The new wiki ref.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	public static void runWikiUpdate(String from, String to) throws InterruptedException, IOException{
-		runArtisan("OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])");
-	}
-	
-	/**
-	 * Runs an osu! web artisan command.
-	 * @param cmd The command to run.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	private static void runArtisan(String cmd) throws InterruptedException, IOException{
+	@Override
+	protected void runArtisan(String cmd) throws InterruptedException, IOException{
 		runCommand("docker compose exec php /app/docker/development/entrypoint.sh artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
@@ -67,7 +44,8 @@ public class OsuWebDev{
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
-	public static void start() throws InterruptedException, IOException{
+	@Override
+	public void start() throws InterruptedException, IOException{
 		runCommand("bin/docker_dev.sh -d");
 	}
 	
@@ -76,7 +54,8 @@ public class OsuWebDev{
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
-	public static void stop() throws InterruptedException, IOException{
+	@Override
+	public void stop() throws InterruptedException, IOException{
 		runCommand("docker compose down --rmi all");
 	}
 	

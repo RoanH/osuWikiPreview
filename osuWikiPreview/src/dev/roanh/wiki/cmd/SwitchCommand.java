@@ -20,7 +20,6 @@
 package dev.roanh.wiki.cmd;
 
 import java.awt.Color;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
@@ -34,7 +33,7 @@ import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
-import dev.roanh.wiki.OsuWebDev;
+import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
 
@@ -43,10 +42,6 @@ import dev.roanh.wiki.OsuWiki.SwitchResult;
  * @author Roan
  */
 public class SwitchCommand extends Command{
-	/**
-	 * Lock to present simultaneous command runs.
-	 */
-	private volatile AtomicBoolean busy = new AtomicBoolean(false);
 	
 	/**
 	 * Constructs a new osu! wiki command.
@@ -59,16 +54,27 @@ public class SwitchCommand extends Command{
 	
 	@Override
 	public void execute(CommandMap args, CommandEvent original){
-		if(busy.getAndSet(true)){
+		OsuWeb web;
+		if(original.getChannelId() == 1133099410654498896L){
+			web = Main.DEV_INSTANCE;
+		}else if(original.getChannelId() == 1133099433853198427L){
+			web = Main.OSU2;
+		}else{
+			original.reply("Please run this command in either <#1133099410654498896> (dev) or <#1133099433853198427> (deploy).");
+			return;
+		}
+		
+		if(web.tryLock()){
 			original.reply("Already running an update, please try again later.");
 			return;
 		}
 		
+		final OsuWeb instance = web;
 		original.deferReply(event->{
 			try{
 				String name = args.get("namespace").getAsString();
 				String ref = args.get("ref").getAsString();
-				SwitchResult diff = OsuWiki.switchBranch(name, ref);
+				SwitchResult diff = OsuWiki.switchBranch(name, ref, instance);
 				
 				EmbedBuilder embed = new EmbedBuilder();
 				embed.setColor(new Color(255, 142, 230));
@@ -77,7 +83,7 @@ public class SwitchCommand extends Command{
 
 				StringBuilder desc = embed.getDescriptionBuilder();
 				for(DiffEntry item : diff.diff()){
-					String path = resolveSitePath(item.getNewPath());
+					String path = resolveSitePath(item.getNewPath(), instance);
 					if(path != null){
 						int len = desc.length();
 						desc.append("- [");
@@ -98,7 +104,7 @@ public class SwitchCommand extends Command{
 				event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();
 			}finally{
-				busy.set(false);
+				instance.unlock();
 			}
 		});
 	}
@@ -108,11 +114,12 @@ public class SwitchCommand extends Command{
 	 * inside the osu! wiki repository.
 	 * @param repoPath The path of the markdown file in the osu! wiki
 	 *        repository, this path is assumed to end with <code>.md</code>.
+	 * @param instance The osu! web instance to resolve site paths with.
 	 * @return The osu! web path for the given osu! wiki path or
 	 *         <code>null</code> if the given path does not point to
 	 *         a file that is visible on the website.
 	 */
-	private static final String resolveSitePath(String repoPath){
+	private static final String resolveSitePath(String repoPath, OsuWeb instance){
 		int pathEnd = repoPath.lastIndexOf('/');
 		if(pathEnd == -1){
 			//some markdown file at the root of the repository
@@ -121,11 +128,11 @@ public class SwitchCommand extends Command{
 		
 		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
 		if(repoPath.startsWith("news/")){
-			return OsuWebDev.DOMAIN + "home/news/" + filename;
+			return instance.getDomain() + "home/news/" + filename;
 		}else if(repoPath.startsWith("wiki/Legal/")){
-			return OsuWebDev.DOMAIN + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+			return instance.getDomain() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
 		}else if(repoPath.startsWith("wiki/")){
-			return OsuWebDev.DOMAIN + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
+			return instance.getDomain() + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
 		}else{
 			return null;
 		}

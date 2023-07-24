@@ -26,7 +26,7 @@ import java.io.IOException;
  * Standalone webserver to receive commands and run commands.
  * @author Roan
  */
-public class OsuWeb{
+public class OsuWebDev{
 	/**
 	 * The domain the preview site is available at.
 	 */

@@ -134,7 +134,7 @@ public class OsuWiki{
 			from = getHead();
 			
 			//roll back the website
-			OsuWeb.runWikiUpdate("wikisync", "wikisynccopy");
+			OsuWebDev.runWikiUpdate("wikisync", "wikisynccopy");
 			
 			lastRef = full;
 			refs.add(ref);
@@ -148,10 +148,10 @@ public class OsuWiki{
 		
 		//update the website wiki
 		ObjectId to = getHead();
-		OsuWeb.runWikiUpdate(from.getName(), to.getName());
+		OsuWebDev.runWikiUpdate(from.getName(), to.getName());
 		
 		//update the website news
-		OsuWeb.runNewsUpdate();
+		OsuWebDev.runNewsUpdate();
 		
 		//return the diff
 		return new SwitchResult(computeDiff(from, to), to.getName(), ff);

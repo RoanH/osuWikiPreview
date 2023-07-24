@@ -34,7 +34,7 @@ import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
-import dev.roanh.wiki.OsuWeb;
+import dev.roanh.wiki.OsuWebDev;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
 
@@ -121,11 +121,11 @@ public class SwitchCommand extends Command{
 		
 		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
 		if(repoPath.startsWith("news/")){
-			return OsuWeb.DOMAIN + "home/news/" + filename;
+			return OsuWebDev.DOMAIN + "home/news/" + filename;
 		}else if(repoPath.startsWith("wiki/Legal/")){
-			return OsuWeb.DOMAIN + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+			return OsuWebDev.DOMAIN + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
 		}else if(repoPath.startsWith("wiki/")){
-			return OsuWeb.DOMAIN + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
+			return OsuWebDev.DOMAIN + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
 		}else{
 			return null;
 		}

@@ -81,7 +81,7 @@ public class SwitchCommand extends Command{
 					name = args.get("namespace").getAsString();
 				}else{
 					int idx = ref.indexOf(':');
-					if(idx == -1 || idx == ref.length() - 1){
+					if(idx <= 0 || idx == ref.length() - 1){
 						event.reply("No namespace provided, please either explicitly provide a namespace or pass one via the `ref` argument using the `namespace:ref` format.");
 						return;
 					}else{

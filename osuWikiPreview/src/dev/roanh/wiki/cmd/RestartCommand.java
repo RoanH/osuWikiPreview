@@ -43,6 +43,11 @@ public class RestartCommand extends Command{
 
 	@Override
 	public void execute(CommandMap args, CommandEvent original){
+		if(original.getChannelId() != 1133099410654498896L){
+			original.reply("This command can currently only be used in <#1133099410654498896>.");
+			return;
+		}
+		
 		original.deferReply(event->{
 			try{
 				Main.DEV_INSTANCE.stop();

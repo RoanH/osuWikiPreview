@@ -22,6 +22,7 @@ package dev.roanh.wiki.cmd;
 import java.awt.Color;
 
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
 
@@ -117,6 +118,13 @@ public class SwitchCommand extends Command{
 				event.replyEmbeds(embed.build());
 			}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
 				event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
+			}catch(JGitInternalException ignore){
+				if(ignore.getMessage().startsWith("Invalid ref name")){
+					event.reply("Could not find the requested ref, does it exist?");
+				}else{
+					event.logError(ignore, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+					event.internalError();
+				}
 			}catch(Throwable e){
 				event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();

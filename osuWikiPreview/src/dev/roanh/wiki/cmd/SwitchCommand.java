@@ -51,8 +51,8 @@ public class SwitchCommand extends Command{
 	 */
 	public SwitchCommand(){
 		super("switch", "Switch the preview site to a different branch.", Main.PERMISSION, true);
-		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
-		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
+		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a GitHub style namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
+		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, required if a namespace is not passed via the ref argument.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 	}
 	
 	@Override

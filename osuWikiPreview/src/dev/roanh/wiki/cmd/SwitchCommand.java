@@ -50,8 +50,8 @@ public class SwitchCommand extends Command{
 	 */
 	public SwitchCommand(){
 		super("switch", "Switch the preview site to a different branch.", Main.PERMISSION, true);
-		addOptionString("namespace", "The user or organisation the osu-wiki fork is under.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag).", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
+		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 	}
 	
 	@Override
@@ -74,8 +74,21 @@ public class SwitchCommand extends Command{
 		final OsuWeb instance = web;
 		original.deferReply(event->{
 			try{
-				String name = args.get("namespace").getAsString();
 				String ref = args.get("ref").getAsString();
+				String name = null;
+				if(args.has("namespace")){
+					name = args.get("namespace").getAsString();
+				}else{
+					int idx = ref.indexOf(':');
+					if(idx == -1 || idx == ref.length() - 1){
+						event.reply("No namespace provided, please either explicitly provide a namespace or pass one via the `ref` argument using the `namespace:ref` format.");
+						return;
+					}else{
+						name = ref.substring(0, idx);
+						ref = ref.substring(idx + 1, ref.length());
+					}
+				}
+				
 				SwitchResult diff = OsuWiki.switchBranch(name, ref, instance);
 				
 				EmbedBuilder embed = new EmbedBuilder();

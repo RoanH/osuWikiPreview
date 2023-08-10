@@ -64,7 +64,7 @@ public class OsuWeb{
 	 * @return True if checking out the target ref would be a fast-forward.
 	 */
 	public boolean isFastFoward(String targetRef){
-		return currentRef.equals(targetRef);
+		return targetRef.equals(currentRef);
 	}
 	
 	/**

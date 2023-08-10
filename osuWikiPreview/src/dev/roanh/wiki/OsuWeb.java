@@ -36,6 +36,10 @@ public class OsuWeb{
 	 * Lock to present simultaneous command runs.
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
+	/**
+	 * Ref currently checked out by this instance.
+	 */
+	private String currentRef = null;
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
@@ -43,6 +47,24 @@ public class OsuWeb{
 	 */
 	public OsuWeb(String domain){
 		this.domain = domain;
+	}
+	
+	/**
+	 * Sets the current ref for this instance.
+	 * @param ref The new reference.
+	 */
+	public void setCurrentRef(String ref){
+		currentRef = ref;
+	}
+	
+	/**
+	 * Checks if switching this instance to checkout the given
+	 * ref would be a fast-forward operation.
+	 * @param targetRef The target ref.
+	 * @return True if checking out the target ref would be a fast-forward.
+	 */
+	public boolean isFastFoward(String targetRef){
+		return currentRef.equals(targetRef);
 	}
 	
 	/**

@@ -79,10 +79,6 @@ public class OsuWiki{
 	 * The SSH connection to use.
 	 */
 	private static TransportConfigCallback transport;
-	/**
-	 * Target ref for the last update.
-	 */
-	private static String lastRef = null;
 	
 	/**
 	 * Constructs a new osu! wiki command.
@@ -118,7 +114,7 @@ public class OsuWiki{
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
 		String full = name + "/" + ref;
-		boolean ff = full.equals(lastRef);
+		boolean ff = instance.isFastFoward(full);
 		
 		ObjectId from;
 		if(ff){
@@ -137,7 +133,7 @@ public class OsuWiki{
 			//roll back the website
 			instance.runWikiUpdate("wikisync", "wikisynccopy");
 			
-			lastRef = full;
+			instance.setCurrentRef(full);
 			refs.add(ref);
 		}
 		

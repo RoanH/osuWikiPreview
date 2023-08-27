@@ -33,6 +33,10 @@ public class OsuWeb{
 	 */
 	private final String domain;
 	/**
+	 * The docker container name for this instance.
+	 */
+	private final String container;
+	/**
 	 * Lock to present simultaneous command runs.
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
@@ -44,9 +48,11 @@ public class OsuWeb{
 	/**
 	 * Constructs a new osu! web instance with the given domain.
 	 * @param domain The site domain.
+	 * @param container The docker container name for this instance.
 	 */
-	public OsuWeb(String domain){
+	public OsuWeb(String domain, String container){
 		this.domain = domain;
+		this.container = container;
 	}
 	
 	/**
@@ -121,25 +127,7 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	protected void runArtisan(String cmd) throws InterruptedException, IOException{
-		runCommand("docker exec -it osu-web-octane-deploy php artisan tinker --execute=\"" + cmd + "\"");
-	}
-	
-	/**
-	 * Runs a command to start the osu! web instance.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	public void start() throws InterruptedException, IOException{
-		//TODO unsupported for now
-	}
-	
-	/**
-	 * Runs a command to stop the osu! web instance.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	public void stop() throws InterruptedException, IOException{
-		//TODO unsupported for now
+		runCommand("docker exec -it " + container + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
 	/**

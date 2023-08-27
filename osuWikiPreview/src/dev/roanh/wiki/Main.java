@@ -46,7 +46,7 @@ public class Main{
 	/**
 	 * Deployment instances.
 	 */
-	public static Map<Long, OsuWeb> INSTANCES = Map.of(
+	public static final Map<Long, OsuWeb> INSTANCES = Map.of(
 		1145490143436873739L, new OsuWeb("https://osu1.roanh.dev/", "osu-web-1"),
 		1133099433853198427L, new OsuWeb("https://osu2.roanh.dev/", "osu-web-2"),
 		1145490162806173706L, new OsuWeb("https://osu3.roanh.dev/", "osu-web-3")

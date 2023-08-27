@@ -20,6 +20,7 @@
 package dev.roanh.wiki;
 
 import java.io.IOException;
+import java.util.Map;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -27,7 +28,6 @@ import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.cmd.RestartCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
 
 /**
@@ -44,14 +44,13 @@ public class Main{
 	 */
 	public static DiscordBot client;
 	/**
-	 * Legacy osu! web dev instance.
+	 * Deployment instances.
 	 */
-	@SuppressWarnings("deprecation")
-	public static final OsuWeb DEV_INSTANCE = new OsuWebDev();
-	/**
-	 * First osu! web deploy instance.
-	 */
-	public static final OsuWeb OSU2 = new OsuWeb("https://osu2.roanh.dev/");
+	public static final Map<Long, OsuWeb> INSTANCES = Map.of(
+		1145490143436873739L, new OsuWeb("https://osu1.roanh.dev/", "osu-web-1"),
+		1133099433853198427L, new OsuWeb("https://osu2.roanh.dev/", "osu-web-2"),
+		1145490162806173706L, new OsuWeb("https://osu3.roanh.dev/", "osu-web-3")
+	);
 
 	/**
 	 * Starts the Discord bot.
@@ -67,7 +66,6 @@ public class Main{
 		}
 		
 		client.registerCommand(new SwitchCommand());
-		client.registerCommand(new RestartCommand());
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();
 	}

@@ -52,7 +52,7 @@ public class SwitchCommand extends Command{
 	public SwitchCommand(){
 		super("switch", "Switch the preview site to a different branch.", Main.PERMISSION, true);
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a GitHub style namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
-		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, required if a namespace is not passed via the ref argument.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
+		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 	}
 	
 	@Override
@@ -82,8 +82,7 @@ public class SwitchCommand extends Command{
 				}else{
 					int idx = ref.indexOf(':');
 					if(idx <= 0 || idx == ref.length() - 1){
-						event.reply("No namespace provided, please either explicitly provide a namespace or pass one via the `ref` argument using the `namespace:ref` format.");
-						return;
+						name = original.getMember().getEffectiveName();
 					}else{
 						name = ref.substring(0, idx);
 						ref = ref.substring(idx + 1, ref.length());

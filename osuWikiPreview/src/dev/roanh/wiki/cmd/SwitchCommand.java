@@ -57,13 +57,9 @@ public class SwitchCommand extends Command{
 	
 	@Override
 	public void execute(CommandMap args, CommandEvent original){
-		OsuWeb web;
-		if(original.getChannelId() == 1133099410654498896L){
-			web = Main.DEV_INSTANCE;
-		}else if(original.getChannelId() == 1133099433853198427L){
-			web = Main.OSU2;
-		}else{
-			original.reply("Please run this command in either <#1133099410654498896> (dev) or <#1133099433853198427> (deploy).");
+		OsuWeb web = Main.INSTANCES.getOrDefault(original.getChannelId(), null);
+		if(web == null){
+			original.reply("Please run this command in one of the channels under the `instances` category.");
 			return;
 		}
 		

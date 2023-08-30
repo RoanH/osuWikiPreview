@@ -66,6 +66,14 @@ public class Main{
 			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
 		}
 		
+		for(OsuWeb site : INSTANCES.values()){
+			try{
+				site.start();
+			}catch(InterruptedException | IOException e){
+				client.logError(e, "[Main] Failed to start site with ID " + site.getID(), Severity.MINOR, Priority.MEDIUM);
+			}
+		}
+		
 		client.registerCommand(new SwitchCommand());
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();

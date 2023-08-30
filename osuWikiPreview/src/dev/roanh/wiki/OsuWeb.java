@@ -99,6 +99,10 @@ public class OsuWeb{
 		return domain;
 	}
 	
+	public int getID(){
+		return id;
+	}
+	
 	/**
 	 * Updates all osu! web news articles.
 	 * @throws InterruptedException When the thread was interrupted.
@@ -118,6 +122,14 @@ public class OsuWeb{
 	 */
 	public void runWikiUpdate(String from, String to) throws InterruptedException, IOException{
 		runArtisan("OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])");
+	}
+	
+	public void start() throws InterruptedException, IOException{
+		runCommand("docker start osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+	}
+	
+	public void stop() throws InterruptedException, IOException{
+		runCommand("docker stop osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
 	}
 	
 	/**

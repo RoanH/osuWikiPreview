@@ -33,9 +33,9 @@ public class OsuWeb{
 	 */
 	private final String domain;
 	/**
-	 * The docker container name for this instance.
+	 * Numerical ID of this instance to identify associated docker containers.
 	 */
-	private final String container;
+	private final int id;
 	/**
 	 * Lock to present simultaneous command runs.
 	 */
@@ -47,12 +47,11 @@ public class OsuWeb{
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
-	 * @param domain The site domain.
-	 * @param container The docker container name for this instance.
+	 * @param id Numerical ID used to identify this instance and associated services.
 	 */
-	public OsuWeb(String domain, String container){
-		this.domain = domain;
-		this.container = container;
+	public OsuWeb(int id){
+		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
+		this.id = id;
 	}
 	
 	/**
@@ -101,11 +100,20 @@ public class OsuWeb{
 	}
 	
 	/**
+	 * Gets the ID for this osu! web instance.
+	 * @return The ID for this instance.
+	 */
+	public int getID(){
+		return id;
+	}
+	
+	/**
 	 * Updates all osu! web news articles.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
 	public void runNewsUpdate() throws InterruptedException, IOException{
+		runQuery("DELETE FROM news_posts");
 		runArtisan("NewsPost::syncAll()");
 	}
 		
@@ -121,13 +129,41 @@ public class OsuWeb{
 	}
 	
 	/**
+	 * Starts the osu! web instance.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public void start() throws InterruptedException, IOException{
+		runCommand("docker start osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+	}
+	
+	/**
+	 * Stops the osu! web instance.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public void stop() throws InterruptedException, IOException{
+		runCommand("docker stop osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+	}
+	
+	/**
 	 * Runs an osu! web artisan command.
 	 * @param cmd The command to run.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
 	protected void runArtisan(String cmd) throws InterruptedException, IOException{
-		runCommand("docker exec -it " + container + " php artisan tinker --execute=\"" + cmd + "\"");
+		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
+	}
+	
+	/**
+	 * Runs the given SQL query on the database for this instance.
+	 * @param query The query to execute.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	protected void runQuery(String query) throws InterruptedException, IOException{
+		runCommand("docker exec -it osu-web-mysql-" + id + " mysql osu -e \"" + query + ";\"");
 	}
 	
 	/**

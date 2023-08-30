@@ -36,6 +36,10 @@ import dev.roanh.wiki.cmd.SwitchCommand;
  */
 public class Main{
 	/**
+	 * Root domain for all instances.
+	 */
+	public static final String DOMAIN = "roanh.dev";
+	/**
 	 * The permission required to run wiki commands.
 	 */
 	public static final CommandPermission PERMISSION = CommandPermission.forRole(1109514462794358815L);//wiki role
@@ -47,9 +51,9 @@ public class Main{
 	 * Deployment instances.
 	 */
 	public static final Map<Long, OsuWeb> INSTANCES = Map.of(
-		1145490143436873739L, new OsuWeb("https://osu1.roanh.dev/", "osu-web-1"),
-		1133099433853198427L, new OsuWeb("https://osu2.roanh.dev/", "osu-web-2"),
-		1145490162806173706L, new OsuWeb("https://osu3.roanh.dev/", "osu-web-3")
+		1145490143436873739L, new OsuWeb(1),
+		1133099433853198427L, new OsuWeb(2),
+		1145490162806173706L, new OsuWeb(3)
 	);
 
 	/**
@@ -63,6 +67,14 @@ public class Main{
 			OsuWiki.init();
 		}catch(IOException e){
 			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
+		}
+		
+		for(OsuWeb site : INSTANCES.values()){
+			try{
+				site.start();
+			}catch(InterruptedException | IOException e){
+				client.logError(e, "[Main] Failed to start site with ID " + site.getID(), Severity.MINOR, Priority.MEDIUM);
+			}
 		}
 		
 		client.registerCommand(new SwitchCommand());

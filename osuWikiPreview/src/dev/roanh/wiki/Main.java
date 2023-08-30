@@ -35,6 +35,9 @@ import dev.roanh.wiki.cmd.SwitchCommand;
  * @author Roan
  */
 public class Main{
+	/**
+	 * Root domain for all instances.
+	 */
 	public static final String DOMAIN = "roanh.dev";
 	/**
 	 * The permission required to run wiki commands.

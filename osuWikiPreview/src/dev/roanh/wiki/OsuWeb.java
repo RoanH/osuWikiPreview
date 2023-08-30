@@ -33,9 +33,9 @@ public class OsuWeb{
 	 */
 	private final String domain;
 	/**
-	 * The docker container name for this instance.
+	 * Numerical ID of this instance to identify associated docker containers.
 	 */
-	private final String container;
+	private final int id;
 	/**
 	 * Lock to present simultaneous command runs.
 	 */
@@ -47,12 +47,11 @@ public class OsuWeb{
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
-	 * @param domain The site domain.
-	 * @param container The docker container name for this instance.
+	 * @param id Numberical ID used to identify this instance and associated services.
 	 */
-	public OsuWeb(String domain, String container){
-		this.domain = domain;
-		this.container = container;
+	public OsuWeb(int id){
+		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
+		this.id = id;
 	}
 	
 	/**
@@ -106,6 +105,7 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	public void runNewsUpdate() throws InterruptedException, IOException{
+		runQuery("DELETE FROM news_posts");
 		runArtisan("NewsPost::syncAll()");
 	}
 		
@@ -127,7 +127,11 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	protected void runArtisan(String cmd) throws InterruptedException, IOException{
-		runCommand("docker exec -it " + container + " php artisan tinker --execute=\"" + cmd + "\"");
+		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
+	}
+	
+	protected void runQuery(String query) throws InterruptedException, IOException{
+		runCommand("docker exec -it osu-web-mysql-" + id + " mysql osu -e \"" + query + ";\"");
 	}
 	
 	/**

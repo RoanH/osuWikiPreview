@@ -99,6 +99,10 @@ public class OsuWeb{
 		return domain;
 	}
 	
+	/**
+	 * Gets the ID for this osu! web instance.
+	 * @return The ID for this instance.
+	 */
 	public int getID(){
 		return id;
 	}
@@ -124,10 +128,20 @@ public class OsuWeb{
 		runArtisan("OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])");
 	}
 	
+	/**
+	 * Starts the osu! web instance.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	public void start() throws InterruptedException, IOException{
 		runCommand("docker start osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
 	}
 	
+	/**
+	 * Stops the osu! web instance.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	public void stop() throws InterruptedException, IOException{
 		runCommand("docker stop osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
 	}
@@ -142,6 +156,12 @@ public class OsuWeb{
 		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
+	/**
+	 * Runs the given SQL query on the database for this instance.
+	 * @param query The query to execute.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
 	protected void runQuery(String query) throws InterruptedException, IOException{
 		runCommand("docker exec -it osu-web-mysql-" + id + " mysql osu -e \"" + query + ";\"");
 	}

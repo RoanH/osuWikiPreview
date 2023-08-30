@@ -47,7 +47,7 @@ public class OsuWeb{
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
-	 * @param id Numberical ID used to identify this instance and associated services.
+	 * @param id Numerical ID used to identify this instance and associated services.
 	 */
 	public OsuWeb(int id){
 		domain = "https://osu" + id + "." + Main.DOMAIN + "/";

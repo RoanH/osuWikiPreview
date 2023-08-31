@@ -173,6 +173,8 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	private void runCommand(String cmd) throws InterruptedException, IOException{
-		new ProcessBuilder("bash", "-c", cmd).directory(new File("/home/roan/wiki/deploy")).inheritIO().start().waitFor();
+		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(new File("/home/roan/wiki/deploy")).inheritIO().start().waitFor()){
+			throw new IOException("Executed command returned a non-zero exit code.");
+		}
 	}
 }

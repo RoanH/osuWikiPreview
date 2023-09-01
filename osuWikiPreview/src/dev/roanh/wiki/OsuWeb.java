@@ -113,8 +113,17 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	public void runNewsUpdate() throws InterruptedException, IOException{
-		runQuery("DELETE FROM news_posts");
+		clearNewsDatabase();
 		runArtisan("NewsPost::syncAll()");
+	}
+	
+	/**
+	 * Clear all data in the news posts database.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public void clearNewsDatabase() throws InterruptedException, IOException{
+		runQuery("DELETE FROM news_posts");
 	}
 		
 	/**

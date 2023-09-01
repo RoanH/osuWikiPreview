@@ -127,11 +127,11 @@ public class OsuWiki{
 			//reset to ppy master
 			forceFetch("ppy");
 			reset("ppy", "master");
-			forcePush("wikisync");
+			forcePush("wikisync-" + instance.getID());
 			from = getHead();
 			
 			//roll back the website
-			instance.runWikiUpdate("wikisync", "wikisynccopy");
+			instance.runWikiUpdate("wikisync-" + instance.getID(), "wikisynccopy");
 			
 			instance.setCurrentRef(full);
 			refs.add(ref);
@@ -141,7 +141,7 @@ public class OsuWiki{
 		findRemote(name);
 		forceFetch(name);
 		reset(name, ref);
-		forcePush("wikisync");
+		forcePush("wikisync-" + instance.getID());
 		
 		//update the website wiki
 		ObjectId to = getHead();

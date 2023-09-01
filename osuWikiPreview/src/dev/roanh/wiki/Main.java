@@ -28,6 +28,7 @@ import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.cmd.RestartCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
 
 /**
@@ -78,6 +79,7 @@ public class Main{
 		}
 		
 		client.registerCommand(new SwitchCommand());
+		client.registerCommand(new RestartCommand());
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();
 	}

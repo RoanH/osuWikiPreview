@@ -23,9 +23,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -70,11 +70,11 @@ public class OsuWiki{
 	/**
 	 * Cached list of remotes.
 	 */
-	private static Set<String> remotes = new HashSet<String>();
+	private static Set<String> remotes = new CopyOnWriteArraySet<String>();
 	/**
 	 * Cached list of recent refs.
 	 */
-	private static Set<String> refs = new HashSet<String>();
+	private static Set<String> refs = new CopyOnWriteArraySet<String>();
 	/**
 	 * The SSH connection to use.
 	 */
@@ -92,7 +92,7 @@ public class OsuWiki{
 	 * Gets a list of recently used remotes.
 	 * @return The recently used remotes.
 	 */
-	public synchronized static List<String> getRecentRemotes(){
+	public static List<String> getRecentRemotes(){
 		return new ArrayList<String>(remotes);
 	}
 	
@@ -100,7 +100,7 @@ public class OsuWiki{
 	 * Gets a list of recently used refs.
 	 * @return The recently used refs.
 	 */
-	public synchronized static List<String> getRecentRefs(){
+	public static List<String> getRecentRefs(){
 		return new ArrayList<String>(refs);
 	}
 	

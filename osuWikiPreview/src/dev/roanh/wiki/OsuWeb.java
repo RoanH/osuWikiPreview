@@ -118,6 +118,15 @@ public class OsuWeb{
 	}
 	
 	/**
+	 * Sets the published date for all news posts to the current date.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public void redateNews() throws InterruptedException, IOException{
+		runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP()");
+	}
+	
+	/**
 	 * Clear all data in the news posts database.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.

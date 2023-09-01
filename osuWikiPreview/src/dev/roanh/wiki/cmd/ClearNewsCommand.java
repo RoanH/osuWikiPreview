@@ -55,7 +55,7 @@ public class ClearNewsCommand extends Command{
 				web.clearNewsDatabase();
 				event.reply("osu! web news database cleared succesfully.");
 			}catch(IOException | InterruptedException e){
-				event.logError(e, "[RestartCommand] Failed to clear news database", Severity.MINOR, Priority.MEDIUM);
+				event.logError(e, "[ClearNewsCommand] Failed to clear news database", Severity.MINOR, Priority.MEDIUM);
 				event.internalError();
 			}
 		});

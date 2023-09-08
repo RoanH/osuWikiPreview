@@ -21,7 +21,6 @@ package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
 
-import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
@@ -33,7 +32,7 @@ import dev.roanh.wiki.OsuWeb;
  * Command to clear the news posts database.
  * @author Roan
  */
-public class ClearNewsCommand extends Command{
+public class ClearNewsCommand extends WebCommand{
 
 	/**
 	 * Constructs a new clear news command.
@@ -43,21 +42,13 @@ public class ClearNewsCommand extends Command{
 	}
 
 	@Override
-	public void execute(CommandMap args, CommandEvent original){
-		OsuWeb web = Main.INSTANCES.getOrDefault(original.getChannelId(), null);
-		if(web == null){
-			original.reply("Please run this command in one of the channels under the `instances` category.");
-			return;
+	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			web.clearNewsDatabase();
+			event.reply("osu! web news database cleared succesfully.");
+		}catch(IOException | InterruptedException e){
+			event.logError(e, "[ClearNewsCommand] Failed to clear news database", Severity.MINOR, Priority.MEDIUM);
+			event.internalError();
 		}
-		
-		original.deferReply(event->{
-			try{
-				web.clearNewsDatabase();
-				event.reply("osu! web news database cleared succesfully.");
-			}catch(IOException | InterruptedException e){
-				event.logError(e, "[ClearNewsCommand] Failed to clear news database", Severity.MINOR, Priority.MEDIUM);
-				event.internalError();
-			}
-		});
 	}
 }

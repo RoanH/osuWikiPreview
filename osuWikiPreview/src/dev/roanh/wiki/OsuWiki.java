@@ -163,18 +163,31 @@ public class OsuWiki{
 		try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
 			//attempt to find the merge base of both commits
 			RevCommit target = repo.parseCommit(to);
-			rev.markStart(repo.parseCommit(from));
+			RevCommit source = repo.parseCommit(from);
+			rev.markStart(source);
 			rev.markStart(target);
+			rev.setRetainBody(false);
 			rev.setRevFilter(RevFilter.MERGE_BASE);
+			
+			//the merge base is the commit where the branches diverged and always an ancestor of both commits
+			RevCommit base = rev.next();
+			for(RevCommit parent : source.getParents()){
+				if(parent.equals(base)){
+					//if the source commit is an ancestor of the target commit the source commit is closer
+					//in history to the target commit than the merge base which is a parent of the source commit
+					base = source;
+					break;
+				}
+			}
 
 			//base tree
 			CanonicalTreeParser oldTree = new CanonicalTreeParser();
-			oldTree.reset(reader, rev.next().getTree());
-
+			oldTree.reset(reader, base.getTree());
+			
 			//current head tree
 			CanonicalTreeParser newTree = new CanonicalTreeParser();
 			newTree.reset(reader, target.getTree());
-
+			
 			return git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call().stream().filter(item->{
 				return item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md");
 			}).toList();

@@ -90,7 +90,7 @@ public class SwitchCommand extends Command{
 				EmbedBuilder embed = new EmbedBuilder();
 				embed.setColor(new Color(255, 142, 230));
 				embed.setAuthor("Ref: " + name + "/" + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
-				embed.setFooter("HEAD: " + (diff.ff() ? (diff.head() + " (fast-forward)") : diff.head()));
+				embed.setFooter("HEAD: " + diff.head());
 
 				StringBuilder desc = embed.getDescriptionBuilder();
 				for(DiffEntry item : diff.diff()){

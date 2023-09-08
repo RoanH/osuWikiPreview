@@ -21,7 +21,10 @@ package dev.roanh.wiki;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.eclipse.jgit.diff.DiffEntry;
 
 /**
  * Main controller for an osu! web instance.
@@ -109,21 +112,25 @@ public class OsuWeb{
 	
 	/**
 	 * Updates all osu! web news articles.
+	 * @param diff A diff indicating repository files that were changed.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
-	public void runNewsUpdate() throws InterruptedException, IOException{
-		clearNewsDatabase();
+	public void runNewsUpdate(List<DiffEntry> diff) throws InterruptedException, IOException{
+		for(DiffEntry file : diff){
+			clearNewsPost(file);
+		}
+
 		runArtisan("NewsPost::syncAll()");
 	}
 	
 	/**
-	 * Sets the published date for all news posts to the current date.
+	 * Sets the published date for all future news posts to the current date.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
 	public void redateNews() throws InterruptedException, IOException{
-		runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP()");
+		runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at = CURRENT_TIMESTAMP()");
 	}
 	
 	/**
@@ -133,6 +140,22 @@ public class OsuWeb{
 	 */
 	public void clearNewsDatabase() throws InterruptedException, IOException{
 		runQuery("DELETE FROM news_posts");
+	}
+	
+	/**
+	 * Clears all data for the given news post from the database.
+	 * @param news The news post to remove.
+	 * @throws InterruptedException When the thread was interrupted.
+	 * @throws IOException When an IOException occurs.
+	 */
+	public void clearNewsPost(DiffEntry news) throws InterruptedException, IOException{
+		String path = news.getNewPath();
+		if(path.startsWith("news/")){
+			String slug = path.substring(path.lastIndexOf('/') + 1, path.length() - 3);
+			if(slug.matches("[-0-9a-zA-Z]+")){
+				runQuery("DELETE FROM news_posts WHERE slug = '" + slug + "'");
+			}
+		}
 	}
 		
 	/**

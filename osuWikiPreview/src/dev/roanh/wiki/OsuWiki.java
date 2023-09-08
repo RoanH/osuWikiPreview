@@ -50,6 +50,8 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 
+import ch.qos.logback.classic.Level;
+
 /**
  * Command to update the osu! wiki instance.
  * @author Roan
@@ -58,7 +60,7 @@ public class OsuWiki{
 	/**
 	 * Path to the osu! web wiki.
 	 */
-	private static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
+	private static final File WIKI_PATH = new File("C:\\Users\\RoanH\\Downloads\\osu-wiki");
 	/**
 	 * Path to the osu! web deploy key.
 	 */
@@ -85,6 +87,9 @@ public class OsuWiki{
 	 * @throws IOException When some IO exception occurs.
 	 */
 	public static void init() throws IOException{
+
+		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+	    root.setLevel(Level.WARN);
 		git = Git.open(WIKI_PATH);
 	}
 	
@@ -114,29 +119,15 @@ public class OsuWiki{
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
 		String full = name + "/" + ref;
-		boolean ff = instance.isFastFoward(full);
+		instance.setCurrentRef(full);
+		refs.add(ref);
 		
-		ObjectId from;
-		if(ff){
-			//if the last switch was to the same branch we do not roll back
-			from = getHead();
-		}else{
-			//copy the current state
-			forcePush("wikisynccopy");
-			
-			//reset to ppy master
-			forceFetch("ppy");
-			reset("ppy", "master");
-			forcePush("wikisync-" + instance.getID());
-			from = getHead();
-			
-			//roll back the website
-			instance.runWikiUpdate("wikisync-" + instance.getID(), "wikisynccopy");
-			
-			instance.setCurrentRef(full);
-			refs.add(ref);
-		}
-		
+		//update master copy
+		forceFetch("ppy");
+		reset("ppy", "master");
+		forcePush("master");
+		ObjectId from = git.getRepository().resolve("origin/master");
+
 		//reset to the new branch
 		findRemote(name);
 		forceFetch(name);
@@ -145,13 +136,16 @@ public class OsuWiki{
 		
 		//update the website wiki
 		ObjectId to = getHead();
-		instance.runWikiUpdate(from.getName(), to.getName());
+		instance.runWikiUpdate("master", "wikisync-" + instance.getID());
+		
+		//compute the diff
+		List<DiffEntry> diff = computeDiff(from, to);
 		
 		//update the website news
-		instance.runNewsUpdate();
+		instance.runNewsUpdate(diff);
 		
 		//return the diff
-		return new SwitchResult(computeDiff(from, to), to.getName(), ff);
+		return new SwitchResult(diff, to.getName());
 	}
 	
 	/**
@@ -247,10 +241,9 @@ public class OsuWiki{
 	 * @author Roan
 	 * @param diff A diff with all changed files.
 	 * @param head The new head commit hash.
-	 * @param ff True if the update was a fast forward.
 	 * @see OsuWiki#switchBranch(String, String, OsuWeb)
 	 */
-	public static final record SwitchResult(List<DiffEntry> diff, String head, boolean ff){
+	public static final record SwitchResult(List<DiffEntry> diff, String head){
 	}
 
 	static{

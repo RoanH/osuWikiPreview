@@ -49,8 +49,10 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 
 /**
  * Command to update the osu! wiki instance.
@@ -60,7 +62,7 @@ public class OsuWiki{
 	/**
 	 * Path to the osu! web wiki.
 	 */
-	private static final File WIKI_PATH = new File("C:\\Users\\RoanH\\Downloads\\osu-wiki");
+	private static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
 	/**
 	 * Path to the osu! web deploy key.
 	 */
@@ -87,9 +89,7 @@ public class OsuWiki{
 	 * @throws IOException When some IO exception occurs.
 	 */
 	public static void init() throws IOException{
-
-		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-	    root.setLevel(Level.WARN);
+		((Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
 		git = Git.open(WIKI_PATH);
 	}
 	

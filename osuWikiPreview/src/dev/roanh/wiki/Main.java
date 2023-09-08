@@ -63,7 +63,7 @@ public class Main{
 	 * Starts the Discord bot.
 	 * @param args No valid arguments.
 	 */
-	public static final void mainii(String[] args){
+	public static final void main(String[] args){
 		client = new DiscordBot("/help", "!w", true, 569, 8999);
 		
 		try{

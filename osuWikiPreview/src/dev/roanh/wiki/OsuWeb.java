@@ -130,7 +130,7 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	public void redateNews() throws InterruptedException, IOException{
-		runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at = CURRENT_TIMESTAMP()");
+		runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
 	}
 	
 	/**

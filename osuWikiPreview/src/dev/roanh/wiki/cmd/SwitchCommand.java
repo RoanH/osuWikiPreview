@@ -29,7 +29,6 @@ import org.eclipse.jgit.errors.NoRemoteRepositoryException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
-import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
@@ -44,7 +43,7 @@ import dev.roanh.wiki.OsuWiki.SwitchResult;
  * Command to switch the active preview branch.
  * @author Roan
  */
-public class SwitchCommand extends Command{
+public class SwitchCommand extends WebCommand{
 	
 	/**
 	 * Constructs a new osu! wiki command.
@@ -56,77 +55,61 @@ public class SwitchCommand extends Command{
 	}
 	
 	@Override
-	public void execute(CommandMap args, CommandEvent original){
-		OsuWeb web = Main.INSTANCES.getOrDefault(original.getChannelId(), null);
-		if(web == null){
-			original.reply("Please run this command in one of the channels under the `instances` category.");
-			return;
-		}
-		
-		if(web.tryLock()){
-			original.reply("Already running an update, please try again later.");
-			return;
-		}
-		
-		final OsuWeb instance = web;
-		original.deferReply(event->{
-			try{
-				String ref = args.get("ref").getAsString();
-				String name = null;
-				if(args.has("namespace")){
-					name = args.get("namespace").getAsString();
+	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			String ref = args.get("ref").getAsString();
+			String name = null;
+			if(args.has("namespace")){
+				name = args.get("namespace").getAsString();
+			}else{
+				int idx = ref.indexOf(':');
+				if(idx <= 0 || idx == ref.length() - 1){
+					name = event.getMember().getEffectiveName();
 				}else{
-					int idx = ref.indexOf(':');
-					if(idx <= 0 || idx == ref.length() - 1){
-						name = original.getMember().getEffectiveName();
-					}else{
-						name = ref.substring(0, idx);
-						ref = ref.substring(idx + 1, ref.length());
-					}
+					name = ref.substring(0, idx);
+					ref = ref.substring(idx + 1, ref.length());
 				}
-				
-				SwitchResult diff = OsuWiki.switchBranch(name, ref, instance);
-				
-				EmbedBuilder embed = new EmbedBuilder();
-				embed.setColor(new Color(255, 142, 230));
-				embed.setAuthor("Ref: " + name + "/" + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
-				embed.setFooter("HEAD: " + diff.head());
-
-				StringBuilder desc = embed.getDescriptionBuilder();
-				for(DiffEntry item : diff.diff()){
-					String path = resolveSitePath(item.getNewPath(), instance);
-					if(path != null){
-						int len = desc.length();
-						desc.append("- [");
-						desc.append(item.getNewPath());
-						desc.append("](");
-						desc.append(path);
-						desc.append(")\n");
-						if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
-							desc.delete(len, desc.length());
-							desc.append("_more_");
-							break;
-						}
-					}
-				}
-				
-				event.replyEmbeds(embed.build());
-			}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
-				event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
-			}catch(JGitInternalException ignore){
-				if(ignore.getMessage().startsWith("Invalid ref name")){
-					event.reply("Could not find the requested ref, does it exist?");
-				}else{
-					event.logError(ignore, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
-					event.internalError();
-				}
-			}catch(Throwable e){
-				event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
-				event.internalError();
-			}finally{
-				instance.unlock();
 			}
-		});
+			
+			SwitchResult diff = OsuWiki.switchBranch(name, ref, web);
+			
+			EmbedBuilder embed = new EmbedBuilder();
+			embed.setColor(new Color(255, 142, 230));
+			embed.setAuthor("Ref: " + name + "/" + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
+			embed.setFooter("HEAD: " + diff.head());
+
+			StringBuilder desc = embed.getDescriptionBuilder();
+			for(DiffEntry item : diff.diff()){
+				String path = resolveSitePath(item.getNewPath(), web);
+				if(path != null){
+					int len = desc.length();
+					desc.append("- [");
+					desc.append(item.getNewPath());
+					desc.append("](");
+					desc.append(path);
+					desc.append(")\n");
+					if(desc.length() > MessageEmbed.DESCRIPTION_MAX_LENGTH - "_more_".length()){
+						desc.delete(len, desc.length());
+						desc.append("_more_");
+						break;
+					}
+				}
+			}
+			
+			event.replyEmbeds(embed.build());
+		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
+			event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
+		}catch(JGitInternalException ignore){
+			if(ignore.getMessage().startsWith("Invalid ref name")){
+				event.reply("Could not find the requested ref, does it exist?");
+			}else{
+				event.logError(ignore, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+				event.internalError();
+			}
+		}catch(Throwable e){
+			event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+			event.internalError();
+		}
 	}
 	
 	/**

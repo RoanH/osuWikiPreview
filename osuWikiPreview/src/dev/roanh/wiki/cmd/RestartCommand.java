@@ -21,7 +21,6 @@ package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
 
-import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
@@ -33,7 +32,7 @@ import dev.roanh.wiki.OsuWeb;
  * Command to restart the entire osu! web instance.
  * @author Roan
  */
-public class RestartCommand extends Command{
+public class RestartCommand extends WebCommand{
 
 	/**
 	 * Constructs a new restart command.
@@ -43,22 +42,14 @@ public class RestartCommand extends Command{
 	}
 
 	@Override
-	public void execute(CommandMap args, CommandEvent original){
-		OsuWeb web = Main.INSTANCES.getOrDefault(original.getChannelId(), null);
-		if(web == null){
-			original.reply("Please run this command in one of the channels under the `instances` category.");
-			return;
+	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			web.stop();
+			web.start();
+			event.reply("osu! web instance succesfully restarted.");
+		}catch(IOException | InterruptedException e){
+			event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
+			event.internalError();
 		}
-		
-		original.deferReply(event->{
-			try{
-				web.stop();
-				web.start();
-				event.reply("osu! web instance succesfully restarted.");
-			}catch(IOException | InterruptedException e){
-				event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
-				event.internalError();
-			}
-		});
 	}
 }

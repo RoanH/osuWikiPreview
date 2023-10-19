@@ -133,11 +133,19 @@ public class SwitchCommand extends WebCommand{
 		if(repoPath.startsWith("news/")){
 			return instance.getDomain() + "home/news/" + filename;
 		}else if(repoPath.startsWith("wiki/Legal/")){
-			return instance.getDomain() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+			if(pathEnd < 11){//root so no sub-path
+				return instance.getDomain() + "legal/" + filename;
+			}else{
+				return instance.getDomain() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+			}
 		}else if(repoPath.startsWith("wiki/")){
 			return instance.getDomain() + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
 		}else{
 			return null;
 		}
+	}
+	
+	public static void main(String[] args){
+		System.out.println(resolveSitePath("wiki/Legal/en.md", new OsuWeb(1)));
 	}
 }

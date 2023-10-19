@@ -19,12 +19,8 @@
  */
 package dev.roanh.wiki.cmd;
 
-import java.io.IOException;
-
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.isla.reporting.Priority;
-import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 
@@ -35,7 +31,7 @@ import dev.roanh.wiki.OsuWeb;
 public class RefreshCommand extends SwitchCommand{
 
 	/**
-	 * Constructs a new restart command.
+	 * Constructs a new refresh command command.
 	 */
 	public RefreshCommand(){
 		super("refresh", "Switches to the mostly recently switched to ref.", Main.PERMISSION, true);

@@ -55,6 +55,13 @@ public class SwitchCommand extends WebCommand{
 		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 	}
 	
+	/**
+	 * Constructs a new switch command.
+	 * @param name The name of this command.
+	 * @param description The description of this command.
+	 * @param permission The permission the user needs to be allowed to execute this command.
+	 * @param guild True if this command only works in a guild.
+	 */
 	protected SwitchCommand(String name, String description, CommandPermission permission, boolean guild){
 		super(name, description, permission, guild);
 	}
@@ -78,6 +85,14 @@ public class SwitchCommand extends WebCommand{
 		switchBranch(event, ref, name, web, args);
 	}
 	
+	/**
+	 * Switches the active preview branch.
+	 * @param event The command event.
+	 * @param ref The ref to switch to.
+	 * @param name The namespace the ref to switch to is under.
+	 * @param web The osu! web instance to update.
+	 * @param args The passed command arguments.
+	 */
 	protected void switchBranch(CommandEvent event, String ref, String name, OsuWeb web, CommandMap args){
 		try{
 			SwitchResult diff = OsuWiki.switchBranch(name, ref, web);

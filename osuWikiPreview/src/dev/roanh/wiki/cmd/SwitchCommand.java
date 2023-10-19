@@ -168,8 +168,4 @@ public class SwitchCommand extends WebCommand{
 			return null;
 		}
 	}
-	
-	public static void main(String[] args){
-		System.out.println(resolveSitePath("wiki/Legal/en.md", new OsuWeb(1)));
-	}
 }

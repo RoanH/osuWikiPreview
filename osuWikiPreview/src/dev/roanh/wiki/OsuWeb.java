@@ -57,6 +57,10 @@ public class OsuWeb{
 		this.id = id;
 	}
 	
+	public String getCurrentRef(){
+		return currentRef;
+	}
+	
 	/**
 	 * Sets the current ref for this instance.
 	 * @param ref The new reference.

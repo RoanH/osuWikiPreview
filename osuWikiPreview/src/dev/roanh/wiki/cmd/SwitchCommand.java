@@ -32,6 +32,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
+import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
@@ -49,28 +50,36 @@ public class SwitchCommand extends WebCommand{
 	 * Constructs a new osu! wiki command.
 	 */
 	public SwitchCommand(){
-		super("switch", "Switch the preview site to a different branch.", Main.PERMISSION, true);
+		this("switch", "Switch the preview site to a different branch.", Main.PERMISSION, true);
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
 		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 	}
 	
+	protected SwitchCommand(String name, String description, CommandPermission permission, boolean guild){
+		super(name, description, permission, guild);
+	}
+
 	@Override
 	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
-		try{
-			String ref = args.get("ref").getAsString();
-			String name = null;
-			if(args.has("namespace")){
-				name = args.get("namespace").getAsString();
+		String ref = args.get("ref").getAsString();
+		String name = null;
+		if(args.has("namespace")){
+			name = args.get("namespace").getAsString();
+		}else{
+			int idx = ref.indexOf(':');
+			if(idx <= 0 || idx == ref.length() - 1){
+				name = event.getMember().getEffectiveName();
 			}else{
-				int idx = ref.indexOf(':');
-				if(idx <= 0 || idx == ref.length() - 1){
-					name = event.getMember().getEffectiveName();
-				}else{
-					name = ref.substring(0, idx);
-					ref = ref.substring(idx + 1, ref.length());
-				}
+				name = ref.substring(0, idx);
+				ref = ref.substring(idx + 1, ref.length());
 			}
-			
+		}
+
+		switchBranch(event, ref, name, web, args);
+	}
+	
+	protected void switchBranch(CommandEvent event, String ref, String name, OsuWeb web, CommandMap args){
+		try{
 			SwitchResult diff = OsuWiki.switchBranch(name, ref, web);
 			
 			EmbedBuilder embed = new EmbedBuilder();

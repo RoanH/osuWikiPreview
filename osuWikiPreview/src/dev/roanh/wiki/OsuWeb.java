@@ -57,6 +57,12 @@ public class OsuWeb{
 		this.id = id;
 	}
 	
+	/**
+	 * Gets the ref currently checked out on this instance.
+	 * <p>
+	 * Format: <code>namespace/ref</code>
+	 * @return The current ref.
+	 */
 	public String getCurrentRef(){
 		return currentRef;
 	}

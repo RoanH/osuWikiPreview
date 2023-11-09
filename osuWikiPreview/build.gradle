@@ -1,22 +1,40 @@
 plugins{
-	id 'java-library'
+	id 'java'
+	id 'application'
 	id 'maven-publish'
 	id 'eclipse'
-	id 'application'
 	id 'com.github.johnrengelman.shadow' version '7.1.2'
 	id 'com.github.spotbugs' version '5.0.14'
 }
 
 sourceSets{
 	main{
-		java{
-			srcDirs = ['src']
-		}
-		resources{
-			srcDirs = ['src']
-		}
+		java.srcDirs = ['src']
 	}
 }
+
+dependencies{
+	//Isla Lib
+	implementation "dev.roanh.islalib:islalib:7.16"
+	
+	//JGit
+	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
+	implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r'
+}
+
+repositories{
+	maven{
+		allowInsecureProtocol = true
+		url "$nexusPublic"
+	}
+}
+
+eclipse.classpath.downloadSources = true
+eclipse.classpath.downloadJavadoc = true
+compileJava.options.encoding = 'UTF-8'
+sourceCompatibility = 1.17
+javadoc.options.memberLevel = JavadocMemberLevel.PRIVATE
+application.mainClassName = 'dev.roanh.wiki.Main'
 
 spotbugs{
 	showProgress = true
@@ -35,47 +53,15 @@ spotbugsMain{
 	}
 }
 
-repositories{
-	maven{
-		allowInsecureProtocol = true
-		url "$nexusPublic"
-	}
-}
-
-dependencies{
-	//Isla Lib
-	implementation "dev.roanh.islalib:islalib:7.16"
-	
-	//JGit
-	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
-	implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r'
-}
-
-eclipse.classpath.downloadJavadoc = true
-compileJava.options.encoding = 'UTF-8'
-sourceCompatibility = 1.17
-
-javadoc{
-	options.memberLevel = JavadocMemberLevel.PRIVATE
-}
-
-application{
-	mainClassName = 'dev.roanh.wiki.Main'
-}
-
 group = 'dev.roanh.wiki'
-if(project.hasProperty("releaseVersion")){
-	version = releaseVersion
-}else{
-	version = '1.x-SNAPSHOT'
-}
+version = project.hasProperty("releaseVersion") ? releaseVersion : 'SNAPSHOT'
 
 publishing{
 	publications{
 		nexus(MavenPublication){
 			from components.java
 			artifactId = 'wiki'
-		
+
 			pom{
 				name = project.eclipse.project.name
 				description = 'osu! wiki preview site'
@@ -97,18 +83,6 @@ publishing{
 					connection = 'scm:git:git@git.roanh.dev:roan/osuwikipreview.git'
 					developerConnection = 'scm:git:git@git.roanh.dev:roan/osuwikipreview.git'
 					url = 'https://git.roanh.dev/roan/osuwikipreview'
-				}
-			}
-		}
-	}
-
-	if(project.hasProperty("mavenPassword")){	
-		repositories{
-			maven{
-				url version.endsWith('SNAPSHOT') ? "$nexusSnapshots" : "$nexusReleases"
-				credentials{
-					username "$mavenUser"
-					password "$mavenPassword"
 				}
 			}
 		}

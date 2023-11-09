@@ -1,14 +1,14 @@
 image: eclipse-temurin:17
 
 variables:
-  NAME: "${CI_PROJECT_NAME}-${CI_PIPELINE_ID}-${CI_BUILD_REF_NAME}"
+  NAME: "${CI_PROJECT_NAME}-${CI_PIPELINE_ID}-${CI_COMMIT_REF_NAME}"
   PROJECTNAME: osuWikiPreview
 
 before_script:
   - java -version
-  - chmod -R 755 ./*
   - cd ${PROJECTNAME}
   - ls -l
+  - chmod -R 755 ./*
 
 stages:
   - check
@@ -30,14 +30,13 @@ spotbugs:
   allow_failure: true
   script:
     - ./gradlew -PnexusPublic=${NEXUS_PUBLIC} :spotbugsMain
-    - mv ./build/reports/spotbugs/main/spotbugs.html ../spotbugs.html
   stage: check
   artifacts:
     name: "SpotBugs Report"
     expire_in: 1 week
     when: always
     paths:
-      - spotbugs.html
+      - ${PROJECTNAME}/build/reports/spotbugs/main/spotbugs.html
 
 verify:
   allow_failure: true

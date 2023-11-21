@@ -43,6 +43,10 @@ public class OsuWeb{
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
 	/**
+	 * 
+	 */
+	private String currentNamespace = null;
+	/**
 	 * Ref currently checked out by this instance.
 	 */
 	private String currentRef = null;
@@ -58,19 +62,22 @@ public class OsuWeb{
 	
 	/**
 	 * Gets the ref currently checked out on this instance.
-	 * <p>
-	 * Format: <code>namespace/ref</code>
 	 * @return The current ref.
 	 */
 	public String getCurrentRef(){
 		return currentRef;
 	}
 	
+	public String getCurrentNamespace(){
+		return currentNamespace;
+	}
+	
 	/**
 	 * Sets the current ref for this instance.
 	 * @param ref The new reference.
 	 */
-	public void setCurrentRef(String ref){
+	public void setCurrentRef(String namespace, String ref){
+		currentNamespace = namespace;
 		currentRef = ref;
 	}
 	

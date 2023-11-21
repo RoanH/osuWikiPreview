@@ -40,7 +40,8 @@ public class RefreshCommand extends SwitchCommand{
 	@Override
 	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
 		String ref = web.getCurrentRef();
-		if(ref == null){
+		String namespace = web.getCurrentNamespace();
+		if(ref == null || namespace == null){
 			event.reply("No previous ref found.");
 		}else{
 			String[] parts = ref.split("/");

@@ -109,8 +109,7 @@ public class OsuWiki{
 	 * @throws Throwable When some exception occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
-		String full = name + "/" + ref;
-		instance.setCurrentRef(full);
+		instance.setCurrentRef(name, ref);
 		refs.add(ref);
 		
 		//update master copy

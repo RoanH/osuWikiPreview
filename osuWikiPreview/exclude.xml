@@ -12,11 +12,7 @@
   </Match>
   
   <Match>
-    <Or>
-      <Class name="dev.roanh.wiki.OsuWiki"/>
-      <Class name="dev.roanh.wiki.OsuWeb"/>
-      <Class name="dev.roanh.wiki.OsuWebDev"/>
-    </Or>
+    <Class name="dev.roanh.wiki.Main"/>
     <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
   </Match>
   

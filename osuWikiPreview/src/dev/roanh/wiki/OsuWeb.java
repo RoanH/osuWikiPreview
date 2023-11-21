@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,6 +43,10 @@ public class OsuWeb{
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
 	/**
+	 * Namespace for the currently checked out ref.
+	 */
+	private String currentNamespace = null;
+	/**
 	 * Ref currently checked out by this instance.
 	 */
 	private String currentRef = null;
@@ -59,19 +62,29 @@ public class OsuWeb{
 	
 	/**
 	 * Gets the ref currently checked out on this instance.
-	 * <p>
-	 * Format: <code>namespace/ref</code>
 	 * @return The current ref.
+	 * @see #getCurrentNamespace()
 	 */
 	public String getCurrentRef(){
 		return currentRef;
 	}
 	
 	/**
+	 * Gets the namespace for the ref currently checked out on this instance.
+	 * @return The current namespace.
+	 * @see #getCurrentRef()
+	 */
+	public String getCurrentNamespace(){
+		return currentNamespace;
+	}
+	
+	/**
 	 * Sets the current ref for this instance.
+	 * @param namespace The new namespace.
 	 * @param ref The new reference.
 	 */
-	public void setCurrentRef(String ref){
+	public void setCurrentRef(String namespace, String ref){
+		currentNamespace = namespace;
 		currentRef = ref;
 	}
 	
@@ -224,7 +237,7 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	private void runCommand(String cmd) throws InterruptedException, IOException{
-		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(new File("/home/roan/wiki/deploy")).inheritIO().start().waitFor()){
+		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
 			throw new IOException("Executed command returned a non-zero exit code.");
 		}
 	}

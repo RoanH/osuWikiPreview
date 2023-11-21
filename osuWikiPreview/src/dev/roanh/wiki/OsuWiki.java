@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -60,14 +59,6 @@ import ch.qos.logback.classic.Logger;
  */
 public class OsuWiki{
 	/**
-	 * Path to the osu! web wiki.
-	 */
-	private static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
-	/**
-	 * Path to the osu! web deploy key.
-	 */
-	private static final File AUTH_PATH = new File("/home/roan/wiki/auth");
-	/**
 	 * Wiki repository bound git instance.
 	 */
 	private static Git git;
@@ -90,7 +81,7 @@ public class OsuWiki{
 	 */
 	public static void init() throws IOException{
 		((Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
-		git = Git.open(WIKI_PATH);
+		git = Git.open(Main.WIKI_PATH);
 	}
 	
 	/**
@@ -118,8 +109,7 @@ public class OsuWiki{
 	 * @throws Throwable When some exception occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
-		String full = name + "/" + ref;
-		instance.setCurrentRef(full);
+		instance.setCurrentRef(name, ref);
 		refs.add(ref);
 		
 		//update master copy
@@ -162,27 +152,16 @@ public class OsuWiki{
 		Repository repo = git.getRepository();
 		try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
 			//attempt to find the merge base of both commits
-			RevCommit target = repo.parseCommit(to);
-			RevCommit source = repo.parseCommit(from);
+			rev.setRetainBody(false);
+			RevCommit target = rev.parseCommit(to);
+			RevCommit source = rev.parseCommit(from);
 			rev.markStart(source);
 			rev.markStart(target);
-			rev.setRetainBody(false);
 			rev.setRevFilter(RevFilter.MERGE_BASE);
 			
-			//the merge base is the commit where the branches diverged and always an ancestor of both commits
-			RevCommit base = rev.next();
-			for(RevCommit parent : source.getParents()){
-				if(parent.equals(base)){
-					//if the source commit is an ancestor of the target commit the source commit is closer
-					//in history to the target commit than the merge base which is a parent of the source commit
-					base = source;
-					break;
-				}
-			}
-
-			//base tree
+			//merge base tree
 			CanonicalTreeParser oldTree = new CanonicalTreeParser();
-			oldTree.reset(reader, base.getTree());
+			oldTree.reset(reader, rev.next().getTree());
 			
 			//current head tree
 			CanonicalTreeParser newTree = new CanonicalTreeParser();
@@ -260,7 +239,7 @@ public class OsuWiki{
 	}
 
 	static{
-		SshdSessionFactory sshSessionFactory = new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(AUTH_PATH).setSshDirectory(AUTH_PATH).build(null);
+		SshdSessionFactory sshSessionFactory = new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(Main.AUTH_PATH).setSshDirectory(Main.AUTH_PATH).build(null);
 		transport = new TransportConfigCallback(){
 			@Override
 			public void configure(Transport transport){

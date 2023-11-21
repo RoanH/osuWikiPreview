@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -224,7 +223,7 @@ public class OsuWeb{
 	 * @throws IOException When an IOException occurs.
 	 */
 	private void runCommand(String cmd) throws InterruptedException, IOException{
-		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(new File("/home/roan/wiki/deploy")).inheritIO().start().waitFor()){
+		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
 			throw new IOException("Executed command returned a non-zero exit code.");
 		}
 	}

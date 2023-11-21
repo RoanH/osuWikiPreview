@@ -19,6 +19,7 @@
  */
 package dev.roanh.wiki;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -39,6 +40,18 @@ import dev.roanh.wiki.cmd.SwitchCommand;
  * @author Roan
  */
 public class Main{
+	/**
+	 * Path to the osu! web wiki.
+	 */
+	public static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
+	/**
+	 * Path to the osu! web deploy key.
+	 */
+	public static final File AUTH_PATH = new File("/home/roan/wiki/auth");
+	/**
+	 * Path to the osu! web deploy instance root.
+	 */
+	public static final File DEPLOY_PATH = new File("/home/roan/wiki/deploy");
 	/**
 	 * Root domain for all instances.
 	 */

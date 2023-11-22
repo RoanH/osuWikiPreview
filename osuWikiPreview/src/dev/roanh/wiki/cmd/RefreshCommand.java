@@ -23,6 +23,7 @@ import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
+import dev.roanh.wiki.WebState;
 
 /**
  * Command to refresh a preview with new commits.
@@ -39,13 +40,11 @@ public class RefreshCommand extends SwitchCommand{
 
 	@Override
 	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
-		String ref = web.getCurrentRef();
-		String namespace = web.getCurrentNamespace();
-		if(ref == null || namespace == null){
+		WebState state = web.getCurrentState();
+		if(state == null){
 			event.reply("No previous ref found.");
 		}else{
-			String[] parts = ref.split("/");
-			switchBranch(event, parts[1], parts[0], web, args);
+			switchBranch(event, state, web, args);
 		}
 	}
 }

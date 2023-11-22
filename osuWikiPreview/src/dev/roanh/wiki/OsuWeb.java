@@ -43,13 +43,9 @@ public class OsuWeb{
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
 	/**
-	 * Namespace for the currently checked out ref.
+	 * Current state for this web instance.
 	 */
-	private String currentNamespace = null;
-	/**
-	 * Ref currently checked out by this instance.
-	 */
-	private String currentRef = null;
+	private WebState currentState = null;
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
@@ -61,41 +57,22 @@ public class OsuWeb{
 	}
 	
 	/**
-	 * Gets the ref currently checked out on this instance.
-	 * @return The current ref.
-	 * @see #getCurrentNamespace()
+	 * Gets the current state of this web instance.
+	 * @return The current state or null if nothing was
+	 *         changed on this web instance yet.
+	 * @see WebState
 	 */
-	public String getCurrentRef(){
-		return currentRef;
+	public WebState getCurrentState(){
+		return currentState;
 	}
 	
 	/**
-	 * Gets the namespace for the ref currently checked out on this instance.
-	 * @return The current namespace.
-	 * @see #getCurrentRef()
+	 * Sets the current state for this instance.
+	 * @param state The new state.
+	 * @see WebState
 	 */
-	public String getCurrentNamespace(){
-		return currentNamespace;
-	}
-	
-	/**
-	 * Sets the current ref for this instance.
-	 * @param namespace The new namespace.
-	 * @param ref The new reference.
-	 */
-	public void setCurrentRef(String namespace, String ref){
-		currentNamespace = namespace;
-		currentRef = ref;
-	}
-	
-	/**
-	 * Checks if switching this instance to checkout the given
-	 * ref would be a fast-forward operation.
-	 * @param targetRef The target ref.
-	 * @return True if checking out the target ref would be a fast-forward.
-	 */
-	public boolean isFastFoward(String targetRef){
-		return targetRef.equals(currentRef);
+	public void setCurrentState(WebState state){
+		currentState = state;
 	}
 	
 	/**

@@ -109,7 +109,6 @@ public class OsuWiki{
 	 * @throws Throwable When some exception occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
-		instance.setCurrentRef(name, ref);
 		refs.add(ref);
 		
 		//update master copy
@@ -236,6 +235,14 @@ public class OsuWiki{
 	 * @see OsuWiki#switchBranch(String, String, OsuWeb)
 	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head){
+		
+		/**
+		 * Tests if there are news post items in this diff.
+		 * @return True if this diff contains news posts.
+		 */
+		public boolean hasNews(){
+			return diff.stream().map(DiffEntry::getNewPath).anyMatch(p->p.startsWith("news/"));
+		}
 	}
 
 	static{

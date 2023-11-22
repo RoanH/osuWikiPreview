@@ -39,6 +39,7 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
+import dev.roanh.wiki.WebState;
 
 /**
  * Command to switch the active preview branch.
@@ -53,6 +54,7 @@ public class SwitchCommand extends WebCommand{
 		this("switch", "Switch the preview site to a different branch.", Main.PERMISSION, true);
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
 		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
+		addOptionOptionalBoolean("redate", "Redate future news to the current date (defaults to true).");
 	}
 	
 	/**
@@ -82,25 +84,31 @@ public class SwitchCommand extends WebCommand{
 			}
 		}
 
-		switchBranch(event, ref, name, web, args);
+		switchBranch(event, new WebState(ref, name, args.mapToBoolean("redate").orElse(true)), web, args);
 	}
 	
 	/**
 	 * Switches the active preview branch.
 	 * @param event The command event.
-	 * @param ref The ref to switch to.
-	 * @param name The namespace the ref to switch to is under.
+	 * @param state The state to switch to on the given web instance.
 	 * @param web The osu! web instance to update.
 	 * @param args The passed command arguments.
 	 */
-	protected void switchBranch(CommandEvent event, String ref, String name, OsuWeb web, CommandMap args){
+	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args){
 		try{
-			SwitchResult diff = OsuWiki.switchBranch(name, ref, web);
+			SwitchResult diff = OsuWiki.switchBranch(state.namespace(), state.ref(), web);
+			web.setCurrentState(state);
+			
+			String footer = "HEAD: " + diff.head();
+			if(state.redate() && diff.hasNews()){
+				web.redateNews();
+				footer += " (with redate)";
+			}
 			
 			EmbedBuilder embed = new EmbedBuilder();
 			embed.setColor(new Color(255, 142, 230));
-			embed.setAuthor("Ref: " + name + "/" + ref, "https://github.com/" + name + "/osu-wiki/tree/" + ref, null);
-			embed.setFooter("HEAD: " + diff.head());
+			embed.setAuthor("Ref: " + state.namespace() + "/" + state.ref(), state.getGitHubTree(), null);
+			embed.setFooter(footer);
 
 			StringBuilder desc = embed.getDescriptionBuilder();
 			for(DiffEntry item : diff.diff()){

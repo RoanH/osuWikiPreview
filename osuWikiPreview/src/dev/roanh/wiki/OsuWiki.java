@@ -27,25 +27,14 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
-import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.TransportConfigCallback;
-import org.eclipse.jgit.api.errors.CheckoutConflictException;
-import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidMergeHeadsException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.api.errors.NoMessageException;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -118,9 +107,11 @@ public class OsuWiki{
 	 * Switch the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
 	 * @param ref The reference to switch to.
+	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
 	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
+	 * @throws MergeConflictException If a merge with master is requested but a conflict occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws Throwable, MergeConflictException{
 		refs.add(ref);
@@ -265,7 +256,7 @@ public class OsuWiki{
 	 * @author Roan
 	 * @param diff A diff with all changed files.
 	 * @param head The new head commit hash.
-	 * @see OsuWiki#switchBranch(String, String, OsuWeb)
+	 * @see OsuWiki#switchBranch(String, String, boolean, OsuWeb)
 	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head){
 		

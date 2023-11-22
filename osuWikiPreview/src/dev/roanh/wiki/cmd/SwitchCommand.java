@@ -143,7 +143,7 @@ public class SwitchCommand extends WebCommand{
 				event.internalError();
 			}
 		}catch(MergeConflictException ignore){
-			
+			event.reply("Failed to merge with ppy/master due to a merge conflict.");
 		}catch(Throwable e){
 			event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 			event.internalError();

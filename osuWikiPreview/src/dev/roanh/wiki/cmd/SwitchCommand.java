@@ -86,7 +86,7 @@ public class SwitchCommand extends WebCommand{
 			}
 		}
 
-		switchBranch(event, new WebState(ref, name, args.mapToBoolean("redate").orElse(true)), web, args);
+		switchBranch(event, new WebState(ref, name, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false)), web, args);
 	}
 	
 	/**
@@ -98,13 +98,15 @@ public class SwitchCommand extends WebCommand{
 	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args){
 		try{
-			SwitchResult diff = OsuWiki.switchBranch(state.namespace(), state.ref(), false, web);
+			SwitchResult diff = OsuWiki.switchBranch(state.namespace(), state.ref(), state.master(), web);
 			web.setCurrentState(state);
 			
 			String footer = "HEAD: " + diff.head();
 			if(state.redate() && diff.hasNews()){
 				web.redateNews();
-				footer += " (with redate)";
+				footer += state.master() ? " (with redate & master)" : " (with redate)";
+			}else if(state.master()){
+				footer += " (with master)";
 			}
 			
 			EmbedBuilder embed = new EmbedBuilder();

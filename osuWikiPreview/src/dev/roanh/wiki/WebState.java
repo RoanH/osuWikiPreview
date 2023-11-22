@@ -29,7 +29,7 @@ package dev.roanh.wiki;
  * @param ref The reference (branch/sha/tag) that is currently checked out.
  * @param redate Whether news posts were redated.
  */
-public record WebState(String namespace, String ref, boolean redate){
+public record WebState(String namespace, String ref, boolean redate, boolean master){
 
 	/**
 	 * Gets the link to the GitHub tree associated with this state.
@@ -44,6 +44,10 @@ public record WebState(String namespace, String ref, boolean redate){
 	 * @return A copy of this web state with the redate flag set to true.
 	 */
 	public WebState withRedate(){
-		return new WebState(namespace, ref, true);
+		return new WebState(namespace, ref, true, master);
+	}
+	
+	public WebState withMaster(){
+		return new WebState(namespace, ref, redate, true);
 	}
 }

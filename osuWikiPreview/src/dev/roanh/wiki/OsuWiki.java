@@ -27,17 +27,30 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeCommand;
+import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
+import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
+import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidMergeHeadsException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.api.errors.NoMessageException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.merge.ContentMergeStrategy;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
@@ -82,6 +95,7 @@ public class OsuWiki{
 	public static void init() throws IOException{
 		((Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
 		git = Git.open(Main.WIKI_PATH);
+		git.getRepository().getConfig().setBoolean("commit", null, "gpgsign", false);
 	}
 	
 	/**
@@ -108,19 +122,23 @@ public class OsuWiki{
 	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
+	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws Throwable, MergeConflictException{
 		refs.add(ref);
 		
 		//update master copy
-		forceFetch("ppy");
-		reset("ppy", "master");
-		forcePush("master");
-		ObjectId from = git.getRepository().resolve("origin/master");
+		ObjectId from = updateMaster();
 
 		//reset to the new branch
 		findRemote(name);
 		forceFetch(name);
 		reset(name, ref);
+		
+		//merge changes from master if requested
+		if(mergeMaster){
+			mergeMaster(from);
+		}
+		
+		//push the new state to the remote
 		forcePush("wikisync-" + instance.getID());
 		
 		//update the website wiki
@@ -128,13 +146,15 @@ public class OsuWiki{
 		instance.runWikiUpdate("master", "wikisync-" + instance.getID());
 		
 		//compute the diff
-		List<DiffEntry> diff = computeDiff(from, to);
+		SwitchResult diff = new SwitchResult(computeDiff(from, to), to.getName());
 		
 		//update the website news
-		instance.runNewsUpdate(diff);
+		if(diff.hasNews()){
+			instance.runNewsUpdate(diff.diff());
+		}
 		
 		//return the diff
-		return new SwitchResult(diff, to.getName());
+		return diff;
 	}
 	
 	/**
@@ -170,6 +190,19 @@ public class OsuWiki{
 				return item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md");
 			}).toList();
 		}
+	}
+	
+	private static void mergeMaster(ObjectId master) throws Throwable, MergeConflictException{
+		if(!git.merge().include(master).setCommit(true).setMessage("Merge ppy/master").setFastForward(FastForwardMode.NO_FF).setContentMergeStrategy(ContentMergeStrategy.CONFLICT).call().getMergeStatus().isSuccessful()){
+			throw new MergeConflictException();
+		}
+	}
+	
+	private static ObjectId updateMaster() throws Throwable{
+		forceFetch("ppy");
+		reset("ppy", "master");
+		forcePush("master");
+		return git.getRepository().resolve("origin/master");
 	}
 	
 	/**
@@ -243,6 +276,17 @@ public class OsuWiki{
 		public boolean hasNews(){
 			return diff.stream().map(DiffEntry::getNewPath).anyMatch(p->p.startsWith("news/"));
 		}
+	}
+	
+	/**
+	 * Exception thrown when a merge fails due to a conflict.
+	 * @author Roan
+	 */
+	public static final class MergeConflictException extends Exception{
+		/**
+		 * Serial ID.
+		 */
+		private static final long serialVersionUID = -2500908624137527567L;
 	}
 
 	static{

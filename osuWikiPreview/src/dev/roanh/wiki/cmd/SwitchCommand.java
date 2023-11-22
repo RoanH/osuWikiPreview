@@ -38,6 +38,7 @@ import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
+import dev.roanh.wiki.OsuWiki.MergeConflictException;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
 import dev.roanh.wiki.WebState;
 
@@ -55,6 +56,7 @@ public class SwitchCommand extends WebCommand{
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
 		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 		addOptionOptionalBoolean("redate", "Redate future news to the current date (defaults to true).");
+		addOptionOptionalBoolean("master", "If true ppy/master will be merged into the given target ref (defaults to false).");
 	}
 	
 	/**
@@ -96,7 +98,7 @@ public class SwitchCommand extends WebCommand{
 	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args){
 		try{
-			SwitchResult diff = OsuWiki.switchBranch(state.namespace(), state.ref(), web);
+			SwitchResult diff = OsuWiki.switchBranch(state.namespace(), state.ref(), false, web);
 			web.setCurrentState(state);
 			
 			String footer = "HEAD: " + diff.head();
@@ -138,6 +140,8 @@ public class SwitchCommand extends WebCommand{
 				event.logError(ignore, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();
 			}
+		}catch(MergeConflictException ignore){
+			
 		}catch(Throwable e){
 			event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 			event.internalError();

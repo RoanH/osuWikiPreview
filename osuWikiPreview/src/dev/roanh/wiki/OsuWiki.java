@@ -183,12 +183,23 @@ public class OsuWiki{
 		}
 	}
 	
+	/**
+	 * Merges the local copy of ppy/master into the currently checked out branch.
+	 * @param master A reference to the head of the current master branch.
+	 * @throws Throwable When some exception occurs.
+	 * @throws MergeConflictException When the merge fails due to a merge conflict.
+	 */
 	private static void mergeMaster(ObjectId master) throws Throwable, MergeConflictException{
 		if(!git.merge().include(master).setCommit(true).setMessage("Merge ppy/master").setFastForward(FastForwardMode.NO_FF).setContentMergeStrategy(ContentMergeStrategy.CONFLICT).call().getMergeStatus().isSuccessful()){
 			throw new MergeConflictException();
 		}
 	}
 	
+	/**
+	 * Updates the local and remote copy of ppy/master with the latest changes.
+	 * @return A reference to the current head of the master branch.
+	 * @throws Throwable When some exception occurs.
+	 */
 	private static ObjectId updateMaster() throws Throwable{
 		forceFetch("ppy");
 		reset("ppy", "master");

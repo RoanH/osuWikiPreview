@@ -43,7 +43,7 @@ public class Main{
 	/**
 	 * Path to the osu! web wiki.
 	 */
-	public static final File WIKI_PATH = new File("C:\\Users\\RoanH\\Downloads\\osu-wiki");
+	public static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
 	/**
 	 * Path to the osu! web deploy key.
 	 */

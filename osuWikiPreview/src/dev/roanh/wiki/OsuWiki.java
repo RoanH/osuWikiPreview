@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -38,6 +39,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.merge.ContentMergeStrategy;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
@@ -82,6 +84,7 @@ public class OsuWiki{
 	public static void init() throws IOException{
 		((Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
 		git = Git.open(Main.WIKI_PATH);
+		git.getRepository().getConfig().setBoolean("commit", null, "gpgsign", false);
 	}
 	
 	/**
@@ -104,23 +107,29 @@ public class OsuWiki{
 	 * Switch the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
 	 * @param ref The reference to switch to.
+	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
 	 * @return A record with change information about the switch.
 	 * @throws Throwable When some exception occurs.
+	 * @throws MergeConflictException If a merge with master is requested but a conflict occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref, OsuWeb instance) throws Throwable{
+	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws Throwable, MergeConflictException{
 		refs.add(ref);
 		
 		//update master copy
-		forceFetch("ppy");
-		reset("ppy", "master");
-		forcePush("master");
-		ObjectId from = git.getRepository().resolve("origin/master");
+		ObjectId from = updateMaster();
 
 		//reset to the new branch
 		findRemote(name);
 		forceFetch(name);
 		reset(name, ref);
+		
+		//merge changes from master if requested
+		if(mergeMaster){
+			mergeMaster(from);
+		}
+		
+		//push the new state to the remote
 		forcePush("wikisync-" + instance.getID());
 		
 		//update the website wiki
@@ -128,13 +137,15 @@ public class OsuWiki{
 		instance.runWikiUpdate("master", "wikisync-" + instance.getID());
 		
 		//compute the diff
-		List<DiffEntry> diff = computeDiff(from, to);
+		SwitchResult diff = new SwitchResult(computeDiff(from, to), to.getName());
 		
 		//update the website news
-		instance.runNewsUpdate(diff);
+		if(diff.hasNews()){
+			instance.runNewsUpdate(diff.diff());
+		}
 		
 		//return the diff
-		return new SwitchResult(diff, to.getName());
+		return diff;
 	}
 	
 	/**
@@ -170,6 +181,30 @@ public class OsuWiki{
 				return item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md");
 			}).toList();
 		}
+	}
+	
+	/**
+	 * Merges the local copy of ppy/master into the currently checked out branch.
+	 * @param master A reference to the head of the current master branch.
+	 * @throws Throwable When some exception occurs.
+	 * @throws MergeConflictException When the merge fails due to a merge conflict.
+	 */
+	private static void mergeMaster(ObjectId master) throws Throwable, MergeConflictException{
+		if(!git.merge().include(master).setCommit(true).setMessage("Merge ppy/master").setFastForward(FastForwardMode.NO_FF).setContentMergeStrategy(ContentMergeStrategy.CONFLICT).call().getMergeStatus().isSuccessful()){
+			throw new MergeConflictException();
+		}
+	}
+	
+	/**
+	 * Updates the local and remote copy of ppy/master with the latest changes.
+	 * @return A reference to the current head of the master branch.
+	 * @throws Throwable When some exception occurs.
+	 */
+	private static ObjectId updateMaster() throws Throwable{
+		forceFetch("ppy");
+		reset("ppy", "master");
+		forcePush("master");
+		return git.getRepository().resolve("origin/master");
 	}
 	
 	/**
@@ -232,7 +267,7 @@ public class OsuWiki{
 	 * @author Roan
 	 * @param diff A diff with all changed files.
 	 * @param head The new head commit hash.
-	 * @see OsuWiki#switchBranch(String, String, OsuWeb)
+	 * @see OsuWiki#switchBranch(String, String, boolean, OsuWeb)
 	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head){
 		
@@ -243,6 +278,17 @@ public class OsuWiki{
 		public boolean hasNews(){
 			return diff.stream().map(DiffEntry::getNewPath).anyMatch(p->p.startsWith("news/"));
 		}
+	}
+	
+	/**
+	 * Exception thrown when a merge fails due to a conflict.
+	 * @author Roan
+	 */
+	public static final class MergeConflictException extends Exception{
+		/**
+		 * Serial ID.
+		 */
+		private static final long serialVersionUID = -2500908624137527567L;
 	}
 
 	static{

@@ -27,6 +27,7 @@ import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
+import dev.roanh.wiki.WebState;
 
 /**
  * Command to redate news in the news posts database to the current date time.
@@ -45,6 +46,11 @@ public class RedateCommand extends WebCommand{
 	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			web.redateNews();
+			WebState state = web.getCurrentState();
+			if(state != null){
+				web.setCurrentState(state.withRedate());
+			}
+			
 			event.reply("News posts redated succesfully.");
 		}catch(IOException | InterruptedException e){
 			event.logError(e, "[RedateCommand] Failed to redate news", Severity.MINOR, Priority.MEDIUM);

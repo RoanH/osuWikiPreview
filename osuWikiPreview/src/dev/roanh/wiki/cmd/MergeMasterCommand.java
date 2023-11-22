@@ -32,7 +32,7 @@ import dev.roanh.wiki.WebState;
 public class MergeMasterCommand extends SwitchCommand{
 
 	/**
-	 * Constructs a new refresh command command.
+	 * Constructs a new merge command command.
 	 */
 	public MergeMasterCommand(){
 		super("mergemaster", "Merges ppy/master into the currently checked out branch.", Main.PERMISSION, true);

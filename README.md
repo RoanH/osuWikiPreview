@@ -1,7 +1,10 @@
 # osu! Wiki Preview
 Program to manage osu! wiki instance(s) to show a preview of news posts and wiki articles.
 
-Preview site: https://osu.roanh.dev/home
+Preview sites:
+- https://osu1.roanh.dev/home
+- https://osu2.roanh.dev/home
+- https://osu3.roanh.dev/home
 
 ## History
 Project development started (news only version): 6th of March, 2023.    

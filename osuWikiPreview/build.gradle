@@ -1,16 +1,14 @@
 plugins{
+	id 'eclipse'
 	id 'java'
 	id 'application'
 	id 'maven-publish'
-	id 'eclipse'
 	id 'com.github.johnrengelman.shadow' version '7.1.2'
 	id 'com.github.spotbugs' version '5.0.14'
 }
 
 sourceSets{
-	main{
-		java.srcDirs = ['src']
-	}
+	main.java.srcDirs = ['src']
 }
 
 dependencies{
@@ -29,21 +27,29 @@ repositories{
 	}
 }
 
+version = findProperty("refName") ?: 'SNAPSHOT'
+if(version.matches("v\\d+\\.\\d+")){
+	version = version.substring(1)
+}
+
 eclipse.classpath.downloadSources = true
 eclipse.classpath.downloadJavadoc = true
 compileJava.options.encoding = 'UTF-8'
 sourceCompatibility = 1.17
 javadoc.options.memberLevel = JavadocMemberLevel.PRIVATE
+group = 'dev.roanh.wiki'
+ext.artifact = 'wiki'
+shadowJar.archiveName = 'osuWikiPreview-v' + version + '.jar'
 application.mainClassName = 'dev.roanh.wiki.Main'
 
 spotbugs{
 	showProgress = true
 	effort = 'max'
 	reportLevel = 'low'
-	excludeFilter = file("exclude.xml")
+	excludeFilter = file("$rootDir/exclude.xml")
 }
 
-spotbugsMain{
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask){
 	reports{
 		html{
 			required = true
@@ -53,14 +59,11 @@ spotbugsMain{
 	}
 }
 
-group = 'dev.roanh.wiki'
-version = project.hasProperty("releaseVersion") ? releaseVersion : 'SNAPSHOT'
-
 publishing{
 	publications{
-		nexus(MavenPublication){
+		mavenJava(MavenPublication){
 			from components.java
-			artifactId = 'wiki'
+			artifactId = project.artifact
 
 			pom{
 				name = project.eclipse.project.name
@@ -90,9 +93,9 @@ publishing{
 }
 
 shadowJar{
-	into("META-INF/maven/$project.group/$project.publishing.publications.nexus.artifactId"){
+	into("META-INF/maven/$project.group/$project.artifact"){
 		from{
-			generatePomFileForNexusPublication
+			generatePomFileForMavenJavaPublication
 		}
 		rename ".*", "pom.xml"
 	}

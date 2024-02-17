@@ -134,7 +134,7 @@ public class OsuWeb{
 		runArtisan("NewsPost::syncAll()");
 		
 		for(DiffEntry file : diff){
-			clearNewsPost(file);
+			fixLinks(file);
 		}
 	}
 	

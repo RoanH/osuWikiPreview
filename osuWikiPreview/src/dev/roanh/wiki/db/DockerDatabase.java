@@ -57,8 +57,7 @@ public class DockerDatabase implements Database{
 			throw new IllegalArgumentException("Unsafe param: " + param);
 		}
 		
-		query.replace("?", "'" + param + "'");
-		runQuery(query);
+		runQuery(query.replace("?", "'" + param + "'"));
 	}
 
 	@Override

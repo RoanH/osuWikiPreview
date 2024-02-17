@@ -42,6 +42,9 @@ public class OsuWeb{
 	 * Numerical ID of this instance to identify associated docker containers.
 	 */
 	private final int id;
+	/**
+	 * The connection to the database.
+	 */
 	private final Database database;
 	/**
 	 * Lock to present simultaneous command runs.

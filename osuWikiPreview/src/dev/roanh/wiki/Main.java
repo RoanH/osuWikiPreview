@@ -25,6 +25,7 @@ import java.util.Map;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
@@ -90,7 +91,7 @@ public class Main{
 		for(OsuWeb site : INSTANCES.values()){
 			try{
 				site.start();
-			}catch(InterruptedException | IOException e){
+			}catch(InterruptedException | IOException | DBException e){
 				client.logError(e, "[Main] Failed to start site with ID " + site.getID(), Severity.MINOR, Priority.MEDIUM);
 			}
 		}

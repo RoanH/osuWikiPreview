@@ -21,6 +21,7 @@ package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
 
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
@@ -47,7 +48,7 @@ public class RestartCommand extends WebCommand{
 			web.stop();
 			web.start();
 			event.reply("osu! web instance succesfully restarted.");
-		}catch(IOException | InterruptedException e){
+		}catch(IOException | InterruptedException | DBException e){
 			event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
 			event.internalError();
 		}

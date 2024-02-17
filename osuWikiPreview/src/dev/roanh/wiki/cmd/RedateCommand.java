@@ -19,8 +19,7 @@
  */
 package dev.roanh.wiki.cmd;
 
-import java.io.IOException;
-
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
@@ -52,7 +51,7 @@ public class RedateCommand extends WebCommand{
 			}
 			
 			event.reply("News posts redated succesfully.");
-		}catch(IOException | InterruptedException e){
+		}catch(DBException e){
 			event.logError(e, "[RedateCommand] Failed to redate news", Severity.MINOR, Priority.MEDIUM);
 			event.internalError();
 		}

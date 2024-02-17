@@ -19,8 +19,7 @@
  */
 package dev.roanh.wiki.cmd;
 
-import java.io.IOException;
-
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
@@ -46,7 +45,7 @@ public class ClearNewsCommand extends WebCommand{
 		try{
 			web.clearNewsDatabase();
 			event.reply("osu! web news database cleared succesfully.");
-		}catch(IOException | InterruptedException e){
+		}catch(DBException e){
 			event.logError(e, "[ClearNewsCommand] Failed to clear news database", Severity.MINOR, Priority.MEDIUM);
 			event.internalError();
 		}

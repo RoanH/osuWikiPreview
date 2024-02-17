@@ -129,6 +129,23 @@ public class OsuWeb{
 		}
 
 		runArtisan("NewsPost::syncAll()");
+		
+		for(DiffEntry file : diff){
+			clearNewsPost(file);
+		}
+	}
+	
+	/**
+	 * Fixes some links in news articles. Currently only updates the parent
+	 * for twitch embed links.
+	 * @param news The news post to update.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public void fixLinks(DiffEntry news) throws DBException{
+		String path = news.getNewPath();
+		if(path.startsWith("news/")){
+			database.runQuery("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=osu" + id + ".roanh.dev\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
+		}
 	}
 	
 	/**

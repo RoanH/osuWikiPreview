@@ -17,40 +17,41 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki.cmd;
+package dev.roanh.wiki.db;
 
-import java.io.IOException;
-
+import dev.roanh.infinity.config.Configuration;
+import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.isla.command.slash.CommandEvent;
-import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.isla.reporting.Priority;
-import dev.roanh.isla.reporting.Severity;
+import dev.roanh.infinity.db.concurrent.DBExecutorService;
+import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.Main;
-import dev.roanh.wiki.OsuWeb;
 
-/**
- * Command to restart the entire osu! web instance.
- * @author Roan
- */
-public class RestartCommand extends WebCommand{
-
-	/**
-	 * Constructs a new restart command.
-	 */
-	public RestartCommand(){
-		super("restart", "Restarts the entire osu! web instance.", Main.PERMISSION, true);
+public class RemoteDatabase implements Database{
+	private final int id;
+	private DBExecutorService executor;
+	
+	public RemoteDatabase(int id){
+		this.id = id;
+	}
+	
+	@Override
+	public void init() throws DBException{
+		Configuration config = Main.client.getConfig();
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + id, "osuweb", config.readString("db-pass")), "wiki");
 	}
 
 	@Override
-	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
-		try{
-			web.stop();
-			web.start();
-			event.reply("osu! web instance succesfully restarted.");
-		}catch(IOException | InterruptedException | DBException e){
-			event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
-			event.internalError();
-		}
+	public void runQuery(String query) throws DBException{
+		executor.update(query);
+	}
+
+	@Override
+	public void runQuery(String query, String param) throws DBException{
+		executor.update(query, param);
+	}
+	
+	@Override
+	public void shutdown() throws DBException{
+		executor.shutdown();
 	}
 }

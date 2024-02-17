@@ -25,6 +25,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
+import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.wiki.db.Database;
+import dev.roanh.wiki.db.RemoteDatabase;
+
 /**
  * Main controller for an osu! web instance.
  * @author Roan
@@ -38,6 +42,7 @@ public class OsuWeb{
 	 * Numerical ID of this instance to identify associated docker containers.
 	 */
 	private final int id;
+	private final Database database;
 	/**
 	 * Lock to present simultaneous command runs.
 	 */
@@ -54,6 +59,7 @@ public class OsuWeb{
 	public OsuWeb(int id){
 		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
 		this.id = id;
+		database = new RemoteDatabase(id);
 	}
 	
 	/**
@@ -115,8 +121,9 @@ public class OsuWeb{
 	 * @param diff A diff indicating repository files that were changed.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public void runNewsUpdate(List<DiffEntry> diff) throws InterruptedException, IOException{
+	public void runNewsUpdate(List<DiffEntry> diff) throws InterruptedException, IOException, DBException{
 		for(DiffEntry file : diff){
 			clearNewsPost(file);
 		}
@@ -126,35 +133,29 @@ public class OsuWeb{
 	
 	/**
 	 * Sets the published date for all future news posts to the current date.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public void redateNews() throws InterruptedException, IOException{
-		runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
+	public void redateNews() throws DBException{
+		database.runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
 	}
 	
 	/**
 	 * Clear all data in the news posts database.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public void clearNewsDatabase() throws InterruptedException, IOException{
-		runQuery("DELETE FROM news_posts");
+	public void clearNewsDatabase() throws DBException{
+		database.runQuery("DELETE FROM news_posts");
 	}
 	
 	/**
 	 * Clears all data for the given news post from the database.
 	 * @param news The news post to remove.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public void clearNewsPost(DiffEntry news) throws InterruptedException, IOException{
+	public void clearNewsPost(DiffEntry news) throws DBException{
 		String path = news.getNewPath();
 		if(path.startsWith("news/")){
-			String slug = path.substring(path.lastIndexOf('/') + 1, path.length() - 3);
-			if(slug.matches("[-0-9a-zA-Z]+")){
-				runQuery("DELETE FROM news_posts WHERE slug = '" + slug + "'");
-			}
+			database.runQuery("DELETE FROM news_posts WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
 		}
 	}
 		
@@ -173,18 +174,22 @@ public class OsuWeb{
 	 * Starts the osu! web instance.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public void start() throws InterruptedException, IOException{
-		runCommand("docker start osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+	public void start() throws InterruptedException, IOException, DBException{
+		database.init();
+		runCommand("docker start osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
 	}
 	
 	/**
 	 * Stops the osu! web instance.
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public void stop() throws InterruptedException, IOException{
-		runCommand("docker stop osu-web-mysql-" + id + " osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+	public void stop() throws InterruptedException, IOException, DBException{
+		runCommand("docker stop osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+		database.shutdown();
 	}
 	
 	/**
@@ -193,18 +198,8 @@ public class OsuWeb{
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
-	protected void runArtisan(String cmd) throws InterruptedException, IOException{
+	public void runArtisan(String cmd) throws InterruptedException, IOException{
 		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
-	}
-	
-	/**
-	 * Runs the given SQL query on the database for this instance.
-	 * @param query The query to execute.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
-	 */
-	protected void runQuery(String query) throws InterruptedException, IOException{
-		runCommand("docker exec -it osu-web-mysql-" + id + " mysql osu -e \"" + query + ";\"");
 	}
 	
 	/**
@@ -213,7 +208,7 @@ public class OsuWeb{
 	 * @throws InterruptedException When the thread was interrupted.
 	 * @throws IOException When an IOException occurs.
 	 */
-	private void runCommand(String cmd) throws InterruptedException, IOException{
+	public void runCommand(String cmd) throws InterruptedException, IOException{
 		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
 			throw new IOException("Executed command returned a non-zero exit code.");
 		}

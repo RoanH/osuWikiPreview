@@ -17,40 +17,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki.cmd;
-
-import java.io.IOException;
+package dev.roanh.wiki.db;
 
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.isla.command.slash.CommandEvent;
-import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.isla.reporting.Priority;
-import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.Main;
-import dev.roanh.wiki.OsuWeb;
 
-/**
- * Command to restart the entire osu! web instance.
- * @author Roan
- */
-public class RestartCommand extends WebCommand{
-
+public abstract interface Database{
+	
+	public abstract void init() throws DBException;
+	
+	public abstract void shutdown() throws DBException;
+	
+	
 	/**
-	 * Constructs a new restart command.
+	 * Runs the given SQL query on the database for this instance.
+	 * @param query The query to execute.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public RestartCommand(){
-		super("restart", "Restarts the entire osu! web instance.", Main.PERMISSION, true);
-	}
-
-	@Override
-	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
-		try{
-			web.stop();
-			web.start();
-			event.reply("osu! web instance succesfully restarted.");
-		}catch(IOException | InterruptedException | DBException e){
-			event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
-			event.internalError();
-		}
-	}
+	public abstract void runQuery(String query) throws DBException;
+	
+	/**
+	 * Runs the given SQL query on the database for this instance.
+	 * The query is allowed to have a single string parameter.
+	 * @param query The query to execute.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public abstract void runQuery(String query, String param) throws DBException;
 }

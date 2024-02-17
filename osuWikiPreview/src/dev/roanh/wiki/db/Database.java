@@ -21,12 +21,23 @@ package dev.roanh.wiki.db;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 
+/**
+ * Database connection implementation for osu! web.
+ * @author Roan
+ */
 public abstract interface Database{
 	
+	/**
+	 * Initialises the connection with the database.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public abstract void init() throws DBException;
 	
+	/**
+	 * Closes the connection with the database.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public abstract void shutdown() throws DBException;
-	
 	
 	/**
 	 * Runs the given SQL query on the database for this instance.
@@ -39,6 +50,7 @@ public abstract interface Database{
 	 * Runs the given SQL query on the database for this instance.
 	 * The query is allowed to have a single string parameter.
 	 * @param query The query to execute.
+	 * @param param The query string parameter.
 	 * @throws DBException When a database exception occurs.
 	 */
 	public abstract void runQuery(String query, String param) throws DBException;

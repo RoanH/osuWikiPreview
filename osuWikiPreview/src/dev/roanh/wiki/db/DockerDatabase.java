@@ -24,9 +24,20 @@ import java.io.IOException;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.OsuWeb;
 
+/**
+ * Local docker image MySQL instance connection.
+ * @author Roan
+ */
 public class DockerDatabase implements Database{
+	/**
+	 * The osu! web instance.
+	 */
 	private final OsuWeb web;
 	
+	/**
+	 * Constructs a new docker image database with the given web instance.
+	 * @param web The associated osu! web instance.
+	 */
 	public DockerDatabase(OsuWeb web){
 		this.web = web;
 	}

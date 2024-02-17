@@ -26,10 +26,24 @@ import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.Main;
 
+/**
+ * Remote hosted MySQL instance connection.
+ * @author Roan
+ */
 public class RemoteDatabase implements Database{
+	/**
+	 * The instance ID.
+	 */
 	private final int id;
+	/**
+	 * The database connection.
+	 */
 	private DBExecutorService executor;
 	
+	/**
+	 * Constructs a new remote database.
+	 * @param id The preview instance ID.
+	 */
 	public RemoteDatabase(int id){
 		this.id = id;
 	}

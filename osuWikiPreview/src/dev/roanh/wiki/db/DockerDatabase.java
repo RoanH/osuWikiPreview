@@ -46,8 +46,8 @@ public class DockerDatabase implements Database{
 	public void runQuery(String query) throws DBException{
 		try{
 			web.runCommand("docker exec -it osu-web-mysql-" + web.getID() + " mysql osu -e \"" + query + ";\"");
-		}catch(InterruptedException | IOException e){
-			throw new DBException(e);
+		}catch(InterruptedException | IOException ignore){
+			throw new DBException(ignore);
 		}
 	}
 
@@ -64,8 +64,8 @@ public class DockerDatabase implements Database{
 	public void init() throws DBException{
 		try{
 			web.runCommand("docker start osu-web-mysql-" + web.getID());
-		}catch(InterruptedException | IOException e){
-			throw new DBException(e);
+		}catch(InterruptedException | IOException ignore){
+			throw new DBException(ignore);
 		}
 	}
 
@@ -73,8 +73,8 @@ public class DockerDatabase implements Database{
 	public void shutdown() throws DBException{
 		try{
 			web.runCommand("docker stop osu-web-mysql-" + web.getID());
-		}catch(InterruptedException | IOException e){
-			throw new DBException(e);
+		}catch(InterruptedException | IOException ignore){
+			throw new DBException(ignore);
 		}
 	}
 }

@@ -64,4 +64,4 @@ compile:
     name: osuWikiPreview-${SUFFIX}
     expire_in: 1 week
     paths:
-      - ${PROJECTNAME}.jar
+      - osuWikiPreview.jar

@@ -5,6 +5,7 @@ plugins{
 	id 'maven-publish'
 	id 'com.github.johnrengelman.shadow' version '7.1.2'
 	id 'com.github.spotbugs' version '5.0.14'
+	id 'org.sonarqube' version '4.4.1.3373'
 }
 
 sourceSets{
@@ -41,6 +42,13 @@ group = 'dev.roanh.wiki'
 ext.artifact = 'wiki'
 shadowJar.archiveName = 'osuWikiPreview-v' + version + '.jar'
 application.mainClassName = 'dev.roanh.wiki.Main'
+
+sonar{
+	properties{
+		property "sonar.projectKey", "roan_osuwikipreview_d8e2a73a-0db4-47c2-8b68-b3b9a5199f7b"
+		property "sonar.projectName", "osuWikiPreview"
+	}
+}
 
 spotbugs{
 	showProgress = true
@@ -93,6 +101,7 @@ publishing{
 }
 
 shadowJar{
+	mergeServiceFiles()
 	into("META-INF/maven/$project.group/$project.artifact"){
 		from{
 			generatePomFileForMavenJavaPublication

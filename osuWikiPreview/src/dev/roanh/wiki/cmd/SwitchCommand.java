@@ -121,7 +121,7 @@ public class SwitchCommand extends WebCommand{
 			StringBuilder desc = embed.getDescriptionBuilder();
 			
 			try{
-				Optional<PullRequestInfo> pr = GitHub.getPullRequestsForCommit(state.namespace(), diff.head());
+				Optional<PullRequestInfo> pr = GitHub.getPullRequestForCommit(state.namespace(), diff.head());
 				if(pr.isPresent()){
 					PullRequestInfo info = pr.get();
 					desc.append("[PR#");

@@ -20,6 +20,7 @@
 package dev.roanh.wiki.cmd;
 
 import java.awt.Color;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -35,6 +36,9 @@ import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.GitHub;
+import dev.roanh.wiki.GitHub.GitHubException;
+import dev.roanh.wiki.GitHub.PullRequestInfo;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
@@ -115,6 +119,21 @@ public class SwitchCommand extends WebCommand{
 			embed.setFooter(footer);
 
 			StringBuilder desc = embed.getDescriptionBuilder();
+			
+			try{
+				Optional<PullRequestInfo> pr = GitHub.getPullRequestForCommit(state.namespace(), diff.head());
+				if(pr.isPresent()){
+					PullRequestInfo info = pr.get();
+					desc.append("[PR#");
+					desc.append(info.number());
+					desc.append("](");
+					desc.append(info.getUrl());
+					desc.append(")\n");
+				}
+			}catch(GitHubException ignore){
+				//missing PR info should not hold back the embed
+			}
+			
 			for(DiffEntry item : diff.diff()){
 				String path = resolveSitePath(item.getNewPath(), web);
 				if(path != null){
@@ -144,7 +163,7 @@ public class SwitchCommand extends WebCommand{
 			}
 		}catch(MergeConflictException ignore){
 			event.reply("Failed to merge with ppy/master due to a merge conflict.");
-		}catch(Throwable e){
+		}catch(Exception e){
 			event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 			event.internalError();
 		}

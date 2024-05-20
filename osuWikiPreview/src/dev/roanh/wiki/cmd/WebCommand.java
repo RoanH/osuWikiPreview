@@ -41,7 +41,7 @@ public abstract class WebCommand extends Command{
 	 * @param permission The permission the user needs to be allowed to execute this command.
 	 * @param guild True if this command only works in a guild.
 	 */
-	public WebCommand(String name, String description, CommandPermission permission, boolean guild){
+	protected WebCommand(String name, String description, CommandPermission permission, boolean guild){
 		super(name, description, permission, guild);
 	}
 
@@ -61,7 +61,7 @@ public abstract class WebCommand extends Command{
 		original.deferReply(event->{
 			try{
 				executeWeb(web, args, event);
-			}catch(Throwable e){
+			}catch(Exception e){
 				event.logError(e, "[WebCommand] Default failure", Severity.MAJOR, Priority.HIGH, args);
 				event.internalError();
 			}finally{

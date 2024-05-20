@@ -110,10 +110,10 @@ public class OsuWiki{
 	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
 	 * @return A record with change information about the switch.
-	 * @throws Throwable When some exception occurs.
+	 * @throws Exception When some exception occurs.
 	 * @throws MergeConflictException If a merge with master is requested but a conflict occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws Throwable, MergeConflictException{
+	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws Exception, MergeConflictException{
 		refs.add(ref);
 		
 		//update master copy
@@ -186,10 +186,10 @@ public class OsuWiki{
 	/**
 	 * Merges the local copy of ppy/master into the currently checked out branch.
 	 * @param master A reference to the head of the current master branch.
-	 * @throws Throwable When some exception occurs.
+	 * @throws Exception When some exception occurs.
 	 * @throws MergeConflictException When the merge fails due to a merge conflict.
 	 */
-	private static void mergeMaster(ObjectId master) throws Throwable, MergeConflictException{
+	private static void mergeMaster(ObjectId master) throws Exception, MergeConflictException{
 		if(!git.merge().include(master).setCommit(true).setMessage("Merge ppy/master").setFastForward(FastForwardMode.NO_FF).setContentMergeStrategy(ContentMergeStrategy.CONFLICT).call().getMergeStatus().isSuccessful()){
 			throw new MergeConflictException();
 		}
@@ -198,9 +198,9 @@ public class OsuWiki{
 	/**
 	 * Updates the local and remote copy of ppy/master with the latest changes.
 	 * @return A reference to the current head of the master branch.
-	 * @throws Throwable When some exception occurs.
+	 * @throws Exception When some exception occurs.
 	 */
-	private static ObjectId updateMaster() throws Throwable{
+	private static ObjectId updateMaster() throws Exception{
 		forceFetch("ppy");
 		reset("ppy", "master");
 		forcePush("master");

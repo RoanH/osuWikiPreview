@@ -124,11 +124,11 @@ public class SwitchCommand extends WebCommand{
 				Optional<PullRequestInfo> pr = GitHub.getPullRequestForCommit(state.namespace(), diff.head());
 				if(pr.isPresent()){
 					PullRequestInfo info = pr.get();
-					desc.append("[PR#");
+					desc.append("Pull request [#");
 					desc.append(info.number());
 					desc.append("](");
 					desc.append(info.getUrl());
-					desc.append(")\n");
+					desc.append(").\n");
 				}
 			}catch(GitHubException ignore){
 				//missing PR info should not hold back the embed

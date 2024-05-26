@@ -27,11 +27,9 @@ trycatch:
   coverage: '/\([0-9]{2,3}\.[0-9]{2}%\)/'
 
 sonar:
-  variables:
-    GIT_DEPTH: "0"
-  allow_failure: true
   script:
     - ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} :sonar
+  allow_failure: true
   stage: check
   only:
     - master

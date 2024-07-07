@@ -20,15 +20,21 @@
 package dev.roanh.wiki.db;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.OsuWeb;
+import dev.roanh.wiki.WebState;
 
 /**
  * Local docker image MySQL instance connection.
  * @author Roan
  */
 public class DockerDatabase implements Database{
+	/**
+	 * Regex allowing only valid slug characters.
+	 */
+	private static final Pattern SLUG_REGEX = Pattern.compile("[-0-9a-zA-Z]+");
 	/**
 	 * The osu! web instance.
 	 */
@@ -47,13 +53,14 @@ public class DockerDatabase implements Database{
 		try{
 			web.runCommand("docker exec -it osu-web-mysql-" + web.getID() + " mysql osu -e \"" + query + ";\"");
 		}catch(InterruptedException | IOException ignore){
+			Thread.currentThread().interrupt();
 			throw new DBException(ignore);
 		}
 	}
 
 	@Override
 	public void runQuery(String query, String param) throws DBException{
-		if(!param.matches("[-0-9a-zA-Z]+")){
+		if(!SLUG_REGEX.matcher(param).matches()){
 			throw new IllegalArgumentException("Unsafe param: " + param);
 		}
 		
@@ -65,6 +72,7 @@ public class DockerDatabase implements Database{
 		try{
 			web.runCommand("docker start osu-web-mysql-" + web.getID());
 		}catch(InterruptedException | IOException ignore){
+			Thread.currentThread().interrupt();
 			throw new DBException(ignore);
 		}
 	}
@@ -74,7 +82,19 @@ public class DockerDatabase implements Database{
 		try{
 			web.runCommand("docker stop osu-web-mysql-" + web.getID());
 		}catch(InterruptedException | IOException ignore){
+			Thread.currentThread().interrupt();
 			throw new DBException(ignore);
 		}
+	}
+	
+	@Override
+	public WebState getState(int id) throws DBException{
+		//unsupported, just revert to a clean state
+		return null;
+	}
+	
+	@Override
+	public void saveState(int id, WebState state) throws DBException{
+		//unsupported
 	}
 }

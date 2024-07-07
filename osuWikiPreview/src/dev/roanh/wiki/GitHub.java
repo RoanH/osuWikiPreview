@@ -64,7 +64,10 @@ public final class GitHub{
 			return Arrays.stream(
 				gson.fromJson(executeGet("https://api.github.com/repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), PullRequestInfo[].class)
 			).filter(PullRequestInfo::isOfficial).findFirst();
-		}catch(JsonSyntaxException | URISyntaxException | IOException | InterruptedException ignore){
+		}catch(InterruptedException ignore){
+			Thread.currentThread().interrupt();
+			throw new GitHubException(ignore);
+		}catch(JsonSyntaxException | URISyntaxException | IOException ignore){
 			throw new GitHubException(ignore);
 		}
 	}

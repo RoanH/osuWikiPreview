@@ -78,10 +78,12 @@ public class OsuWeb{
 	/**
 	 * Sets the current state for this instance.
 	 * @param state The new state.
+	 * @throws DBException When a database exception occurs.
 	 * @see WebState
 	 */
-	public void setCurrentState(WebState state){
+	public void setCurrentState(WebState state) throws DBException{
 		currentState = state;
+		database.saveState(id, currentState);
 	}
 	
 	/**
@@ -198,6 +200,7 @@ public class OsuWeb{
 	 */
 	public void start() throws InterruptedException, IOException, DBException{
 		database.init();
+		currentState = database.getState(id);
 		runCommand("docker start osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
 	}
 	

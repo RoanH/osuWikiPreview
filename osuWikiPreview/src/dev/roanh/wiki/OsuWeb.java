@@ -47,7 +47,7 @@ public class OsuWeb{
 	 */
 	private final Database database;
 	/**
-	 * Lock to present simultaneous command runs.
+	 * Lock to prevent simultaneous command runs.
 	 */
 	private AtomicBoolean busy = new AtomicBoolean(false);
 	/**
@@ -96,7 +96,7 @@ public class OsuWeb{
 	
 	/**
 	 * Unlocks this instance for use by other threads, should
-	 * only be called after succesfully locking this instance.
+	 * only be called after successfully locking this instance.
 	 * @see #tryLock()
 	 */
 	public void unlock(){

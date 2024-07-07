@@ -20,6 +20,7 @@
 package dev.roanh.wiki.db;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.wiki.WebState;
 
 /**
  * Database connection implementation for osu! web.
@@ -54,4 +55,20 @@ public abstract interface Database{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public abstract void runQuery(String query, String param) throws DBException;
+	
+	/**
+	 * Saves the current state of the web instance with the given ID.
+	 * @param id The ID of the web instance to save the state of.
+	 * @param state The state of the web instance.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public abstract void saveState(int id, WebState state) throws DBException;
+	
+	/**
+	 * Retrieves the last known state of the web instance with the given ID.
+	 * @param id The ID of the web instance to retrieve the state of.
+	 * @return The last known state of the given instance or null if not known.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public abstract WebState getState(int id) throws DBException;
 }

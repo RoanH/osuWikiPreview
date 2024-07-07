@@ -25,6 +25,7 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.WebState;
 
 /**
  * Remote hosted MySQL instance connection.
@@ -67,5 +68,25 @@ public class RemoteDatabase implements Database{
 	@Override
 	public void shutdown() throws DBException{
 		executor.shutdown();
+	}
+	
+	@Override
+	public void saveState(int id, WebState state) throws DBException{
+		executor.insert(
+			"REPLACE INTO wikipreview.state (id, namespace, ref, redate, master) VALUES (?, ?, ?, ?, ?)",
+			id, state.namespace(), state.ref(), state.redate(), state.master()
+		);
+	}
+	
+	@Override
+	public WebState getState(int id) throws DBException{
+		return executor.selectFirst("SELECT * FROM wikipreview.state WHERE id = ?", rs->{
+			return new WebState(
+				rs.getString("namespace"),
+				rs.getString("ref"),
+				rs.getBoolean("redate"),
+				rs.getBoolean("master")
+			);
+		}, id).orElse(null);
 	}
 }

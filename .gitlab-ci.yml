@@ -1,7 +1,7 @@
 image: eclipse-temurin:17
 
 variables:
-  SUFFIX: "${CI_PIPELINE_ID}-${CI_COMMIT_REF_NAME}"
+  SUFFIX: ${CI_PIPELINE_ID}-${CI_COMMIT_REF_NAME}
   PROJECTNAME: osuWikiPreview
 
 before_script:
@@ -27,21 +27,19 @@ trycatch:
   coverage: '/\([0-9]{2,3}\.[0-9]{2}%\)/'
 
 sonar:
-  script:
-    - ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} :sonar
   allow_failure: true
+  script: ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} sonar
   stage: check
   only:
     - master
 
 spotbugs:
   allow_failure: true
-  script:
-    - ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} :spotbugsMain
+  script: ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} spotbugsMain
   stage: check
   artifacts:
-    name: "SpotBugs-${SUFFIX}"
-    expire_in: 1 week
+    name: SpotBugs-${SUFFIX}
+    expire_in: 1 day
     when: always
     paths:
       - ./${PROJECTNAME}/build/reports/spotbugs/main/spotbugs.html
@@ -54,12 +52,12 @@ verify:
 
 javadoc:
   script:
-    - ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} :javadoc
+    - ./gradlew -PrefName=${CI_COMMIT_REF_NAME} -PnexusPublic=${NEXUS_PUBLIC} javadoc
     - mv ./build/docs/javadoc ../
   stage: javadoc
   artifacts:
-    name: "Javadoc-${SUFFIX}"
-    expire_in: 1 week
+    name: Javadoc-${SUFFIX}
+    expire_in: 1 day
     paths:
       - javadoc/
 
@@ -70,6 +68,6 @@ compile:
   stage: compile
   artifacts:
     name: osuWikiPreview-${SUFFIX}
-    expire_in: 1 week
+    expire_in: 1 day
     paths:
       - osuWikiPreview.jar

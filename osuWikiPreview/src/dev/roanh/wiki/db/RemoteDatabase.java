@@ -73,7 +73,7 @@ public class RemoteDatabase implements Database{
 	@Override
 	public void saveState(int id, WebState state) throws DBException{
 		executor.insert(
-			"REPLACE INTO wikipreview.state (id, namespace, ref, redate, master) VALUES (?, ?, ?, ?)",
+			"REPLACE INTO wikipreview.state (id, namespace, ref, redate, master) VALUES (?, ?, ?, ?, ?)",
 			id, state.namespace(), state.ref(), state.redate(), state.master()
 		);
 	}

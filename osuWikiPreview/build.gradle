@@ -21,10 +21,14 @@ dependencies{
 }
 
 repositories{
-	maven{
-		allowInsecureProtocol = true
-		url "$nexusPublic"
+	//Local cache
+	if(project.hasProperty("nexusPublic")){
+		maven{
+			allowInsecureProtocol = true
+			url "$nexusPublic"
+		}
 	}
+	mavenCentral()
 }
 
 version = findProperty("refName") ?: 'SNAPSHOT'
@@ -75,7 +79,7 @@ publishing{
 			pom{
 				name = project.eclipse.project.name
 				description = 'osu! wiki preview site'
-				url = 'https://git.roanh.dev/roan/osuwikipreview'
+				url = 'https://github.com/RoanH/osuWikiPreview'
 				licenses{
 					license{
 						name = 'GNU Affero General Public License v3.0'
@@ -90,9 +94,9 @@ publishing{
 					}
 				}
 				scm{
-					connection = 'scm:git:git@git.roanh.dev:roan/osuwikipreview.git'
+					connection = 'scm:git:git@github.com:RoanH/osuWikiPreview.git'
 					developerConnection = 'scm:git:git@git.roanh.dev:roan/osuwikipreview.git'
-					url = 'https://git.roanh.dev/roan/osuwikipreview'
+					url = 'https://github.com/RoanH/osuWikiPreview'
 				}
 			}
 		}

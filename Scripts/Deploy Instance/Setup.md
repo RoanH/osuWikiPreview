@@ -48,7 +48,7 @@ docker run --rm -it --network osu-web-1 --env-file osu1.env pppy/osu-web:latest 
 ```
 
 ## Run osu! web
-The run the latest version of osu! web:
+Then run the latest version of osu! web:
 
 ```sh
 docker run -d --name osu-web-1 --network osu-web-1 --env-file osu1.env -p 9591:8000 pppy/osu-web:latest octane

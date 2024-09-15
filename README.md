@@ -6,6 +6,8 @@ Preview sites:
 - https://osu2.roanh.dev/home
 - https://osu3.roanh.dev/home
 
+Setup information is under [Scripts](Scripts).
+
 ## History
 Project development started (news only version): 6th of March, 2023.    
 Project development started (wiki version): 20th of May, 2023.

@@ -1,22 +1,23 @@
+=== Current configuration overview ===
+
+# Networks
 docker network create osu-web-1
 docker network create osu-web-2
 docker network create osu-web-3
 
-docker run -d --name osu-web-mysql-1 -e MYSQL_ALLOW_EMPTY_PASSWORD=yes --network osu-web-1 mysql/mysql-server:8.0
-docker run -d --name osu-web-mysql-2 -e MYSQL_ALLOW_EMPTY_PASSWORD=yes --network osu-web-2 mysql/mysql-server:8.0
-docker run -d --name osu-web-mysql-3 -e MYSQL_ALLOW_EMPTY_PASSWORD=yes --network osu-web-3 mysql/mysql-server:8.0
-
--- populate db
-
+# Redis
 docker run -d --name osu-web-redis-1 --network osu-web-1 redis:latest
 docker run -d --name osu-web-redis-2 --network osu-web-2 redis:latest
 docker run -d --name osu-web-redis-3 --network osu-web-3 redis:latest
 
+# Elastic Search
 docker run -d --name osu-web-elasticsearch-1 -e action.auto_create_index=false -e discovery.type=single-node -e ES_JAVA_OPTS="-Xms512m -Xmx512m" --network osu-web-1 docker.elastic.co/elasticsearch/elasticsearch:7.17.6
 docker run -d --name osu-web-elasticsearch-2 -e action.auto_create_index=false -e discovery.type=single-node -e ES_JAVA_OPTS="-Xms512m -Xmx512m" --network osu-web-2 docker.elastic.co/elasticsearch/elasticsearch:7.17.6
 docker run -d --name osu-web-elasticsearch-3 -e action.auto_create_index=false -e discovery.type=single-node -e ES_JAVA_OPTS="-Xms512m -Xmx512m" --network osu-web-3 docker.elastic.co/elasticsearch/elasticsearch:7.17.6
 
-# for each network
+# osu! web prepration
+NOTE: when using a shared MySQL instance delete the extra schemas (osu_updates, osu_store, osu_mp, osu_chat, osu_charts) before running the artisan migration command
+
 docker run --rm -it --network osu-web-1 --env-file osu1.env pppy/osu-web:latest artisan db:create
 docker run --rm -it --network osu-web-1 --env-file osu1.env pppy/osu-web:latest artisan migrate
 docker run --rm -it --network osu-web-1 --env-file osu1.env pppy/osu-web:latest artisan es:index-documents
@@ -35,9 +36,7 @@ docker run --rm -it --network osu-web-3 --env-file osu3.env pppy/osu-web:latest 
 docker run --rm -it --network osu-web-3 --env-file osu3.env pppy/osu-web:latest artisan es:create-search-blacklist
 docker run --rm -it --network osu-web-3 --env-file osu3.env pppy/osu-web:latest artisan es:index-wiki --create-only
 
+# osu! web
 docker run -d --name osu-web-1 --network osu-web-1 --env-file osu1.env -p 9591:8000 pppy/osu-web:latest octane
 docker run -d --name osu-web-2 --network osu-web-2 --env-file osu2.env -p 9592:8000 pppy/osu-web:latest octane
 docker run -d --name osu-web-3 --network osu-web-3 --env-file osu3.env -p 9593:8000 pppy/osu-web:latest octane
-
-NOTE: when using a shared MySQL instance delete the extra schemas (osu_updates, osu_store, osu_mp, osu_chat, osu_charts)
-      before running the artisan migration command and no need to create a MySQL container either of course

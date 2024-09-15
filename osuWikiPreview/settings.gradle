@@ -1,9 +1,14 @@
 pluginManagement{
 	repositories{
-		maven{
-			allowInsecureProtocol = true
-			url "$nexusPublic"
+		//Local cache
+		if(settings.ext.find("nexusPublic") != null){
+			maven{
+				allowInsecureProtocol = true
+				url "$nexusPublic"
+			}
 		}
+		gradlePluginPortal()
+		mavenCentral()
 	}
 }
 

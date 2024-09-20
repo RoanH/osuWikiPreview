@@ -19,27 +19,33 @@
  */
 package dev.roanh.wiki.cmd;
 
+import java.io.IOException;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.exception.MergeConflictException;
+import dev.roanh.wiki.exception.WebException;
 
 /**
  * Command to refresh a preview with new commits.
  * @author Roan
  */
-public class RefreshCommand extends SwitchCommand{
+public class RefreshCommand extends BaseSwitchCommand{
 
 	/**
 	 * Constructs a new refresh command command.
 	 */
 	public RefreshCommand(){
-		super("refresh", "Switches to the mostly recently switched to ref.", Main.PERMISSION, true);
+		super("refresh", "Switches to the mostly recently switched to ref.");
 	}
 
 	@Override
-	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
+	public void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		WebState state = web.getCurrentState();
 		if(state == null){
 			event.reply("No previous ref found.");

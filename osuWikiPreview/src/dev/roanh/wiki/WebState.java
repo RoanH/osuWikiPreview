@@ -55,4 +55,8 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 	public WebState withMaster(){
 		return new WebState(namespace, ref, redate, true);
 	}
+	
+	public boolean isInternalBranch(){
+		return namespace.equals("RoanH") && ref.startsWith("wikisync-");
+	}
 }

@@ -19,27 +19,33 @@
  */
 package dev.roanh.wiki.cmd;
 
+import java.io.IOException;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.exception.MergeConflictException;
+import dev.roanh.wiki.exception.WebException;
 
 /**
  * Command to merge ppy/master into the current branch.
  * @author Roan
  */
-public class MergeMasterCommand extends SwitchCommand{
+public class MergeMasterCommand extends BaseSwitchCommand{
 
 	/**
 	 * Constructs a new merge command command.
 	 */
 	public MergeMasterCommand(){
-		super("mergemaster", "Merges ppy/master into the currently checked out branch.", Main.PERMISSION, true);
+		super("mergemaster", "Merges ppy/master into the currently checked out branch.");
 	}
 
 	@Override
-	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
+	public void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		WebState state = web.getCurrentState();
 		if(state == null){
 			event.reply("No checked out ref found.");

@@ -237,7 +237,8 @@ public class OsuWiki{
 	 * @throws GitAPIException When some exception occurs.
 	 */
 	private static RevCommit commitNewsFile(String path) throws GitAPIException{
-		return git.commit().setCommitter("Roan Hofland", "roan@roanh.dev").setMessage("Add newspost").setOnly(path).call();
+		git.add().addFilepattern(path).call();
+		return git.commit().setCommitter("Roan Hofland", "roan@roanh.dev").setMessage("Add newspost").setOnly(path).setSign(false).call();
 	}
 	
 	/**

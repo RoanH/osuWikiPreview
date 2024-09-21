@@ -33,6 +33,10 @@ import dev.roanh.wiki.WebState;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 
+/**
+ * Command to switch the active preview branch.
+ * @author Roan
+ */
 public class SwitchCommand extends BaseSwitchCommand{
 
 	/**

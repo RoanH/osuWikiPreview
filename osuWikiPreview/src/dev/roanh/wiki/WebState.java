@@ -56,6 +56,10 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 		return new WebState(namespace, ref, redate, true);
 	}
 	
+	/**
+	 * Checks if this is an internal branch used by the preview system itself.
+	 * @return True if this is an internal branch.
+	 */
 	public boolean isInternalBranch(){
 		return namespace.equals("RoanH") && ref.startsWith("wikisync-");
 	}

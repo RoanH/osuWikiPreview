@@ -19,12 +19,20 @@
  */
 package dev.roanh.wiki.exception;
 
+/**
+ * Exception raised when something related to an osu! web instance fails.
+ * @author Roan
+ */
 public class WebException extends Exception{
 	/**
 	 * Serial ID.
 	 */
 	private static final long serialVersionUID = -4335664458179464269L;
 
+	/**
+	 * Constructs a new web exception with the given root cause.
+	 * @param cause The root cause.
+	 */
 	public WebException(Throwable cause){
 		super(cause);
 	}

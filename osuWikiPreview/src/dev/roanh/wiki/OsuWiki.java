@@ -86,7 +86,7 @@ public class OsuWiki{
 	 * @throws IOException When some IO exception occurs.
 	 */
 	public static void init() throws IOException{
-		((Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
+		((Logger)LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
 		git = Git.open(Main.WIKI_PATH);
 		git.getRepository().getConfig().setBoolean("commit", null, "gpgsign", false);
 	}
@@ -107,6 +107,18 @@ public class OsuWiki{
 		return new ArrayList<String>(refs);
 	}
 	
+	/**
+	 * Pushes a new newspost file to the preview branch for the given instance.
+	 * @param data The newspost file content.
+	 * @param year The year for the newspost.
+	 * @param filename The filename of the newspost.
+	 * @param instance The instance to update.
+	 * @return A record with change information about the switch.
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public synchronized static SwitchResult pushNews(byte[] data, int year, String filename, OsuWeb instance) throws GitAPIException, IOException, DBException, WebException{
 		//update master copy
 		ObjectId from = updateMaster();
@@ -122,17 +134,17 @@ public class OsuWiki{
 	}
 	
 	/**
-	 * Switch the site to the given ref from the given namespace.
+	 * Switches the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
 	 * @param ref The reference to switch to.
 	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
 	 * @return A record with change information about the switch.
 	 * @throws MergeConflictException If a merge with master is requested but a conflict occurs.
-	 * @throws IOException 
-	 * @throws GitAPIException 
-	 * @throws WebException 
-	 * @throws DBException 
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		refs.add(ref);
@@ -153,6 +165,16 @@ public class OsuWiki{
 		return pushBranch(from, instance);
 	}
 	
+	/**
+	 * Pushing the currently checked out branch and computes a diff.
+	 * @param from The commit to use the compute a git diff of the changes.
+	 * @param instance The osu! web instance that is being updated.
+	 * @return The result of switching the active preview branch.
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws DBException When a database exception occurs.
+	 */
 	private static SwitchResult pushBranch(ObjectId from, OsuWeb instance) throws IOException, GitAPIException, DBException, WebException{
 		//push the new state to the remote
 		forcePush("wikisync-" + instance.getID());
@@ -208,6 +230,12 @@ public class OsuWiki{
 		}
 	}
 	
+	/**
+	 * Commits a new newspost to the current branch.
+	 * @param path The path of the newspost file to commit.
+	 * @return The commit that was created.
+	 * @throws GitAPIException When some exception occurs.
+	 */
 	private static RevCommit commitNewsFile(String path) throws GitAPIException{
 		return git.commit().setCommitter("Roan Hofland", "roan@roanh.dev").setMessage("Add newspost").setOnly(path).call();
 	}

@@ -35,7 +35,16 @@ import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.exception.WebException;
 
+/**
+ * Special version of the switch command for newsposts that accepts
+ * a properly named and formatted newspost file instead of a git ref.
+ * @author Roan
+ */
 public class PreviewCommand extends BaseSwitchCommand{
+	/**
+	 * Newspost filename regex.
+	 * Group 1: The year for the newspost.
+	 */
 	private static final Pattern POST_REGEX = Pattern.compile("(\\d{4})-\\d{2}-\\d{2}-[a-zA-Z0-9-]+\\.md");
 	
 	/**
@@ -58,11 +67,11 @@ public class PreviewCommand extends BaseSwitchCommand{
 		
 		Matcher m = POST_REGEX.matcher(name);
 		if(!m.matches()){
-			event.reply("The name of the given file does not conform to the required format, see the [News styling criteria](https://osu.ppy.sh/wiki/en/News_styling_criteria).");
+			event.reply("The name of the given file does not conform to the required format, see the [news styling criteria](https://osu.ppy.sh/wiki/en/News_styling_criteria).");
 			return;
 		}
 		
-		if(file.getSize() > 1024 * 1024 * 10){
+		if(file.getSize() > 1024 * 1024 * 10){//10MB
 			event.reply("The given newspost file is too large.");
 			return;
 		}

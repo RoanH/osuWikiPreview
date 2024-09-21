@@ -84,14 +84,50 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		}
 	}
 	
+	/**
+	 * Switches the active preview branch based on the user supplied arguments.
+	 * @param web The osu! web instance to update.
+	 * @param args The received input arguments.
+	 * @param event The command event.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws MergeConflictException When a merge is requested which results in a conflict.
+	 */
 	protected abstract void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException;
 	
+	/**
+	 * Switches the active preview branch by pushing a file newspost file to ppy/master.
+	 * @param event The command event.
+	 * @param web The osu! web instance to update.
+	 * @param args The received input arguments.
+	 * @param data The newspost file content.
+	 * @param year The year for the newspost.
+	 * @param filename The filename of the newspost.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 */
 	protected void pushBranch(CommandEvent event, OsuWeb web, CommandMap args, byte[] data, int year, String filename) throws GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, new WebState("RoanH", "wikisync-" + web.getID(), true, false), web, args, OsuWiki.pushNews(data, year, filename, web));
+		switchBranch(event, new WebState("RoanH", "wikisync-" + web.getID(), true, false), web, OsuWiki.pushNews(data, year, filename, web));
 	}
 	
+	/**
+	 * Switches the active preview branch to the given web state.
+	 * @param event The command event.
+	 * @param state The state to switch to.
+	 * @param web The osu! web instance to update.
+	 * @param args The received input arguments.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws IOException When an IOException occurs.
+	 * @throws DBException When a database exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws MergeConflictException When a merge is requested which results in a conflict.
+	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, state, web, args, OsuWiki.switchBranch(state.namespace(), state.ref(), state.master(), web));
+		switchBranch(event, state, web, OsuWiki.switchBranch(state.namespace(), state.ref(), state.master(), web));
 	}
 
 	/**
@@ -99,10 +135,10 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @param event The command event.
 	 * @param state The state to switch to on the given web instance.
 	 * @param web The osu! web instance to update.
-	 * @param args The passed command arguments.
-	 * @throws DBException 
+	 * @param diff The git diff of the current state against ppy/master.
+	 * @throws DBException When a database exception occurs.
 	 */
-	private void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args, SwitchResult diff) throws DBException{
+	private void switchBranch(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
 		web.setCurrentState(state);
 
 		if(state.redate() && diff.hasNews()){
@@ -112,6 +148,13 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		event.replyEmbeds(createEmbed(diff, state, web));
 	}
 	
+	/**
+	 * Creates the reply embed with information about the switch.
+	 * @param diff The git diff of the current state against ppy/master.
+	 * @param state The new osu! web instance state.
+	 * @param web The osu! web instance that was updated.
+	 * @return The constructed switch result embed.
+	 */
 	private static final MessageEmbed createEmbed(SwitchResult diff, WebState state, OsuWeb web){
 		String footer = "HEAD: " + diff.head();
 		if(state.redate() && diff.hasNews()){
@@ -159,6 +202,12 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		return embed.build();
 	}
 	
+	/**
+	 * Attempts to retrieve pull request information for the given commit.
+	 * @param namespace The namespace to look under.
+	 * @param sha The commit hash to find.
+	 * @return If found information about the pull requested associated with the commit.
+	 */
 	private static final Optional<PullRequestInfo> retrievePullRequest(String namespace, String sha){
 		try{
 			return GitHub.getPullRequestForCommit(namespace, sha);

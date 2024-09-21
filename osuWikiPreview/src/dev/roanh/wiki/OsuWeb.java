@@ -28,6 +28,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.db.Database;
 import dev.roanh.wiki.db.RemoteDatabase;
+import dev.roanh.wiki.exception.WebException;
 
 /**
  * Main controller for an osu! web instance.
@@ -124,11 +125,10 @@ public class OsuWeb{
 	/**
 	 * Updates all osu! web news articles.
 	 * @param diff A diff indicating repository files that were changed.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
 	 * @throws DBException When a database exception occurs.
+	 * @throws WebException When an exception occurs.
 	 */
-	public void runNewsUpdate(List<DiffEntry> diff) throws InterruptedException, IOException, DBException{
+	public void runNewsUpdate(List<DiffEntry> diff) throws DBException, WebException{
 		for(DiffEntry file : diff){
 			clearNewsPost(file);
 		}
@@ -185,20 +185,18 @@ public class OsuWeb{
 	 * Updates all osu! web wiki articles in the given ref range.
 	 * @param from The current wiki ref.
 	 * @param to The new wiki ref.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * @throws WebException When an exception occurs.
 	 */
-	public void runWikiUpdate(String from, String to) throws InterruptedException, IOException{
+	public void runWikiUpdate(String from, String to) throws WebException{
 		runArtisan("OsuWiki::updateFromGithub(['before' => '" + from + "','after' => '" + to + "'])");
 	}
 	
 	/**
 	 * Starts the osu! web instance.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
 	 * @throws DBException When a database exception occurs.
+	 * @throws WebException When an exception occurs.
 	 */
-	public void start() throws InterruptedException, IOException, DBException{
+	public void start() throws DBException, WebException{
 		database.init();
 		currentState = database.getState(id);
 		runCommand("docker start osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
@@ -206,11 +204,10 @@ public class OsuWeb{
 	
 	/**
 	 * Stops the osu! web instance.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
 	 * @throws DBException When a database exception occurs.
+	 * @throws WebException When an exception occurs.
 	 */
-	public void stop() throws InterruptedException, IOException, DBException{
+	public void stop() throws DBException, WebException{
 		runCommand("docker stop osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
 		database.shutdown();
 	}
@@ -218,22 +215,27 @@ public class OsuWeb{
 	/**
 	 * Runs an osu! web artisan command.
 	 * @param cmd The command to run.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * @throws WebException When an exception occurs.
 	 */
-	public void runArtisan(String cmd) throws InterruptedException, IOException{
+	public void runArtisan(String cmd) throws WebException{
 		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
 	/**
 	 * Runs a command on the server.
 	 * @param cmd The command to run.
-	 * @throws InterruptedException When the thread was interrupted.
-	 * @throws IOException When an IOException occurs.
+	 * @throws WebException When an exception occurs.
 	 */
-	public void runCommand(String cmd) throws InterruptedException, IOException{
-		if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
-			throw new IOException("Executed command returned a non-zero exit code.");
+	public void runCommand(String cmd) throws WebException{
+		try{
+			if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
+				throw new IOException("Executed command returned a non-zero exit code.");
+			}
+		}catch(InterruptedException ignore){
+			Thread.currentThread().interrupt();
+			throw new WebException(ignore);
+		}catch(IOException ignore){
+			throw new WebException(ignore);
 		}
 	}
 }

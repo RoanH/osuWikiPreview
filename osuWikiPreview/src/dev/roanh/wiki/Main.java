@@ -32,10 +32,12 @@ import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.cmd.ClearNewsCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
+import dev.roanh.wiki.cmd.PreviewCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.RestartCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
+import dev.roanh.wiki.exception.WebException;
 
 /**
  * Main entry point of the application that starts the Discord bot.
@@ -91,7 +93,7 @@ public class Main{
 		for(OsuWeb site : INSTANCES.values()){
 			try{
 				site.start();
-			}catch(InterruptedException | IOException | DBException e){
+			}catch(WebException | DBException e){
 				client.logError(e, "[Main] Failed to start site with ID " + site.getID(), Severity.MINOR, Priority.MEDIUM);
 			}
 		}
@@ -102,6 +104,8 @@ public class Main{
 		client.registerCommand(new RedateCommand());
 		client.registerCommand(new RefreshCommand());
 		client.registerCommand(new MergeMasterCommand());
+		client.registerCommand(new PreviewCommand());
+		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();
 	}

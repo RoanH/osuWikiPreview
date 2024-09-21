@@ -21,6 +21,7 @@ package dev.roanh.wiki;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -45,12 +46,15 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.slf4j.LoggerFactory;
+
+import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.wiki.exception.MergeConflictException;
+import dev.roanh.wiki.exception.WebException;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -82,7 +86,7 @@ public class OsuWiki{
 	 * @throws IOException When some IO exception occurs.
 	 */
 	public static void init() throws IOException{
-		((Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
+		((Logger)LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
 		git = Git.open(Main.WIKI_PATH);
 		git.getRepository().getConfig().setBoolean("commit", null, "gpgsign", false);
 	}
@@ -104,16 +108,45 @@ public class OsuWiki{
 	}
 	
 	/**
-	 * Switch the site to the given ref from the given namespace.
+	 * Pushes a new newspost file to the preview branch for the given instance.
+	 * @param data The newspost file content.
+	 * @param year The year for the newspost.
+	 * @param filename The filename of the newspost.
+	 * @param instance The instance to update.
+	 * @return A record with change information about the switch.
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public synchronized static SwitchResult pushNews(byte[] data, int year, String filename, OsuWeb instance) throws GitAPIException, IOException, DBException, WebException{
+		//update master copy
+		ObjectId from = updateMaster();
+		
+		//write & commit file
+		String path = "news/" + year + "/" + filename;
+		Files.write(Main.WIKI_PATH.toPath().resolve(path), data);
+		
+		//commit file
+		commitNewsFile(path);
+		
+		return pushBranch(from, instance);
+	}
+	
+	/**
+	 * Switches the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
 	 * @param ref The reference to switch to.
 	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
 	 * @return A record with change information about the switch.
-	 * @throws Exception When some exception occurs.
 	 * @throws MergeConflictException If a merge with master is requested but a conflict occurs.
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws DBException When a database exception occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws Exception, MergeConflictException{
+	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		refs.add(ref);
 		
 		//update master copy
@@ -129,21 +162,35 @@ public class OsuWiki{
 			mergeMaster(from);
 		}
 		
+		return pushBranch(from, instance);
+	}
+	
+	/**
+	 * Pushing the currently checked out branch and computes a diff.
+	 * @param from The commit to use the compute a git diff of the changes.
+	 * @param instance The osu! web instance that is being updated.
+	 * @return The result of switching the active preview branch.
+	 * @throws IOException When an IOException occurs.
+	 * @throws GitAPIException When a git exception occurs.
+	 * @throws WebException When a web exception occurs.
+	 * @throws DBException When a database exception occurs.
+	 */
+	private static SwitchResult pushBranch(ObjectId from, OsuWeb instance) throws IOException, GitAPIException, DBException, WebException{
 		//push the new state to the remote
 		forcePush("wikisync-" + instance.getID());
-		
+
 		//update the website wiki
 		ObjectId to = getHead();
 		instance.runWikiUpdate("master", "wikisync-" + instance.getID());
-		
+
 		//compute the diff
 		SwitchResult diff = new SwitchResult(computeDiff(from, to), to.getName());
-		
+
 		//update the website news
 		if(diff.hasNews()){
 			instance.runNewsUpdate(diff.diff());
 		}
-		
+
 		//return the diff
 		return diff;
 	}
@@ -184,12 +231,22 @@ public class OsuWiki{
 	}
 	
 	/**
+	 * Commits a new newspost to the current branch.
+	 * @param path The path of the newspost file to commit.
+	 * @return The commit that was created.
+	 * @throws GitAPIException When some exception occurs.
+	 */
+	private static RevCommit commitNewsFile(String path) throws GitAPIException{
+		return git.commit().setCommitter("Roan Hofland", "roan@roanh.dev").setMessage("Add newspost").setOnly(path).call();
+	}
+	
+	/**
 	 * Merges the local copy of ppy/master into the currently checked out branch.
 	 * @param master A reference to the head of the current master branch.
-	 * @throws Exception When some exception occurs.
+	 * @throws GitAPIException When some exception occurs.
 	 * @throws MergeConflictException When the merge fails due to a merge conflict.
 	 */
-	private static void mergeMaster(ObjectId master) throws Exception, MergeConflictException{
+	private static void mergeMaster(ObjectId master) throws GitAPIException, MergeConflictException{
 		if(!git.merge().include(master).setCommit(true).setMessage("Merge ppy/master").setFastForward(FastForwardMode.NO_FF).setContentMergeStrategy(ContentMergeStrategy.CONFLICT).call().getMergeStatus().isSuccessful()){
 			throw new MergeConflictException();
 		}
@@ -198,9 +255,10 @@ public class OsuWiki{
 	/**
 	 * Updates the local and remote copy of ppy/master with the latest changes.
 	 * @return A reference to the current head of the master branch.
-	 * @throws Exception When some exception occurs.
+	 * @throws GitAPIException When some exception occurs.
+	 * @throws IOException When an IOException occurs.
 	 */
-	private static ObjectId updateMaster() throws Exception{
+	private static ObjectId updateMaster() throws GitAPIException, IOException{
 		forceFetch("ppy");
 		reset("ppy", "master");
 		forcePush("master");
@@ -250,15 +308,18 @@ public class OsuWiki{
 	 * Finds the remote with the given name or creates it.
 	 * @param name The name of the remote.
 	 * @throws GitAPIException When a git exception occurs.
-	 * @throws URISyntaxException When a URI is invalid.
 	 */
-	private static void findRemote(String name) throws GitAPIException, URISyntaxException{
-		if(!remotes.contains(name)){
-			if(git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().isEmpty()){
-				git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/osu-wiki.git")).call();
+	private static void findRemote(String name) throws GitAPIException{
+		try{
+			if(!remotes.contains(name)){
+				if(git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().isEmpty()){
+					git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/osu-wiki.git")).call();
+				}
+				
+				remotes.add(name);
 			}
-			
-			remotes.add(name);
+		}catch(URISyntaxException ignore){
+			throw new InvalidRemoteException(name);
 		}
 	}
 	
@@ -280,25 +341,11 @@ public class OsuWiki{
 		}
 	}
 	
-	/**
-	 * Exception thrown when a merge fails due to a conflict.
-	 * @author Roan
-	 */
-	public static final class MergeConflictException extends Exception{
-		/**
-		 * Serial ID.
-		 */
-		private static final long serialVersionUID = -2500908624137527567L;
-	}
-
 	static{
 		SshdSessionFactory sshSessionFactory = new SshdSessionFactoryBuilder().setPreferredAuthentications("publickey").setHomeDirectory(Main.AUTH_PATH).setSshDirectory(Main.AUTH_PATH).build(null);
-		transport = new TransportConfigCallback(){
-			@Override
-			public void configure(Transport transport){
-				SshTransport sshTransport = (SshTransport)transport;
-				sshTransport.setSshSessionFactory(sshSessionFactory);
-			}
+		transport = transport->{
+			SshTransport sshTransport = (SshTransport)transport;
+			sshTransport.setSshSessionFactory(sshSessionFactory);
 		};
 	}
 }

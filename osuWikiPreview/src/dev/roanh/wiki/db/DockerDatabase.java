@@ -19,12 +19,12 @@
  */
 package dev.roanh.wiki.db;
 
-import java.io.IOException;
 import java.util.regex.Pattern;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.exception.WebException;
 
 /**
  * Local docker image MySQL instance connection.
@@ -52,10 +52,7 @@ public class DockerDatabase implements Database{
 	public void runQuery(String query) throws DBException{
 		try{
 			web.runCommand("docker exec -it osu-web-mysql-" + web.getID() + " mysql osu -e \"" + query + ";\"");
-		}catch(InterruptedException ignore){
-			Thread.currentThread().interrupt();
-			throw new DBException(ignore);
-		}catch(IOException ignore){
+		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}
 	}
@@ -73,10 +70,7 @@ public class DockerDatabase implements Database{
 	public void init() throws DBException{
 		try{
 			web.runCommand("docker start osu-web-mysql-" + web.getID());
-		}catch(InterruptedException ignore){
-			Thread.currentThread().interrupt();
-			throw new DBException(ignore);
-		}catch(IOException ignore){
+		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}
 	}
@@ -85,10 +79,7 @@ public class DockerDatabase implements Database{
 	public void shutdown() throws DBException{
 		try{
 			web.runCommand("docker stop osu-web-mysql-" + web.getID());
-		}catch(InterruptedException ignore){
-			Thread.currentThread().interrupt();
-			throw new DBException(ignore);
-		}catch(IOException ignore){
+		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}
 	}

@@ -73,13 +73,13 @@ public abstract class BaseSwitchCommand extends WebCommand{
 			if(ignore.getMessage().startsWith("Invalid ref name")){
 				event.reply("Could not find the requested ref, does it exist?");
 			}else{
-				event.logError(ignore, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+				event.logError(ignore, "[BaseSwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();
 			}
 		}catch(MergeConflictException ignore){
 			event.reply("Failed to merge with ppy/master due to a merge conflict.");
 		}catch(Exception e){
-			event.logError(e, "[SwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
+			event.logError(e, "[BaseSwitchCommand] Wiki update failed", Severity.MINOR, Priority.MEDIUM, args);
 			event.internalError();
 		}
 	}

@@ -231,11 +231,11 @@ public class OsuWeb{
 			if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
 				throw new IOException("Executed command returned a non-zero exit code.");
 			}
-		}catch(InterruptedException e){
+		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();
-			throw new WebException(e);
-		}catch(IOException e){
-			throw new WebException(e);
+			throw new WebException(ignore);
+		}catch(IOException ignore){
+			throw new WebException(ignore);
 		}
 	}
 }

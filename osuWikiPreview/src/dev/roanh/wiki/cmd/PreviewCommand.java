@@ -78,11 +78,11 @@ public class PreviewCommand extends BaseSwitchCommand{
 		
 		try(InputStream in = file.getProxy().download().get()){
 			pushBranch(event, web, args, in.readAllBytes(), Integer.parseInt(m.group(1)), m.group());
-		}catch(InterruptedException e){
+		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();
-			throw new IOException(e);
-		}catch(ExecutionException e){
-			throw new IOException(e);
+			throw new IOException(ignore);
+		}catch(ExecutionException ignore){
+			throw new IOException(ignore);
 		}
 	}
 }

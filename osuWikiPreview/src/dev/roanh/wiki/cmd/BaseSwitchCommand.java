@@ -69,6 +69,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 			handleSwitch(web, args, event);
 		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
 			event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
+			ignore.printStackTrace();
 		}catch(JGitInternalException ignore){
 			if(ignore.getMessage().startsWith("Invalid ref name")){
 				event.reply("Could not find the requested ref, does it exist?");

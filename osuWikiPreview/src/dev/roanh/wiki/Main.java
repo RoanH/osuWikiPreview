@@ -67,7 +67,7 @@ public class Main{
 	/**
 	 * Discord bot instance.
 	 */
-	public static DiscordBot client;
+	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999);
 	/**
 	 * Deployment instances.
 	 */
@@ -82,8 +82,6 @@ public class Main{
 	 * @param args No valid arguments.
 	 */
 	public static final void main(String[] args){
-		client = new DiscordBot("/help", "!w", true, 569, 8999);
-		
 		try{
 			OsuWiki.init();
 		}catch(IOException e){

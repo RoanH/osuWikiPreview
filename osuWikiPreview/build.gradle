@@ -2,10 +2,13 @@ plugins{
 	id 'eclipse'
 	id 'application'
 	id 'maven-publish'
-	id 'com.github.johnrengelman.shadow' version '7.1.2'
-	id 'com.github.spotbugs' version '5.0.14'
-	id 'org.sonarqube' version '4.4.1.3373'
+	id 'com.gradleup.shadow' version '8.3.2'
+	id 'com.github.spotbugs' version '6.0.18'
+	id 'org.sonarqube' version '5.1.0.4882'
 }
+
+import com.github.spotbugs.snom.Confidence
+import com.github.spotbugs.snom.Effort
 
 sourceSets{
 	main.java.srcDirs = ['src']
@@ -43,8 +46,10 @@ sourceCompatibility = 1.17
 javadoc.options.memberLevel = JavadocMemberLevel.PRIVATE
 group = 'dev.roanh.wiki'
 ext.artifact = 'wiki'
-shadowJar.archiveName = 'osuWikiPreview-v' + version + '.jar'
-application.mainClassName = 'dev.roanh.wiki.Main'
+shadowJar.archiveBaseName = 'osuWikiPreview'
+shadowJar.archiveVersion = 'v' + version
+shadowJar.archiveClassifier = ''
+application.mainClass = 'dev.roanh.wiki.Main'
 
 sonar{
 	properties{
@@ -55,8 +60,8 @@ sonar{
 
 spotbugs{
 	showProgress = true
-	effort = 'max'
-	reportLevel = 'low'
+	effort = Effort.valueOf('MAX')
+	reportLevel = Confidence.valueOf('LOW')
 	excludeFilter = file("$rootDir/exclude.xml")
 }
 

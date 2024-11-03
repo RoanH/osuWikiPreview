@@ -37,9 +37,6 @@ import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.GitHub;
-import dev.roanh.wiki.GitHub.GitHubException;
-import dev.roanh.wiki.GitHub.PullRequestInfo;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
@@ -47,6 +44,9 @@ import dev.roanh.wiki.OsuWiki.SwitchResult;
 import dev.roanh.wiki.WebState;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
+import dev.roanh.wiki.github.GitHub;
+import dev.roanh.wiki.github.GitHub.GitHubException;
+import dev.roanh.wiki.github.GitHub.PullRequestInfo;
 
 /**
  * Base for commands that switch the active preview branch.

@@ -45,11 +45,36 @@ public final class GitHub{
 	 * The GSON instance to use to deserialise response payloads.
 	 */
 	private static final Gson gson = new Gson();
+	/**
+	 * The instance of the GitHub API.
+	 */
+	private static final GitHub instance = new GitHub();
+	/**
+	 * The base url for the GitHub API.
+	 */
+	private final String baseUrl;
 	
 	/**
-	 * Prevent instantiation.
+	 * Constructs a new GitHub API instance.
 	 */
 	private GitHub(){
+		this("https://api.github.com/");
+	}
+	
+	/**
+	 * Constructs a new GitHub API instance.
+	 * @param baseUrl The GitHub API base endpoint.
+	 */
+	public GitHub(String baseUrl){
+		this.baseUrl = baseUrl;
+	}
+	
+	/**
+	 * Gets the instance of the GitHub API.
+	 * @return The GitHub API instance.
+	 */
+	public static final GitHub instance(){
+		return instance;
 	}
 
 	/**
@@ -59,10 +84,10 @@ public final class GitHub{
 	 * @return An open PR with the given commit.
 	 * @throws GitHubException When some GitHub API exception occurs.
 	 */
-	public static final Optional<PullRequestInfo> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
+	public final Optional<PullRequestInfo> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
 		try{
 			return Arrays.stream(
-				gson.fromJson(executeGet("https://api.github.com/repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), PullRequestInfo[].class)
+				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), PullRequestInfo[].class)
 			).filter(PullRequestInfo::isOfficial).findFirst();
 		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();
@@ -74,15 +99,15 @@ public final class GitHub{
 	
 	/**
 	 * Executes a HTTP GET request against the given endpoint.
-	 * @param url The URL to request.
+	 * @param path The endpoint to request.
 	 * @return The response JSON payload.
 	 * @throws URISyntaxException When the given URL is invalid.
 	 * @throws IOException When an IOException occurs.
 	 * @throws InterruptedException When the current thread is interrupted.
 	 */
-	private static final String executeGet(String url) throws URISyntaxException, IOException, InterruptedException{
+	private final String executeGet(String path) throws URISyntaxException, IOException, InterruptedException{
 		HttpResponse<String> response = client.send(
-			HttpRequest.newBuilder(new URI(url)).GET().header("Accept", "application/vnd.github.v3+json").build(),
+			HttpRequest.newBuilder(new URI(baseUrl + path)).GET().header("Accept", "application/vnd.github.v3+json").build(),
 			BodyHandlers.ofString()
 		);
 		

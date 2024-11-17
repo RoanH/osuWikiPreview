@@ -33,6 +33,7 @@ import com.google.gson.Gson;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import dev.roanh.infinity.io.netty.http.HttpBody;
@@ -51,30 +52,42 @@ public class WebHookHandler implements BodyHandler{
 	
 	
 	public static void init(){
-		WebServer server = new WebServer(0);
+		WebServer server = new WebServer(23333);
 		
-		server.createContext(null, false, null);
+		server.createContext("/", false, (request, data)->RequestHandler.status(HttpResponseStatus.FORBIDDEN));
+		server.createContext(HttpMethod.POST, "/", new WebHookHandler("snip"));
 		
 		
-		
+		server.run();
+	}
+	
+	
+	public static void main(String[] args){
+		init();
 	}
 
 	@Override
 	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
 		String payload = data.string();
 		if(!validateSignature(payload, request.headers())){
+			System.out.println("payload validation failed: " + payload);
 			return RequestHandler.status(HttpResponseStatus.FORBIDDEN);
 		}
 		
 		
+		System.out.println("received: " + payload);
 		
+		
+		//TODO not receiving comments right now
+		
+		//separate table for pr (id/number) - comment
 		
 		
 //		new Gson().fromJson(signatureHeader, null)
 		
 		
 		// TODO Auto-generated method stub
-		return null;
+		return RequestHandler.ok();
 	}
 	
 	
@@ -88,13 +101,13 @@ public class WebHookHandler implements BodyHandler{
 	
 	
 	
-	
-	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException{
-		//TODO unit test
-		new WebHookHandler("It's a Secret to Everybody").validateSignature("757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17", "Hello, World!");
-	}
-	
-	
+//	
+//	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException{
+//		//TODO unit test
+//		new WebHookHandler("It's a Secret to Everybody").validateSignature("757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17", "Hello, World!");
+//	}
+//	
+//	
 	
 	private final boolean validateSignature(String payload, HttpHeaders headers){
 		String signatureHeader = headers.get("X-Hub-Signature-256");

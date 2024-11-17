@@ -211,7 +211,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 */
 	private static final Optional<PullRequestInfo> retrievePullRequest(String namespace, String sha){
 		try{
-			return GitHub.getPullRequestForCommit(namespace, sha);
+			return GitHub.instance().getPullRequestForCommit(namespace, sha);
 		}catch(GitHubException ignore){
 			//missing PR info should not hold back an embed
 			return Optional.empty();

@@ -19,11 +19,14 @@
  */
 package dev.roanh.wiki.github;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.List;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -40,10 +43,14 @@ import dev.roanh.infinity.io.netty.http.HttpBody;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.BodyHandler;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.wiki.github.handler.PullRequestCommentHandler;
+import dev.roanh.wiki.github.hooks.IssueCommentData;
 
 public class WebHookHandler implements BodyHandler{
 	private static final String HMAC_ALGORITHM = "HmacSHA256";
+	private static final Gson gson = new Gson();//TODO configure
 	private final Key secret;
+	private final List<PullRequestCommentHandler> commentHandler = new ArrayList<PullRequestCommentHandler>();
 	
 	public WebHookHandler(String secret){
 		this.secret = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
@@ -53,6 +60,7 @@ public class WebHookHandler implements BodyHandler{
 	
 	public static void init(){
 		WebServer server = new WebServer(23333);
+		//TODO register exception handler
 		
 		server.createContext("/", false, (request, data)->RequestHandler.status(HttpResponseStatus.FORBIDDEN));
 		server.createContext(HttpMethod.POST, "/", new WebHookHandler("snip"));
@@ -65,6 +73,10 @@ public class WebHookHandler implements BodyHandler{
 	public static void main(String[] args){
 		init();
 	}
+	
+	public void addPullRequestCommentHandler(PullRequestCommentHandler handler){
+		commentHandler.add(handler);
+	}
 
 	@Override
 	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
@@ -76,7 +88,8 @@ public class WebHookHandler implements BodyHandler{
 		
 		
 		System.out.println("received: " + payload);
-		
+
+
 		
 		//TODO not receiving comments right now
 		
@@ -87,7 +100,25 @@ public class WebHookHandler implements BodyHandler{
 		
 		
 		// TODO Auto-generated method stub
+		
+		
+		String type = request.headers().get("X-GitHub-Event");
+		switch(type){
+		case "issue_comment"://pr's are also issues
+			handleIssueCommentEvent(payload);
+			break;
+		}
+		
 		return RequestHandler.ok();
+	}
+	
+	private void handleIssueCommentEvent(String json) throws IOException{
+		IssueCommentData data = gson.fromJson(json, IssueCommentData.class);
+		if(data.isCreateAction() && data.issue().isPullRequest()){
+			for(PullRequestCommentHandler handler : commentHandler){
+				handler.handleComment(data);
+			}
+		}
 	}
 	
 	
@@ -99,22 +130,14 @@ public class WebHookHandler implements BodyHandler{
 	
 	
 	
-	
-	
-//	
-//	public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException{
-//		//TODO unit test
-//		new WebHookHandler("It's a Secret to Everybody").validateSignature("757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17", "Hello, World!");
-//	}
-//	
-//	
+
 	
 	private final boolean validateSignature(String payload, HttpHeaders headers){
 		String signatureHeader = headers.get("X-Hub-Signature-256");
 		return signatureHeader != null && signatureHeader.length() == 64 + 7 && signatureHeader.startsWith("sha256=") && validateSignature(signatureHeader.substring(7), payload);
 	}
 	
-	private final boolean validateSignature(String signature, String payload){
+	protected final boolean validateSignature(String signature, String payload){
 		try{
 			Mac mac = Mac.getInstance(HMAC_ALGORITHM);
 			mac.init(secret);

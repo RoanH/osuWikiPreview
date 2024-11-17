@@ -21,4 +21,10 @@
     <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
   </Match>
   
+  <Match>
+	<!-- For testing and temporary -->
+	<Class name="dev.roanh.wiki.GitHub"/>
+	<Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
+  </Match>
+  
 </FindBugsFilter>

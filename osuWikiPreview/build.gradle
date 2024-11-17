@@ -4,6 +4,7 @@ plugins{
 	id 'maven-publish'
 	id 'com.gradleup.shadow' version '8.3.2'
 	id 'com.github.spotbugs' version '6.0.18'
+	id 'jacoco'
 	id 'org.sonarqube' version '5.1.0.4882'
 }
 
@@ -12,6 +13,11 @@ import com.github.spotbugs.snom.Effort
 
 sourceSets{
 	main.java.srcDirs = ['src']
+
+	test{
+		java.srcDirs = ['test']
+		resources.srcDirs = ['test']
+	}
 }
 
 dependencies{
@@ -21,6 +27,11 @@ dependencies{
 	//JGit
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
 	implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r'
+
+	//Testing
+	testImplementation(platform('org.junit:junit-bom:5.11.1'))
+	testImplementation('org.junit.jupiter:junit-jupiter')
+	testImplementation('org.wiremock:wiremock:3.5.4')
 }
 
 repositories{
@@ -42,6 +53,8 @@ if(version.matches("v\\d+\\.\\d+")){
 eclipse.classpath.downloadSources = true
 eclipse.classpath.downloadJavadoc = true
 compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+jacocoTestReport.reports.xml.required = true
 sourceCompatibility = 1.17
 javadoc.options.memberLevel = JavadocMemberLevel.PRIVATE
 group = 'dev.roanh.wiki'
@@ -50,6 +63,16 @@ shadowJar.archiveBaseName = 'osuWikiPreview'
 shadowJar.archiveVersion = 'v' + version
 shadowJar.archiveClassifier = ''
 application.mainClass = 'dev.roanh.wiki.Main'
+
+test{
+	useJUnitPlatform()
+	dependsOn 'cleanTest'
+
+	testLogging{
+		events "passed", "skipped", "failed"
+		showStandardStreams = true
+	}
+}
 
 sonar{
 	properties{

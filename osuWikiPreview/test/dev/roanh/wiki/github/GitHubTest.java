@@ -20,6 +20,7 @@
 package dev.roanh.wiki.github;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -57,6 +58,24 @@ public class GitHubTest{
 		assertEquals(12265, pr.number());
 		assertTrue(pr.isOfficial());
 		assertEquals("https://github.com/ppy/osu-wiki/pull/12265", pr.getUrl());
+	}
+	
+	@Test
+	public void signatureValidationValid(){
+		assertTrue(GitHub.validateSignature(
+			GitHub.createSigningKey("It's a Secret to Everybody"),
+			"757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",
+			"Hello, World!")
+		);
+	}
+	
+	@Test
+	public void signatureValidationInvalid(){
+		assertFalse(GitHub.validateSignature(
+			GitHub.createSigningKey("It's not a Secret to Everybody"),
+			"757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",
+			"Hello, World!")
+		);
 	}
 	
 	private static ResponseDefinitionBuilder readJson(String name) throws IOException{

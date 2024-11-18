@@ -26,8 +26,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.Optional;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -37,6 +45,10 @@ import com.google.gson.JsonSyntaxException;
  * @author Roan
  */
 public final class GitHub{
+	/**
+	 * Algorithm used by GitHub to sign webhook events.
+	 */
+	private static final String HMAC_ALGORITHM = "HmacSHA256";
 	/**
 	 * HTTP client used to make API requests.
 	 */
@@ -116,6 +128,27 @@ public final class GitHub{
 		}
 		
 		return response.body();
+	}
+	
+	public static final Key createSigningKey(String secret){
+		return new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+	}
+	
+	public static final boolean validateSignature(Key secret, String signature, String payload){
+		try{
+			Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+			mac.init(secret);
+			byte[] hexSignature = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+			
+			int diff = 0;
+			for(int i = 0; i < hexSignature.length; i++){
+				diff |= ((HexFormat.fromHexDigit(signature.charAt(i * 2)) << 4) | HexFormat.fromHexDigit(signature.charAt(i * 2 + 1))) ^ (hexSignature[i] & 0xFF);
+			}
+			
+			return diff == 0;
+		}catch(NoSuchAlgorithmException | InvalidKeyException ignore){
+			return false;
+		}
 	}
 	
 	/**

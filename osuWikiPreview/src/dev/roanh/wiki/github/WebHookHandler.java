@@ -47,13 +47,12 @@ import dev.roanh.wiki.github.handler.PullRequestCommentHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentData;
 
 public class WebHookHandler implements BodyHandler{
-	private static final String HMAC_ALGORITHM = "HmacSHA256";
 	private static final Gson gson = new Gson();//TODO configure
 	private final Key secret;
 	private final List<PullRequestCommentHandler> commentHandler = new ArrayList<PullRequestCommentHandler>();
 	
 	public WebHookHandler(String secret){
-		this.secret = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
+		this.secret = GitHub.createSigningKey(secret);
 	}
 	
 	
@@ -89,7 +88,7 @@ public class WebHookHandler implements BodyHandler{
 		
 		System.out.println("received: " + payload);
 
-
+		//check if known contributor?
 		
 		//TODO not receiving comments right now
 		
@@ -134,23 +133,6 @@ public class WebHookHandler implements BodyHandler{
 	
 	private final boolean validateSignature(String payload, HttpHeaders headers){
 		String signatureHeader = headers.get("X-Hub-Signature-256");
-		return signatureHeader != null && signatureHeader.length() == 64 + 7 && signatureHeader.startsWith("sha256=") && validateSignature(signatureHeader.substring(7), payload);
-	}
-	
-	protected final boolean validateSignature(String signature, String payload){
-		try{
-			Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-			mac.init(secret);
-			byte[] hexSignature = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-			
-			int diff = 0;
-			for(int i = 0; i < hexSignature.length; i++){
-				diff |= ((HexFormat.fromHexDigit(signature.charAt(i * 2)) << 4) | HexFormat.fromHexDigit(signature.charAt(i * 2 + 1))) ^ (hexSignature[i] & 0xFF);
-			}
-			
-			return diff == 0;
-		}catch(NoSuchAlgorithmException | InvalidKeyException ignore){
-			return false;
-		}
+		return signatureHeader != null && signatureHeader.length() == 64 + 7 && signatureHeader.startsWith("sha256=") && GitHub.validateSignature(secret, signatureHeader.substring(7), payload);
 	}
 }

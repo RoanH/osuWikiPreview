@@ -20,16 +20,9 @@
 package dev.roanh.wiki.github;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HexFormat;
 import java.util.List;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
 
@@ -48,29 +41,29 @@ import dev.roanh.wiki.github.hooks.IssueCommentData;
 
 public class WebHookHandler implements BodyHandler{
 	private static final Gson gson = new Gson();//TODO configure
+	private final WebServer server;
 	private final Key secret;
 	private final List<PullRequestCommentHandler> commentHandler = new ArrayList<PullRequestCommentHandler>();
 	
 	public WebHookHandler(String secret){
+		this.server = new WebServer(23333);
 		this.secret = GitHub.createSigningKey(secret);
-	}
-	
-	
-	
-	public static void init(){
-		WebServer server = new WebServer(23333);
 		//TODO register exception handler
-		
 		server.createContext("/", false, (request, data)->RequestHandler.status(HttpResponseStatus.FORBIDDEN));
-		server.createContext(HttpMethod.POST, "/", new WebHookHandler("snip"));
-		
-		
-		server.run();
+		server.createContext(HttpMethod.POST, "/", this);
 	}
 	
 	
-	public static void main(String[] args){
-		init();
+	
+	
+	
+	
+	public void start(){
+		server.runAsync();
+	}
+	
+	public void stop(){
+		server.shutdown();
 	}
 	
 	public void addPullRequestCommentHandler(PullRequestCommentHandler handler){
@@ -81,7 +74,7 @@ public class WebHookHandler implements BodyHandler{
 	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
 		String payload = data.string();
 		if(!validateSignature(payload, request.headers())){
-			System.out.println("payload validation failed: " + payload);
+			System.out.println("payload validation failed: " + "\nsig: " + request.headers().get("X-Hub-Signature-256"));
 			return RequestHandler.status(HttpResponseStatus.FORBIDDEN);
 		}
 		

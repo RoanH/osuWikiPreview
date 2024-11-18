@@ -15,5 +15,13 @@ public record GitHubIssue(
 	}
 	
 	//state = open | closed
+	
+	
+	public boolean isOpen(){
+		return "open".equals(state);
+	}
 
+	public boolean isClosed(){
+		return "closed".equals(state);
+	}
 }

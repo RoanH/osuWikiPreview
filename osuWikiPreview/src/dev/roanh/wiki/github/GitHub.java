@@ -134,11 +134,15 @@ public final class GitHub{
 		return new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
 	}
 	
+	public static final byte[] sign(Key secret, String payload) throws NoSuchAlgorithmException, InvalidKeyException{
+		Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+		mac.init(secret);
+		return mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+	}
+	
 	public static final boolean validateSignature(Key secret, String signature, String payload){
 		try{
-			Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-			mac.init(secret);
-			byte[] hexSignature = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+			byte[] hexSignature = sign(secret, payload);
 			
 			int diff = 0;
 			for(int i = 0; i < hexSignature.length; i++){

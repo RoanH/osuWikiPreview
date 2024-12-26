@@ -218,7 +218,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void runArtisan(String cmd) throws WebException{
-		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
+		runCommand("docker exec -t osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
 	/**

@@ -218,7 +218,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void runArtisan(String cmd) throws WebException{
-		runCommand("docker exec -it osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
+		runCommand("docker exec -t osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 	
 	/**
@@ -228,8 +228,9 @@ public class OsuWeb{
 	 */
 	public void runCommand(String cmd) throws WebException{
 		try{
-			if(0 != new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor()){
-				throw new IOException("Executed command returned a non-zero exit code.");
+			int code = new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor();
+			if(0 != code){
+				throw new IOException("Executed command returned exit code: " + code);
 			}
 		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();

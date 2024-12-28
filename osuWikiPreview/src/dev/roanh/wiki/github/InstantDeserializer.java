@@ -17,26 +17,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki.github.hooks;
+package dev.roanh.wiki.github;
 
-import dev.roanh.wiki.github.obj.GitHubComment;
-import dev.roanh.wiki.github.obj.GitHubIssue;
+import java.lang.reflect.Type;
+import java.time.Instant;
+
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 
 /**
- * Web hook data for an issue comment (PRs are also issues).
+ * Deserialiser for Instant instances.
  * @author Roan
- * @param action The comment event type, one of 'created', 'deleted', and 'edited'.
- * @param comment Information about the comment.
- * @param issue Information about the issue the comment is on.
- *
+ * @see Instant
  */
-public record IssueCommentData(String action, GitHubComment comment, GitHubIssue issue){
-	
-	/**
-	 * Checks if this event is for a newly created comment.
-	 * @return True if this event is for a newly created comment.
-	 */
-	public boolean isCreateAction(){
-		return "created".equals(action);
+public class InstantDeserializer implements JsonDeserializer<Instant>{
+
+	@Override
+	public Instant deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException{
+		return json.isJsonNull() ? null : Instant.parse(json.getAsString());
 	}
 }

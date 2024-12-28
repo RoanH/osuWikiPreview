@@ -63,18 +63,20 @@ public class GitHubTest{
 	@Test
 	public void signatureValidationValid(){
 		assertTrue(GitHub.validateSignature(
-			GitHub.createSigningKey("It's a Secret to Everybody"),
-			"757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",
-			"Hello, World!")
+				GitHub.createSigningKey("It's a Secret to Everybody"),
+				"757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",
+				"Hello, World!"
+			)
 		);
 	}
 	
 	@Test
 	public void signatureValidationInvalid(){
 		assertFalse(GitHub.validateSignature(
-			GitHub.createSigningKey("It's not a Secret to Everybody"),
-			"757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",
-			"Hello, World!")
+				GitHub.createSigningKey("It's not a Secret to Everybody"),
+				"757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",
+				"Hello, World!"
+			)
 		);
 	}
 	

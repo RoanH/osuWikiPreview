@@ -81,7 +81,7 @@ public class WebHookHandlerTest{
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("resources/github/" + name + ".json")){
 			String payload = new String(in.readAllBytes(), StandardCharsets.UTF_8);
 			HttpRequest.Builder builder = HttpRequest.newBuilder(new URI("http://localhost:23333"));
-			builder.header("X-Hub-Signature-256", HexFormat.of().formatHex(GitHub.sign(signingKey, payload)));
+			builder.header("X-Hub-Signature-256", "sha256=" + HexFormat.of().formatHex(GitHub.sign(signingKey, payload)));
 			builder.header("X-GitHub-Event", eventType);
 			builder.POST(BodyPublishers.ofString(payload));
 			

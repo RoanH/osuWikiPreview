@@ -21,10 +21,12 @@ package dev.roanh.wiki.github;
 
 import java.io.IOException;
 import java.security.Key;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -40,7 +42,7 @@ import dev.roanh.wiki.github.handler.PullRequestCommentHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentData;
 
 public class WebHookHandler implements BodyHandler{
-	private static final Gson gson = new Gson();//TODO configure
+	private static final Gson gson;
 	private final WebServer server;
 	private final Key secret;
 	private final List<PullRequestCommentHandler> commentHandler = new ArrayList<PullRequestCommentHandler>();
@@ -95,6 +97,7 @@ public class WebHookHandler implements BodyHandler{
 		
 		
 		String type = request.headers().get("X-GitHub-Event");
+		System.out.println("type: " + type);
 		switch(type){
 		case "issue_comment"://pr's are also issues
 			handleIssueCommentEvent(payload);
@@ -127,5 +130,13 @@ public class WebHookHandler implements BodyHandler{
 	private final boolean validateSignature(String payload, HttpHeaders headers){
 		String signatureHeader = headers.get("X-Hub-Signature-256");
 		return signatureHeader != null && signatureHeader.length() == 64 + 7 && signatureHeader.startsWith("sha256=") && GitHub.validateSignature(secret, signatureHeader.substring(7), payload);
+	}
+	
+	
+	
+	static{
+		GsonBuilder builder = new GsonBuilder();
+		builder.registerTypeAdapter(Instant.class, new InstantDeserializer());
+		gson = builder.create();
 	}
 }

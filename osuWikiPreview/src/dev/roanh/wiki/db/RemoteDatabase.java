@@ -25,7 +25,7 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.Main;
-import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.WebState;
 
 /**
  * Remote hosted MySQL instance connection.

@@ -28,7 +28,6 @@ import dev.roanh.wiki.github.obj.GitHubIssue;
  * @param action The comment event type, one of 'created', 'deleted', and 'edited'.
  * @param comment Information about the comment.
  * @param issue Information about the issue the comment is on.
- *
  */
 public record IssueCommentData(String action, GitHubComment comment, GitHubIssue issue){
 	

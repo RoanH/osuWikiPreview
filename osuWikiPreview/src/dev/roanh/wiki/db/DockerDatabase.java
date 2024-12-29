@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.OsuWeb;
-import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.WebException;
 
 /**

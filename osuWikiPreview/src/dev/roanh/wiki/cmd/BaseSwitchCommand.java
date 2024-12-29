@@ -41,7 +41,7 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
-import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 import dev.roanh.wiki.github.GitHub;

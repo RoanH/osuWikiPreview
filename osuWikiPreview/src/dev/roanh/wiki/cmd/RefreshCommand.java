@@ -27,7 +27,7 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.wiki.OsuWeb;
-import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 

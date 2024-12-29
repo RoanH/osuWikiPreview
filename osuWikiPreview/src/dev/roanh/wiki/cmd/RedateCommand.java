@@ -26,7 +26,7 @@ import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
-import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.WebState;
 
 /**
  * Command to redate news in the news posts database to the current date time.

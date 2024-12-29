@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jgit.diff.DiffEntry;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.db.Database;
 import dev.roanh.wiki.db.RemoteDatabase;
 import dev.roanh.wiki.exception.WebException;

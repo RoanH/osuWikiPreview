@@ -17,7 +17,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki;
+package dev.roanh.wiki.data;
+
+import java.util.Optional;
 
 /**
  * Record containing information on the current state of an osu! web
@@ -28,9 +30,17 @@ package dev.roanh.wiki;
  *        out reference is under.
  * @param ref The reference (branch/sha/tag) that is currently checked out.
  * @param redate Whether news posts were redated.
- * @param master Whether ppy/master was merged into the ref beforehand.
+ * @param master Whether ppy/master was merged into the ref beforehand. 
  */
-public record WebState(String namespace, String ref, boolean redate, boolean master){
+public record WebState(
+		String namespace,
+		String ref,
+		boolean redate,
+		boolean master,
+		long lockedUntil,
+		Optional<Long> pullRequest,
+		Optional<User> user
+	){
 
 	/**
 	 * Gets the link to the GitHub tree associated with this state.
@@ -45,7 +55,7 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 	 * @return A copy of this web state with the redate flag set to true.
 	 */
 	public WebState withRedate(){
-		return new WebState(namespace, ref, true, master);
+		return new WebState(namespace, ref, true, master);//user discord --github
 	}
 
 	/**

@@ -45,7 +45,7 @@ public class WebHookHandler implements BodyHandler{
 	private static final Gson gson;
 	private final WebServer server;
 	private final Key secret;
-	private final List<PullRequestCommentHandler> commentHandler = new ArrayList<PullRequestCommentHandler>();
+	private final List<PullRequestCommentHandler> commentHandlers = new ArrayList<PullRequestCommentHandler>();
 	
 	public WebHookHandler(String secret){
 		this.server = new WebServer(23333);
@@ -69,7 +69,7 @@ public class WebHookHandler implements BodyHandler{
 	}
 	
 	public void addPullRequestCommentHandler(PullRequestCommentHandler handler){
-		commentHandler.add(handler);
+		commentHandlers.add(handler);
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class WebHookHandler implements BodyHandler{
 	private void handleIssueCommentEvent(String json) throws IOException{
 		IssueCommentData data = gson.fromJson(json, IssueCommentData.class);
 		if(data.isCreateAction() && data.issue().isPullRequest()){
-			for(PullRequestCommentHandler handler : commentHandler){
+			for(PullRequestCommentHandler handler : commentHandlers){
 				handler.handleComment(data);
 			}
 		}

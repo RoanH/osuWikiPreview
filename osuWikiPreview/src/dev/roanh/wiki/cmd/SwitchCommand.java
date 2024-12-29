@@ -29,7 +29,7 @@ import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
-import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 

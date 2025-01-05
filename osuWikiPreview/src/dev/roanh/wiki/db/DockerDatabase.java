@@ -79,7 +79,7 @@ public class DockerDatabase implements Database{
 	@Override
 	public void shutdown() throws DBException{
 		try{
-			dev.roanh.wiki.Main.runCommand("docker stop osu-web-mysql-" + web.getID());
+			Main.runCommand("docker stop osu-web-mysql-" + web.getID());
 		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}

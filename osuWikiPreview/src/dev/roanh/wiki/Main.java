@@ -74,7 +74,7 @@ public class Main{
 	public static final Map<Long, OsuWeb> INSTANCES = Map.of(
 		1145490143436873739L, new OsuWeb(1),
 		1133099433853198427L, new OsuWeb(2),
-		1145490162806173706L, new OsuWeb(3)
+		1145490162806173706L, new OsuWeb(3)//TODO db
 	);
 
 	/**
@@ -106,5 +106,24 @@ public class Main{
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();
+	}
+	
+	/**
+	 * Runs a command on the server.
+	 * @param cmd The command to run.
+	 * @throws WebException When an exception occurs.
+	 */
+	public static void runCommand(String cmd) throws WebException{
+		try{
+			int code = new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor();
+			if(0 != code){
+				throw new IOException("Executed command returned exit code: " + code);
+			}
+		}catch(InterruptedException ignore){
+			Thread.currentThread().interrupt();
+			throw new WebException(ignore);
+		}catch(IOException ignore){
+			throw new WebException(ignore);
+		}
 	}
 }

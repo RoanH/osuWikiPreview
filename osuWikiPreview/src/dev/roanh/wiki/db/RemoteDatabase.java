@@ -52,7 +52,7 @@ public class RemoteDatabase implements Database{
 	@Override
 	public void init() throws DBException{
 		Configuration config = Main.client.getConfig();
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + id, "osuweb", config.readString("db-pass")), "wiki");
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "osu" + id, "osuweb", config.readString("db-pass")), "wiki");
 	}
 
 	@Override

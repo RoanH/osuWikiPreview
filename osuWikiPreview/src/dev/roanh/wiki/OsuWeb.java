@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -199,7 +198,7 @@ public class OsuWeb{
 	public void start() throws DBException, WebException{
 		database.init();
 		currentState = database.getState(id);
-		runCommand("docker start osu-web-" + id);
+		Main.runCommand("docker start osu-web-" + id);
 	}
 	
 	/**
@@ -208,7 +207,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void stop() throws DBException, WebException{
-		runCommand("docker stop osu-web-" + id);
+		Main.runCommand("docker stop osu-web-" + id);
 		database.shutdown();
 	}
 	
@@ -218,25 +217,6 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void runArtisan(String cmd) throws WebException{
-		runCommand("docker exec -t osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
-	}
-	
-	/**
-	 * Runs a command on the server.
-	 * @param cmd The command to run.
-	 * @throws WebException When an exception occurs.
-	 */
-	public void runCommand(String cmd) throws WebException{
-		try{
-			int code = new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor();
-			if(0 != code){
-				throw new IOException("Executed command returned exit code: " + code);
-			}
-		}catch(InterruptedException ignore){
-			Thread.currentThread().interrupt();
-			throw new WebException(ignore);
-		}catch(IOException ignore){
-			throw new WebException(ignore);
-		}
+		Main.runCommand("docker exec -t osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 }

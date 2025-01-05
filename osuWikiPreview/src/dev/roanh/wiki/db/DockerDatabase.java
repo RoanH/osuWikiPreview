@@ -22,6 +22,7 @@ package dev.roanh.wiki.db;
 import java.util.regex.Pattern;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.WebState;
 import dev.roanh.wiki.exception.WebException;
@@ -51,7 +52,7 @@ public class DockerDatabase implements Database{
 	@Override
 	public void runQuery(String query) throws DBException{
 		try{
-			web.runCommand("docker exec -it osu-web-mysql-" + web.getID() + " mysql osu -e \"" + query + ";\"");
+			Main.runCommand("docker exec -it osu-web-mysql-" + web.getID() + " mysql osu -e \"" + query + ";\"");
 		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}
@@ -69,7 +70,7 @@ public class DockerDatabase implements Database{
 	@Override
 	public void init() throws DBException{
 		try{
-			web.runCommand("docker start osu-web-mysql-" + web.getID());
+			Main.runCommand("docker start osu-web-mysql-" + web.getID());
 		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}
@@ -78,7 +79,7 @@ public class DockerDatabase implements Database{
 	@Override
 	public void shutdown() throws DBException{
 		try{
-			web.runCommand("docker stop osu-web-mysql-" + web.getID());
+			dev.roanh.wiki.Main.runCommand("docker stop osu-web-mysql-" + web.getID());
 		}catch(WebException ignore){
 			throw new DBException(ignore);
 		}

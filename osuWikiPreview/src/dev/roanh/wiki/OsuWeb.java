@@ -199,7 +199,7 @@ public class OsuWeb{
 	public void start() throws DBException, WebException{
 		database.init();
 		currentState = database.getState(id);
-		runCommand("docker start osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+		runCommand("docker start osu-web-" + id);
 	}
 	
 	/**
@@ -208,7 +208,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void stop() throws DBException, WebException{
-		runCommand("docker stop osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+		runCommand("docker stop osu-web-" + id);
 		database.shutdown();
 	}
 	

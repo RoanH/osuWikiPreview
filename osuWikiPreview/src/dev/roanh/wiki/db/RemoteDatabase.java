@@ -19,6 +19,8 @@
  */
 package dev.roanh.wiki.db;
 
+import java.util.List;
+
 import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
@@ -26,6 +28,7 @@ import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.Instance;
 
 /**
  * Remote hosted MySQL instance connection.
@@ -52,7 +55,7 @@ public class RemoteDatabase implements Database{
 	@Override
 	public void init() throws DBException{
 		Configuration config = Main.client.getConfig();
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "osu" + id, "osuweb", config.readString("db-pass")), "wiki");
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "osu" + id, "osuweb", config.readString("db-pass")), "wiki" + id);
 	}
 
 	@Override

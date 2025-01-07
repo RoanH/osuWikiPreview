@@ -21,6 +21,7 @@ package dev.roanh.wiki;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -37,6 +38,7 @@ import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.RestartCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
+import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -71,11 +73,7 @@ public class Main{
 	/**
 	 * Deployment instances.
 	 */
-	public static final Map<Long, OsuWeb> INSTANCES = Map.of(
-		1145490143436873739L, new OsuWeb(1),
-		1133099433853198427L, new OsuWeb(2),
-		1145490162806173706L, new OsuWeb(3)//TODO db
-	);
+	public static final Map<Long, OsuWeb> INSTANCES = new HashMap<Long, OsuWeb>();
 
 	/**
 	 * Starts the Discord bot.
@@ -86,6 +84,14 @@ public class Main{
 			OsuWiki.init();
 		}catch(IOException e){
 			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
+		}
+		
+		try{
+			MainDatabase.init(client.getConfig());
+			MainDatabase.getInstances().forEach(instance->INSTANCES.put(instance.channel(), new OsuWeb(instance)));
+		}catch(DBException e){
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		for(OsuWeb site : INSTANCES.values()){

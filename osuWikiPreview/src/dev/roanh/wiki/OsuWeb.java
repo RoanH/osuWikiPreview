@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jgit.diff.DiffEntry;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.db.Database;
 import dev.roanh.wiki.db.RemoteDatabase;
 import dev.roanh.wiki.exception.WebException;
@@ -59,10 +60,14 @@ public class OsuWeb{
 	 * Constructs a new osu! web instance with the given domain.
 	 * @param id Numerical ID used to identify this instance and associated services.
 	 */
-	public OsuWeb(int id){
-		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
-		this.id = id;
-		database = new RemoteDatabase(id);
+	public OsuWeb(Instance instance){
+		domain = null;
+		database = null;
+		id = -1;
+		//TODO
+//		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
+//		this.id = id;
+//		database = new RemoteDatabase(id);
 	}
 	
 	/**

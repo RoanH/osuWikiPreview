@@ -30,6 +30,7 @@ import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
 public class InstanceGenerator{
@@ -41,7 +42,7 @@ public class InstanceGenerator{
 	
 	public void createInstance() throws DBException, IOException, WebException{
 		generateEnv();
-		dropExtraSchemas();
+		MainDatabase.dropExtraSchemas();
 		prepareInstance();
 	}
 	
@@ -126,17 +127,6 @@ public class InstanceGenerator{
 			out.println("CENTILI_WIDGET_URL=https://api.centili.com/payment/widget");
 			out.println("OSU_RUNNING_COST=");
 		}
-	}
-	
-	private void dropExtraSchemas() throws DBException{
-		Configuration config = Main.client.getConfig();
-		DBExecutorService executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "wikipreview", "osuweb", config.readString("db-pass")), "wiki");
-		executor.update("DROP DATABASE `osu_charts`");
-		executor.update("DROP DATABASE `osu_chat`");
-		executor.update("DROP DATABASE `osu_mp`");
-		executor.update("DROP DATABASE `osu_store`");
-		executor.update("DROP DATABASE `osu_updates`");
-		executor.shutdown();
 	}
 	
 	private void runArtisan(String cmd) throws WebException{

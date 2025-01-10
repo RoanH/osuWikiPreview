@@ -88,17 +88,16 @@ public class Main{
 		
 		try{
 			MainDatabase.init(client.getConfig());
-			MainDatabase.getInstances().forEach(instance->INSTANCES.put(instance.channel(), new OsuWeb(instance)));
+			MainDatabase.getInstances().forEach(instance->INSTANCES.put(instance.channel(), new OsuWeb(client.getConfig(), instance)));
 		}catch(DBException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			client.logError(e, "[Main] Failed to retrieve instances.", Severity.MINOR, Priority.MEDIUM);
 		}
 		
 		for(OsuWeb site : INSTANCES.values()){
 			try{
 				site.start();
 			}catch(WebException | DBException e){
-				client.logError(e, "[Main] Failed to start site with ID " + site.getID(), Severity.MINOR, Priority.MEDIUM);
+				client.logError(e, "[Main] Failed to start site with ID " + site.getInstance().id(), Severity.MINOR, Priority.MEDIUM);
 			}
 		}
 		

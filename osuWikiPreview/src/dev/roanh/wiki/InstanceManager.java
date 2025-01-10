@@ -26,27 +26,39 @@ import java.nio.file.Paths;
 
 import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.config.PropertiesFileConfiguration;
-import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.infinity.db.concurrent.DBExecutorService;
-import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
-public class InstanceGenerator{
+public class InstanceManager{
 	private final int id;
+	private final long discord;
+	private final int port;
 	
-	public InstanceGenerator(int id){
+	public InstanceManager(Instance instance){
+		this(instance.id(), instance.channel(), instance.port());
+	}
+	
+	public InstanceManager(int id, long discord, int port){
 		this.id = id;
+		this.discord = discord;
+		this.port = port;
 	}
 	
 	public void createInstance() throws DBException, IOException, WebException{
+		MainDatabase.addInstance(id, discord, port);
 		generateEnv();
 		MainDatabase.dropExtraSchemas();
 		prepareInstance();
 	}
 	
-	public void runInstance(int port) throws WebException{
+	public void deleteInstanceContainer() throws WebException{
+		Main.runCommand("docker stop osu-web-" + id);
+		Main.runCommand("docker rm osu-web-" + id);
+	}
+	
+	public void runInstance() throws WebException{
 		Main.runCommand("docker run -d --name osu-web-" + id + " --env-file osu" + id + ".env -p " + port + ":8000 pppy/osu-web:latest octane");
 	}
 	
@@ -58,7 +70,7 @@ public class InstanceGenerator{
 		runArtisan("es:index-wiki --create-only");
 	}
 
-	private void generateEnv() throws IOException{
+	public void generateEnv() throws IOException{
 		Configuration config = new PropertiesFileConfiguration(Paths.get("secrets.properties"));
 		try(PrintWriter out = new PrintWriter(Files.newBufferedWriter(Main.DEPLOY_PATH.toPath().resolve("osu" + id + ".env")))){
 			out.println("# osu! web instance " + id);

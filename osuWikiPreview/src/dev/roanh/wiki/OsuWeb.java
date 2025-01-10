@@ -24,10 +24,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
+import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.data.Instance;
-import dev.roanh.wiki.db.Database;
-import dev.roanh.wiki.db.RemoteDatabase;
+import dev.roanh.wiki.db.InstanceDatabase;
+import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -35,18 +36,11 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public class OsuWeb{
-	/**
-	 * The domain this instance can be browsed at.
-	 */
-	private final String domain;
-	/**
-	 * Numerical ID of this instance to identify associated docker containers.
-	 */
-	private final int id;
+	private final Instance instance;
 	/**
 	 * The connection to the database.
 	 */
-	private final Database database;
+	private final InstanceDatabase database;
 	/**
 	 * Lock to prevent simultaneous command runs.
 	 */
@@ -58,16 +52,12 @@ public class OsuWeb{
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
-	 * @param id Numerical ID used to identify this instance and associated services.
+	 * @param config The general configuration file.
+	 * @param instance The instance for this osu! web instance.
 	 */
-	public OsuWeb(Instance instance){
-		domain = null;
-		database = null;
-		id = -1;
-		//TODO
-//		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
-//		this.id = id;
-//		database = new RemoteDatabase(id);
+	public OsuWeb(Configuration config, Instance instance){
+		this.instance = instance;
+		database = new InstanceDatabase(config.readString("db-url"), config.readString("db-pass"), instance.id());
 	}
 	
 	/**
@@ -88,7 +78,7 @@ public class OsuWeb{
 	 */
 	public void setCurrentState(WebState state) throws DBException{
 		currentState = state;
-		database.saveState(id, currentState);
+		MainDatabase.saveState(instance.id(), currentState);
 	}
 	
 	/**
@@ -110,20 +100,16 @@ public class OsuWeb{
 		busy.set(false);
 	}
 	
-	/**
-	 * Gets the website domain for this instance.
-	 * @return The domain for this instance.
-	 */
-	public String getDomain(){
-		return domain;
+	public String getWikiSyncBranch(){
+		return instance.getGitHubBranch();
 	}
 	
 	/**
-	 * Gets the ID for this osu! web instance.
-	 * @return The ID for this instance.
+	 * Gets the instance for this osu! web instance.
+	 * @return The instance for this web instance.
 	 */
-	public int getID(){
-		return id;
+	public Instance getInstance(){
+		return instance;
 	}
 	
 	/**
@@ -153,7 +139,7 @@ public class OsuWeb{
 	public void fixLinks(DiffEntry news) throws DBException{
 		String path = news.getNewPath();
 		if(path.startsWith("news/")){
-			database.runQuery("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=osu" + id + ".roanh.dev\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
+			database.runQuery("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=" + instance.getDomain() + "\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
 		}
 	}
 	
@@ -201,9 +187,8 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void start() throws DBException, WebException{
-		database.init();
-		currentState = database.getState(id);
-		Main.runCommand("docker start osu-web-" + id);
+		currentState = MainDatabase.getState(instance.id());
+		Main.runCommand("docker start " + instance.getWebContainer());
 	}
 	
 	/**
@@ -212,7 +197,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void stop() throws DBException, WebException{
-		Main.runCommand("docker stop osu-web-" + id);
+		Main.runCommand("docker stop " + instance.getWebContainer());
 		database.shutdown();
 	}
 	
@@ -222,6 +207,6 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void runArtisan(String cmd) throws WebException{
-		Main.runCommand("docker exec -t osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
+		Main.runCommand("docker exec -t " + instance.getWebContainer() + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 }

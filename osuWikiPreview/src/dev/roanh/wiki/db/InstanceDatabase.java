@@ -19,33 +19,47 @@
  */
 package dev.roanh.wiki.db;
 
+import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.wiki.WebState;
+import dev.roanh.infinity.db.concurrent.DBExecutorService;
+import dev.roanh.infinity.db.concurrent.DBExecutors;
 
 /**
  * Database connection implementation for osu! web.
  * @author Roan
  */
-public abstract interface Database{
+public class InstanceDatabase{//TODO just move into osuweb?
+	/**
+	 * The database connection.
+	 */
+	private final DBExecutorService executor;
 	
 	/**
-	 * Initialises the connection with the database.
-	 * @throws DBException When a database exception occurs.
+	 * Constructs a new remote database.
+	 * @param url The database connection URL without schema.
+	 * @param pass The database password.
+	 * @param id The preview instance ID.
 	 */
-	public abstract void init() throws DBException;
+	public InstanceDatabase(String url, String pass, int id){
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(url + "osu" + id, "osuweb", pass), "wiki" + id);
+	}
 	
 	/**
 	 * Closes the connection with the database.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public abstract void shutdown() throws DBException;
+	public void shutdown() throws DBException{
+		executor.shutdown();
+	}
 	
 	/**
 	 * Runs the given SQL query on the database for this instance.
 	 * @param query The query to execute.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public abstract void runQuery(String query) throws DBException;
+	public void runQuery(String query) throws DBException{
+		executor.update(query);
+	}
 	
 	/**
 	 * Runs the given SQL query on the database for this instance.
@@ -54,21 +68,7 @@ public abstract interface Database{
 	 * @param param The query string parameter.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public abstract void runQuery(String query, String param) throws DBException;
-	
-	/**
-	 * Saves the current state of the web instance with the given ID.
-	 * @param id The ID of the web instance to save the state of.
-	 * @param state The state of the web instance.
-	 * @throws DBException When a database exception occurs.
-	 */
-	public abstract void saveState(int id, WebState state) throws DBException;
-	
-	/**
-	 * Retrieves the last known state of the web instance with the given ID.
-	 * @param id The ID of the web instance to retrieve the state of.
-	 * @return The last known state of the given instance or null if not known.
-	 * @throws DBException When a database exception occurs.
-	 */
-	public abstract WebState getState(int id) throws DBException;
+	public void runQuery(String query, String param) throws DBException{
+		executor.update(query, param);
+	}
 }

@@ -45,6 +45,7 @@ import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
 import dev.roanh.wiki.WebState;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 
@@ -112,7 +113,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws WebException When a web exception occurs.
 	 */
 	protected void pushBranch(CommandEvent event, OsuWeb web, CommandMap args, byte[] data, int year, String filename) throws GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, new WebState("RoanH", "wikisync-" + web.getID(), true, false), web, OsuWiki.pushNews(data, year, filename, web));
+		switchBranch(event, new WebState("RoanH", web.getWikiSyncBranch(), true, false), web, OsuWiki.pushNews(data, year, filename, web));
 	}
 	
 	/**
@@ -184,7 +185,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		}
 		
 		for(DiffEntry item : diff.diff()){
-			String path = resolveSitePath(item.getNewPath(), web);
+			String path = resolveSitePath(item.getNewPath(), web.getInstance());
 			if(path != null){
 				int len = desc.length();
 				desc.append("- [");
@@ -223,12 +224,12 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * inside the osu! wiki repository.
 	 * @param repoPath The path of the markdown file in the osu! wiki
 	 *        repository, this path is assumed to end with <code>.md</code>.
-	 * @param instance The osu! web instance to resolve site paths with.
+	 * @param instance The instance to resolve site paths with.
 	 * @return The osu! web path for the given osu! wiki path or
 	 *         <code>null</code> if the given path does not point to
 	 *         a file that is visible on the website.
 	 */
-	private static final String resolveSitePath(String repoPath, OsuWeb instance){
+	private static final String resolveSitePath(String repoPath, Instance instance){
 		int pathEnd = repoPath.lastIndexOf('/');
 		if(pathEnd == -1){
 			//some markdown file at the root of the repository
@@ -237,15 +238,15 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		
 		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
 		if(repoPath.startsWith("news/")){
-			return instance.getDomain() + "home/news/" + filename;
+			return instance.getBaseUrl() + "home/news/" + filename;
 		}else if(repoPath.startsWith("wiki/Legal/")){
 			if(pathEnd < 11){//root so no sub-path
-				return instance.getDomain() + "legal/" + filename;
+				return instance.getBaseUrl() + "legal/" + filename;
 			}else{
-				return instance.getDomain() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+				return instance.getBaseUrl() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
 			}
 		}else if(repoPath.startsWith("wiki/")){
-			return instance.getDomain() + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
+			return instance.getBaseUrl() + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
 		}else{
 			return null;
 		}

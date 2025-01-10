@@ -177,11 +177,11 @@ public class OsuWiki{
 	 */
 	private static SwitchResult pushBranch(ObjectId from, OsuWeb instance) throws IOException, GitAPIException, DBException, WebException{
 		//push the new state to the remote
-		forcePush("wikisync-" + instance.getID());
+		forcePush(instance.getWikiSyncBranch());
 
 		//update the website wiki
 		ObjectId to = getHead();
-		instance.runWikiUpdate("master", "wikisync-" + instance.getID());
+		instance.runWikiUpdate("master", instance.getWikiSyncBranch());
 
 		//compute the diff
 		SwitchResult diff = new SwitchResult(computeDiff(from, to), to.getName());

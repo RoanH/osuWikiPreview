@@ -32,6 +32,7 @@ import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.cmd.ClearNewsCommand;
+import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.PreviewCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
@@ -107,6 +108,7 @@ public class Main{
 		client.registerCommand(new RefreshCommand());
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new PreviewCommand());
+		client.registerCommand(new InstanceCommand());
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();

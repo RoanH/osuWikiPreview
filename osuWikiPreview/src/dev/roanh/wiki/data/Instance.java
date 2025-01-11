@@ -27,11 +27,27 @@ public record Instance(int id, long channel, int port){
 		return "https://" + getDomain() + "/";
 	}
 	
+	/**
+	 * Gets the website domain for this instance.
+	 * @return The website domain.
+	 */
 	public String getDomain(){
 		return "osu" + id + "." + Main.DOMAIN;
 	}
 	
+	/**
+	 * Gets the name of the osu! web docker container for this instance.
+	 * @return The name of the osu! web docker container.
+	 */
 	public String getWebContainer(){
 		return "osu-web-" + id;
+	}
+	
+	/**
+	 * Gets the name of the main osu! web database schema for this instance.
+	 * @return The main schema name.
+	 */
+	public String getDatabaseSchema(){
+		return "osu" + id;
 	}
 }

@@ -28,7 +28,6 @@ import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.config.PropertiesFileConfiguration;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.data.Instance;
-import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
 public class InstanceManager{

@@ -25,10 +25,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jgit.diff.DiffEntry;
 
 import dev.roanh.infinity.config.Configuration;
+import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.infinity.db.concurrent.DBExecutorService;
+import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.data.Instance;
-import dev.roanh.wiki.db.InstanceDatabase;
-import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -36,11 +37,14 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public class OsuWeb{
+	/**
+	 * The instance this osu! web instance is associated with.
+	 */
 	private final Instance instance;
 	/**
-	 * The connection to the database.
+	 * The osu! web database connection for this instance.
 	 */
-	private final InstanceDatabase database;
+	private final DBExecutorService executor;
 	/**
 	 * Lock to prevent simultaneous command runs.
 	 */
@@ -57,7 +61,7 @@ public class OsuWeb{
 	 */
 	public OsuWeb(Configuration config, Instance instance){
 		this.instance = instance;
-		database = new InstanceDatabase(config.readString("db-url"), config.readString("db-pass"), instance.id());
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchema(), "osuweb", config.readString("db-pass")), "wiki" + instance.id());
 	}
 	
 	/**
@@ -139,7 +143,7 @@ public class OsuWeb{
 	public void fixLinks(DiffEntry news) throws DBException{
 		String path = news.getNewPath();
 		if(path.startsWith("news/")){
-			database.runQuery("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=" + instance.getDomain() + "\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
+			executor.update("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=" + instance.getDomain() + "\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
 		}
 	}
 	
@@ -148,7 +152,7 @@ public class OsuWeb{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public void redateNews() throws DBException{
-		database.runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
+		executor.update("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
 	}
 	
 	/**
@@ -156,7 +160,7 @@ public class OsuWeb{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public void clearNewsDatabase() throws DBException{
-		database.runQuery("DELETE FROM news_posts");
+		executor.delete("DELETE FROM news_posts");
 	}
 	
 	/**
@@ -167,7 +171,7 @@ public class OsuWeb{
 	public void clearNewsPost(DiffEntry news) throws DBException{
 		String path = news.getNewPath();
 		if(path.startsWith("news/")){
-			database.runQuery("DELETE FROM news_posts WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
+			executor.delete("DELETE FROM news_posts WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
 		}
 	}
 		
@@ -198,7 +202,6 @@ public class OsuWeb{
 	 */
 	public void stop() throws DBException, WebException{
 		Main.runCommand("docker stop " + instance.getWebContainer());
-		database.shutdown();
 	}
 	
 	/**

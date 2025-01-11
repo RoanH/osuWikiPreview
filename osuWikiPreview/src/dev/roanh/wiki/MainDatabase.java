@@ -1,4 +1,4 @@
-package dev.roanh.wiki.db;
+package dev.roanh.wiki;
 
 import java.util.List;
 
@@ -7,10 +7,16 @@ import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
-import dev.roanh.wiki.WebState;
 import dev.roanh.wiki.data.Instance;
 
+/**
+ * Main database for the application (not instance specific).
+ * @author Roan
+ */
 public final class MainDatabase{
+	/**
+	 * The database connection.
+	 */
 	private static DBExecutorService executor;
 
 	/**
@@ -19,6 +25,10 @@ public final class MainDatabase{
 	private MainDatabase(){
 	}
 	
+	/**
+	 * Initialises the connection with the database.
+	 * @param config The application configuration.
+	 */
 	public static void init(Configuration config){
 		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "wikipreview", "osuweb", config.readString("db-pass")), "wiki");
 	}
@@ -53,10 +63,22 @@ public final class MainDatabase{
 		}, id).orElse(null);
 	}
 
+	/**
+	 * Registers a new osu! web instance.
+	 * @param id The ID of the instance.
+	 * @param channel The discord channel for the instance.
+	 * @param port The external web port for the instance.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static void addInstance(int id, long channel, int port) throws DBException{
 		executor.insert("INSERT INTO instances (id, channel, port) VALUES (?, ?, ?)", id, channel, port);
 	}
 	
+	/**
+	 * Gets a list of all registered osu! web instances.
+	 * @return A list of all osu! web instances.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static List<Instance> getInstances() throws DBException{
 		return executor.selectAll("SELECT * FROM instances", rs->{
 			return new Instance(
@@ -67,6 +89,10 @@ public final class MainDatabase{
 		});
 	}
 
+	/**
+	 * Drops all the schemas that are not really used but created by osu! web instances.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static void dropExtraSchemas() throws DBException{
 		executor.delete("DROP DATABASE `osu_charts`");
 		executor.delete("DROP DATABASE `osu_chat`");

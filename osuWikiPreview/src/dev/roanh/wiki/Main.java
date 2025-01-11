@@ -38,7 +38,6 @@ import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.RestartCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
-import dev.roanh.wiki.db.MainDatabase;
 import dev.roanh.wiki.exception.WebException;
 
 /**

@@ -1,7 +1,6 @@
 package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -11,9 +10,9 @@ import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.InstanceManager;
-import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.data.Instance;
+import dev.roanh.wiki.exception.WebException;
 
 public class InstanceCommand extends CommandGroup{
 	private static final long INSTANCES_CATEGORY = 1133099341079384165L;
@@ -29,6 +28,8 @@ public class InstanceCommand extends CommandGroup{
 		registerCommand(create);
 		
 		registerCommand(Command.of("recreate", "Creates the osu! web container again.", CommandPermission.DEV, false, this::recreateContainer));
+		
+		//TODO start
 	}
 
 	public void generateEnv(CommandMap args, CommandEvent event){
@@ -46,11 +47,29 @@ public class InstanceCommand extends CommandGroup{
 		}
 	}
 	
-	public void recreateContainer(CommandMap args, CommandEvent event){
-		
-		
-		
-		
+	public void recreateContainer(CommandMap args, CommandEvent original){
+		original.deferReply(event->{
+			OsuWeb instance = InstanceManager.getInstanceById(args.get("id").getAsInt());
+			if(instance != null){
+				if(!instance.tryLock()){
+					try{
+						InstanceManager manager = instance.getManager();
+						manager.deleteInstanceContainer();
+						manager.runInstance();
+						event.reply("Instance recreated and started successfully.");
+					}catch(WebException e){
+						event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
+						event.internalError();
+					}finally{
+						instance.unlock();
+					}
+				}else{
+					event.reply("Already running a task, please try again later.");
+				}
+			}else{
+				event.reply("Unknown instance");
+			}
+		});
 	}
 
 	public void createInstance(CommandMap args, CommandEvent event){

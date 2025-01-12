@@ -116,6 +116,10 @@ public class OsuWeb{
 		return instance;
 	}
 	
+	public InstanceManager getManager(){
+		return new InstanceManager(instance);
+	}
+	
 	/**
 	 * Updates all osu! web news articles.
 	 * @param diff A diff indicating repository files that were changed.

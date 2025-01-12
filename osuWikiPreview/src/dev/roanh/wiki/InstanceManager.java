@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.config.PropertiesFileConfiguration;
@@ -31,6 +34,14 @@ import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.exception.WebException;
 
 public class InstanceManager{
+	/**
+	 * Deployment instances by ID.
+	 */
+	private static final Map<Integer, OsuWeb> instancesById = new HashMap<Integer, OsuWeb>();
+	/**
+	 * Deployment instances by Discord channel.
+	 */
+	private static final Map<Long, OsuWeb> instancesByChannel = new HashMap<Long, OsuWeb>();
 	private final int id;
 	private final long discord;
 	private final int port;
@@ -50,6 +61,7 @@ public class InstanceManager{
 		generateEnv();
 		MainDatabase.dropExtraSchemas();
 		prepareInstance();
+		//technically should also push a new GitHub branch but I just made 9 in advance for now
 	}
 	
 	public void deleteInstanceContainer() throws WebException{
@@ -142,5 +154,25 @@ public class InstanceManager{
 	
 	private void runArtisan(String cmd) throws WebException{
 		Main.runCommand("docker run --rm -t --env-file osu" + id + ".env pppy/osu-web:latest artisan " + cmd + " --no-interaction");
+	}
+	
+	public static void init(Configuration config) throws DBException{
+		for(Instance instance : MainDatabase.getInstances()){
+			OsuWeb web = new OsuWeb(config, instance);
+			instancesById.put(instance.id(), web);
+			instancesByChannel.put(instance.channel(), web);
+		}
+	}
+	
+	public static OsuWeb getInstanceById(int id){
+		return instancesById.get(id);
+	}
+	
+	public static OsuWeb getInstanceByChannel(long channel){
+		return instancesByChannel.get(channel);
+	}
+	
+	public static Collection<OsuWeb> getInstances(){
+		return instancesById.values();
 	}
 }

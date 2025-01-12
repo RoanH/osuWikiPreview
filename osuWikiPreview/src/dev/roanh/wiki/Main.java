@@ -21,8 +21,6 @@ package dev.roanh.wiki;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -70,11 +68,7 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999);
-	/**
-	 * Deployment instances.
-	 */
-	public static final Map<Long, OsuWeb> INSTANCES = new HashMap<Long, OsuWeb>();
-
+	
 	/**
 	 * Starts the Discord bot.
 	 * @param args No valid arguments.
@@ -88,12 +82,12 @@ public class Main{
 		
 		try{
 			MainDatabase.init(client.getConfig());
-			MainDatabase.getInstances().forEach(instance->INSTANCES.put(instance.channel(), new OsuWeb(client.getConfig(), instance)));
+			InstanceManager.init(client.getConfig());
 		}catch(DBException e){
 			client.logError(e, "[Main] Failed to retrieve instances.", Severity.MINOR, Priority.MEDIUM);
 		}
 		
-		for(OsuWeb site : INSTANCES.values()){
+		for(OsuWeb site : InstanceManager.getInstances()){
 			try{
 				site.start();
 			}catch(WebException | DBException e){

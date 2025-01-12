@@ -25,7 +25,7 @@ import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.Main;
+import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.OsuWeb;
 
 /**
@@ -47,7 +47,7 @@ public abstract class WebCommand extends Command{
 
 	@Override
 	public final void execute(CommandMap args, CommandEvent original){
-		final OsuWeb web = Main.INSTANCES.getOrDefault(original.getChannelId(), null);
+		final OsuWeb web = InstanceManager.getInstanceByChannel(original.getChannelId());
 		if(web == null){
 			original.reply("Please run this command in one of the channels under the `instances` category.");
 			return;

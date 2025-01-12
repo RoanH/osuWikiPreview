@@ -27,14 +27,15 @@ public class InstanceCommand extends CommandGroup{
 		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, false, this::createInstance);
 		create.addOptionInt("port", "The web port for the new instance.", 1024, 65535);
 		registerCommand(create);
+		
+		registerCommand(Command.of("recreate", "Creates the osu! web container again.", CommandPermission.DEV, false, this::recreateContainer));
 	}
 
 	public void generateEnv(CommandMap args, CommandEvent event){
-		final int id = args.get("id").getAsInt();
-		Optional<Instance> instance = Main.INSTANCES.values().stream().filter(web->web.getInstance().id() == id).map(OsuWeb::getInstance).findFirst();
-		if(instance.isPresent()){
+		OsuWeb instance = InstanceManager.getInstanceById(args.get("id").getAsInt());
+		if(instance != null){
 			try{
-				new InstanceManager(instance.get()).generateEnv();
+				instance.getManager().generateEnv();
 				event.reply("Environment regenerated successfully.");
 			}catch(IOException e){
 				event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
@@ -44,12 +45,19 @@ public class InstanceCommand extends CommandGroup{
 			event.reply("Unknown instance");
 		}
 	}
+	
+	public void recreateContainer(CommandMap args, CommandEvent event){
+		
+		
+		
+		
+	}
 
 	public void createInstance(CommandMap args, CommandEvent event){
 		final int id = args.get("id").getAsInt();
 		final int port = args.get("port").getAsInt();
 
-		if(Main.INSTANCES.values().stream().map(OsuWeb::getInstance).anyMatch(instance->instance.id() == id || instance.port() == port)){
+		if(InstanceManager.getInstances().stream().map(OsuWeb::getInstance).anyMatch(instance->instance.id() == id || instance.port() == port)){
 			event.reply("An instance with the given port or ID already exists.");
 			return;
 		}
@@ -62,7 +70,7 @@ public class InstanceCommand extends CommandGroup{
 //				InstanceManager manager = new InstanceManager(INSTANCES_CATEGORY).create
 					
 					
-
+				//TODO mention bot restart required to work + network config ufw+nginx
 			});
 			
 			

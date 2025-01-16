@@ -37,7 +37,7 @@ public class ClearNewsCommand extends WebCommand{
 	 * Constructs a new clear news command.
 	 */
 	public ClearNewsCommand(){
-		super("clearnews", "Clears all generated news posts from the database.", Main.PERMISSION, true);
+		super("clearnews", "Clears all generated news posts from the database.", Main.PERMISSION);
 	}
 
 	@Override

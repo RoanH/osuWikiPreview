@@ -61,7 +61,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @param description The description of this command.
 	 */
 	protected BaseSwitchCommand(String name, String description){
-		super(name, description, Main.PERMISSION, true);
+		super(name, description, Main.PERMISSION);
 	}
 	
 	@Override

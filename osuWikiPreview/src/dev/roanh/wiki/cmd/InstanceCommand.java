@@ -2,6 +2,7 @@ package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
 
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandGroup;
@@ -21,58 +22,70 @@ public class InstanceCommand extends CommandGroup{
 		super("instance", "Creates and configures a new osu! web instance.");
 		addOptionInt("id", "The identifier for the instance.");
 		
-		registerCommand(Command.of("env", "Regenerate the .env file for the given instance.", CommandPermission.DEV, false, this::generateEnv));
+		registerCommand(WebCommand.of("env", "Regenerate the .env file for the given instance.", CommandPermission.DEV, this::generateEnv));
+		
+		registerCommand(WebCommand.of("recreate", "Creates the osu! web container again.", CommandPermission.DEV, this::recreateContainer));
+		
+		registerCommand(WebCommand.of("restart", "Runs a new container for the osu! web instance.", CommandPermission.DEV, this::runInstance));
+		
+		registerCommand(WebCommand.of("restart", "Restarts the entire osu! web instance.", CommandPermission.DEV, this::restartInstance));
 		
 		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, false, this::createInstance);
 		create.addOptionInt("port", "The web port for the new instance.", 1024, 65535);
 		registerCommand(create);
-		
-		registerCommand(Command.of("recreate", "Creates the osu! web container again.", CommandPermission.DEV, false, this::recreateContainer));
-		
-		//TODO start
+	}
+	
+	/**
+	 * Command to restart the entire osu! web instance.
+	 * @author Roan
+	 * @param web The instance to restart.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
+	private void restartInstance(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			web.stop();
+			web.start();
+			event.reply("osu! web instance succesfully restarted.");
+		}catch(WebException | DBException e){
+			event.logError(e, "[InstanceCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
+			event.internalError();
+		}
 	}
 
-	public void generateEnv(CommandMap args, CommandEvent event){
-		OsuWeb instance = InstanceManager.getInstanceById(args.get("id").getAsInt());
-		if(instance != null){
-			try{
-				instance.getManager().generateEnv();
-				event.reply("Environment regenerated successfully.");
-			}catch(IOException e){
-				event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
-				event.internalError();
-			}
-		}else{
-			event.reply("Unknown instance");
+	private void generateEnv(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			web.getManager().generateEnv();
+			event.reply("Environment regenerated successfully (container still needs to be recreated).");
+		}catch(IOException e){
+			event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
+			event.internalError();
 		}
 	}
 	
-	public void recreateContainer(CommandMap args, CommandEvent original){
-		original.deferReply(event->{
-			OsuWeb instance = InstanceManager.getInstanceById(args.get("id").getAsInt());
-			if(instance != null){
-				if(!instance.tryLock()){
-					try{
-						InstanceManager manager = instance.getManager();
-						manager.deleteInstanceContainer();
-						manager.runInstance();
-						event.reply("Instance recreated and started successfully.");
-					}catch(WebException e){
-						event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
-						event.internalError();
-					}finally{
-						instance.unlock();
-					}
-				}else{
-					event.reply("Already running a task, please try again later.");
-				}
-			}else{
-				event.reply("Unknown instance");
-			}
-		});
+	private void runInstance(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			web.getManager().runInstance();
+			event.reply("osu! web instance successfully started.");
+		}catch(WebException e){
+			event.logError(e, "[InstanceCommand] Failed to run osu! web instance", Severity.MINOR, Priority.MEDIUM);
+			event.internalError();
+		}
+	}
+	
+	private void recreateContainer(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			InstanceManager manager = web.getManager();
+			manager.deleteInstanceContainer();
+			manager.runInstance();
+			event.reply("Instance recreated and started successfully.");
+		}catch(WebException e){
+			event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
+			event.internalError();
+		}
 	}
 
-	public void createInstance(CommandMap args, CommandEvent event){
+	private void createInstance(CommandMap args, CommandEvent event){
 		final int id = args.get("id").getAsInt();
 		final int port = args.get("port").getAsInt();
 
@@ -83,31 +96,16 @@ public class InstanceCommand extends CommandGroup{
 
 		event.deferReply(deferred->{
 			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel("osu" + id).queue(chan->{
-				Instance instance = new Instance(id, chan.getIdLong(), port);
-				
-				InstanceManager manager = new InstanceManager(instance);
-				
-				
-				
-				
-				
-				
-				
-//				InstanceManager manager = new InstanceManager(INSTANCES_CATEGORY).create
-					
-					
-				//TODO mention bot restart required to work + network config ufw+nginx
+				try{
+					InstanceManager manager = new InstanceManager(new Instance(id, chan.getIdLong(), port));
+					manager.createInstance();
+					manager.runInstance();
+					event.reply("Instance created succesfully (network configuration remains).");
+				}catch(DBException | IOException | WebException e){
+					event.logError(e, "[InstanceCommand] Failed to create instance", Severity.MINOR, Priority.MEDIUM, args);
+					event.internalError();
+				}
 			});
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
 		});
 	}
 }

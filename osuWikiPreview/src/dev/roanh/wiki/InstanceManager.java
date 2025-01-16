@@ -55,14 +55,14 @@ public class InstanceManager{
 		this.instance = instance;
 	}
 	
-	public OsuWeb createInstance() throws DBException, IOException, WebException{
+	public void createInstance() throws DBException, IOException, WebException{
 		MainDatabase.addInstance(instance);
 		generateEnv();
 		MainDatabase.dropExtraSchemas();
 		prepareInstance();
 		//technically should also push a new GitHub branch but I just made 9 in advance for now
 		
-		return registerInstance(Main.client.getConfig(), instance);
+		registerInstance(Main.client.getConfig(), instance);
 	}
 	
 	public void deleteInstanceContainer() throws WebException{
@@ -176,11 +176,9 @@ public class InstanceManager{
 		return instancesById.values();
 	}
 	
-	private static OsuWeb registerInstance(Configuration config, Instance instance){
+	private static void registerInstance(Configuration config, Instance instance){
 		OsuWeb web = new OsuWeb(config, instance);
-		web.tryLock();
 		instancesById.put(instance.id(), web);
 		instancesByChannel.put(instance.channel(), web);
-		return web;
 	}
 }

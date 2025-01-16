@@ -39,10 +39,9 @@ public abstract class WebCommand extends Command{
 	 * @param name The name of this command.
 	 * @param description The description of this command.
 	 * @param permission The permission the user needs to be allowed to execute this command.
-	 * @param guild True if this command only works in a guild.
 	 */
-	protected WebCommand(String name, String description, CommandPermission permission, boolean guild){
-		super(name, description, permission, guild);
+	protected WebCommand(String name, String description, CommandPermission permission){
+		super(name, description, permission, true);
 	}
 
 	@Override
@@ -77,4 +76,26 @@ public abstract class WebCommand extends Command{
 	 * @param event The command event.
 	 */
 	public abstract void executeWeb(OsuWeb web, CommandMap args, CommandEvent event);
+	
+	public static WebCommand of(String name, String description, CommandPermission permission, WebCommandRunnable handler){
+		return new WebCommand(name, description, permission){
+			
+			@Override
+			public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
+				handler.execute(web, args, event);
+			}
+		};
+	}
+	
+	@FunctionalInterface
+	public static abstract interface WebCommandRunnable{
+		
+		/**
+		 * Executes this command with the given arguments.
+		 * @param web The osu! web instance to work with.
+		 * @param args The arguments passed to this command.
+		 * @param event The message event for the interaction
+		 */
+		public abstract void execute(OsuWeb web, CommandMap args, CommandEvent event);
+	}
 }

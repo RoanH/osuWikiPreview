@@ -201,7 +201,6 @@ public class OsuWeb{
 	public void start() throws DBException, WebException{
 		currentState = MainDatabase.getState(instance.id());
 		Main.runCommand("docker start " + instance.getWebContainer());
-		unlock();
 	}
 	
 	/**
@@ -210,7 +209,6 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void stop() throws DBException, WebException{
-		tryLock();
 		Main.runCommand("docker stop " + instance.getWebContainer());
 	}
 	

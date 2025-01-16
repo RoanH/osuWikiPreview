@@ -85,6 +85,13 @@ public class InstanceCommand extends CommandGroup{
 			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel("osu" + id).queue(chan->{
 				Instance instance = new Instance(id, chan.getIdLong(), port);
 				
+				InstanceManager manager = new InstanceManager(instance);
+				
+				
+				
+				
+				
+				
 				
 //				InstanceManager manager = new InstanceManager(INSTANCES_CATEGORY).create
 					

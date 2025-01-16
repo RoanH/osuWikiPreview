@@ -32,7 +32,7 @@ import dev.roanh.wiki.exception.WebException;
  * Command to restart the entire osu! web instance.
  * @author Roan
  */
-public class RestartCommand extends WebCommand{
+public class RestartCommand extends WebCommand{//TODO move?
 
 	/**
 	 * Constructs a new restart command.

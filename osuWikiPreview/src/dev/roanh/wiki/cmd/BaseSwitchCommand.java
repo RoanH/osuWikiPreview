@@ -238,15 +238,15 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		
 		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
 		if(repoPath.startsWith("news/")){
-			return instance.getBaseUrl() + "home/news/" + filename;
+			return instance.getSiteUrl() + "/home/news/" + filename;
 		}else if(repoPath.startsWith("wiki/Legal/")){
 			if(pathEnd < 11){//root so no sub-path
-				return instance.getBaseUrl() + "legal/" + filename;
+				return instance.getSiteUrl() + "/legal/" + filename;
 			}else{
-				return instance.getBaseUrl() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+				return instance.getSiteUrl() + "/legal/" + filename + "/" + repoPath.substring(11, pathEnd);
 			}
 		}else if(repoPath.startsWith("wiki/")){
-			return instance.getBaseUrl() + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
+			return instance.getSiteUrl() + "/wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
 		}else{
 			return null;
 		}

@@ -33,6 +33,10 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.exception.WebException;
 
+/**
+ * General instance manager for administrative tasks.
+ * @author Roan
+ */
 public class InstanceManager{
 	/**
 	 * Deployment instances by ID.
@@ -42,35 +46,32 @@ public class InstanceManager{
 	 * Deployment instances by Discord channel.
 	 */
 	private static final Map<Long, OsuWeb> instancesByChannel = new HashMap<Long, OsuWeb>();
-	private final int id;
-	private final long discord;
-	private final int port;
+	/**
+	 * The specific instance being managed by this manager.
+	 */
+	private final Instance instance;
 	
 	public InstanceManager(Instance instance){
-		this(instance.id(), instance.channel(), instance.port());
+		this.instance = instance;
 	}
 	
-	public InstanceManager(int id, long discord, int port){
-		this.id = id;
-		this.discord = discord;
-		this.port = port;
-	}
-	
-	public void createInstance() throws DBException, IOException, WebException{
-		MainDatabase.addInstance(id, discord, port);
+	public OsuWeb createInstance() throws DBException, IOException, WebException{
+		MainDatabase.addInstance(instance);
 		generateEnv();
 		MainDatabase.dropExtraSchemas();
 		prepareInstance();
 		//technically should also push a new GitHub branch but I just made 9 in advance for now
+		
+		return registerInstance(Main.client.getConfig(), instance);
 	}
 	
 	public void deleteInstanceContainer() throws WebException{
-		Main.runCommand("docker stop osu-web-" + id);
-		Main.runCommand("docker rm osu-web-" + id);
+		Main.runCommand("docker stop " + instance.getWebContainer());
+		Main.runCommand("docker rm " + instance.getWebContainer());
 	}
 	
 	public void runInstance() throws WebException{
-		Main.runCommand("docker run -d --name osu-web-" + id + " --env-file osu" + id + ".env -p " + port + ":8000 pppy/osu-web:latest octane");
+		Main.runCommand("docker run -d --name " + instance.getWebContainer() + " --env-file " + instance.getEnvFile() + " -p " + instance.port() + ":8000 pppy/osu-web:latest octane");
 	}
 	
 	private void prepareInstance() throws WebException{
@@ -83,9 +84,9 @@ public class InstanceManager{
 
 	public void generateEnv() throws IOException{
 		Configuration config = new PropertiesFileConfiguration(Paths.get("secrets.properties"));
-		try(PrintWriter out = new PrintWriter(Files.newBufferedWriter(Main.DEPLOY_PATH.toPath().resolve("osu" + id + ".env")))){
-			out.println("# osu! web instance " + id);
-			out.println("APP_URL=https://osu" + id + "." + Main.DOMAIN);
+		try(PrintWriter out = new PrintWriter(Files.newBufferedWriter(Main.DEPLOY_PATH.toPath().resolve(instance.getEnvFile())))){
+			out.println("# osu! web instance " + instance.id());
+			out.println("APP_URL=" + instance.getSiteUrl());
 			out.println("APP_ENV=production");
 			out.println("OCTANE_HTTPS=true");
 			out.println("APP_DEBUG=false");
@@ -97,27 +98,27 @@ public class InstanceManager{
 			out.println();
 			out.println("# MySQL");
 			out.println("DB_HOST=" + config.readString("DB_HOST"));
-			out.println("DB_DATABASE=osu" + id);
+			out.println("DB_DATABASE=" + instance.getDatabaseSchema());
 			out.println("DB_USERNAME=osuweb");
 			out.println("DB_PASSWORD=" + config.readString("DB_PASSWORD"));
 			out.println();
 			out.println("# Redis");
 			out.println("REDIS_HOST=" + config.readString("REDIS_HOST"));
 			out.println("REDIS_PORT=6379");
-			out.println("REDIS_DB=" + id);
+			out.println("REDIS_DB=" + instance.id());
 			out.println("CACHE_REDIS_HOST=" + config.readString("REDIS_HOST"));
 			out.println("CACHE_REDIS_PORT=6379");
-			out.println("CACHE_REDIS_DB=" + id);
+			out.println("CACHE_REDIS_DB=" + instance.id());
 			out.println();
 			out.println("# GitHub");
 			out.println("GITHUB_TOKEN=" + config.readString("GITHUB_TOKEN"));
-			out.println("WIKI_BRANCH=wikisync-" + id);
+			out.println("WIKI_BRANCH=" + instance.getGitHubBranch());
 			out.println("WIKI_REPOSITORY=osu-wiki");
 			out.println("WIKI_USER=RoanH");
 			out.println();
 			out.println("# Elasticsearch");
 			out.println("ES_HOST=" + config.readString("ES_HOST") + ":9200");
-			out.println("ES_INDEX_PREFIX=osu" + id);
+			out.println("ES_INDEX_PREFIX=" + instance.getElasticsearchPrefix());
 			out.println();
 			out.println("# Other");
 			out.println("OSU_API_KEY=");
@@ -153,14 +154,12 @@ public class InstanceManager{
 	}
 	
 	private void runArtisan(String cmd) throws WebException{
-		Main.runCommand("docker run --rm -t --env-file osu" + id + ".env pppy/osu-web:latest artisan " + cmd + " --no-interaction");
+		Main.runCommand("docker run --rm -t --env-file " + instance.getEnvFile() + " pppy/osu-web:latest artisan " + cmd + " --no-interaction");
 	}
 	
 	public static void init(Configuration config) throws DBException{
 		for(Instance instance : MainDatabase.getInstances()){
-			OsuWeb web = new OsuWeb(config, instance);
-			instancesById.put(instance.id(), web);
-			instancesByChannel.put(instance.channel(), web);
+			registerInstance(config, instance);
 		}
 	}
 	
@@ -172,7 +171,16 @@ public class InstanceManager{
 		return instancesByChannel.get(channel);
 	}
 	
+	
 	public static Collection<OsuWeb> getInstances(){
 		return instancesById.values();
+	}
+	
+	private static OsuWeb registerInstance(Configuration config, Instance instance){
+		OsuWeb web = new OsuWeb(config, instance);
+		web.tryLock();
+		instancesById.put(instance.id(), web);
+		instancesByChannel.put(instance.channel(), web);
+		return web;
 	}
 }

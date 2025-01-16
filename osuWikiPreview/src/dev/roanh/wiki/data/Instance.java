@@ -20,11 +20,11 @@ public record Instance(int id, long channel, int port){
 	}
 	
 	/**
-	 * Gets the base URL this instance can be browsed at.
+	 * Gets the URL this instance can be browsed at.
 	 * @return The URL for this instance.
 	 */
-	public String getBaseUrl(){
-		return "https://" + getDomain() + "/";
+	public String getSiteUrl(){
+		return "https://" + getDomain();
 	}
 	
 	/**
@@ -48,6 +48,14 @@ public record Instance(int id, long channel, int port){
 	 * @return The main schema name.
 	 */
 	public String getDatabaseSchema(){
+		return "osu" + id;
+	}
+	
+	public String getEnvFile(){
+		return "osu" + id + ".env";
+	}
+	
+	public String getElasticsearchPrefix(){
 		return "osu" + id;
 	}
 }

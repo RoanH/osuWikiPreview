@@ -65,13 +65,11 @@ public final class MainDatabase{
 
 	/**
 	 * Registers a new osu! web instance.
-	 * @param id The ID of the instance.
-	 * @param channel The discord channel for the instance.
-	 * @param port The external web port for the instance.
+	 * @param instance The new instance to register.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public static void addInstance(int id, long channel, int port) throws DBException{
-		executor.insert("INSERT INTO instances (id, channel, port) VALUES (?, ?, ?)", id, channel, port);
+	public static void addInstance(Instance instance) throws DBException{
+		executor.insert("INSERT INTO instances (id, channel, port) VALUES (?, ?, ?)", instance.id(), instance.channel(), instance.port());
 	}
 	
 	/**

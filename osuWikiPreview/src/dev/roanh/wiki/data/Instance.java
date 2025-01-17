@@ -70,10 +70,18 @@ public record Instance(int id, long channel, int port){
 		return "osu" + id;
 	}
 	
+	/**
+	 * Gets the name of the environment configuration file for this instance.
+	 * @return The name of the environment configuration file for this instance.
+	 */
 	public String getEnvFile(){
 		return "osu" + id + ".env";
 	}
 	
+	/**
+	 * Gets the Elasticsearch prefixed used by this instance. 
+	 * @return The Elasticsearch prefix used by this instance.
+	 */
 	public String getElasticsearchPrefix(){
 		return "osu" + id;
 	}

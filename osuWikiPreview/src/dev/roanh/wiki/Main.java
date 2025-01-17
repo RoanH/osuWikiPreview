@@ -21,7 +21,6 @@ package dev.roanh.wiki;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -31,11 +30,11 @@ import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.cmd.ClearNewsCommand;
+import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.PreviewCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
-import dev.roanh.wiki.cmd.RestartCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
 import dev.roanh.wiki.exception.WebException;
 
@@ -68,15 +67,7 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999);
-	/**
-	 * Deployment instances.
-	 */
-	public static final Map<Long, OsuWeb> INSTANCES = Map.of(
-		1145490143436873739L, new OsuWeb(1),
-		1133099433853198427L, new OsuWeb(2),
-		1145490162806173706L, new OsuWeb(3)
-	);
-
+	
 	/**
 	 * Starts the Discord bot.
 	 * @param args No valid arguments.
@@ -88,23 +79,49 @@ public class Main{
 			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
 		}
 		
-		for(OsuWeb site : INSTANCES.values()){
+		try{
+			MainDatabase.init(client.getConfig());
+			InstanceManager.init(client.getConfig());
+		}catch(DBException e){
+			client.logError(e, "[Main] Failed to retrieve instances.", Severity.MINOR, Priority.MEDIUM);
+		}
+		
+		for(OsuWeb site : InstanceManager.getInstances()){
 			try{
 				site.start();
 			}catch(WebException | DBException e){
-				client.logError(e, "[Main] Failed to start site with ID " + site.getID(), Severity.MINOR, Priority.MEDIUM);
+				client.logError(e, "[Main] Failed to start site with ID " + site.getInstance().id(), Severity.MINOR, Priority.MEDIUM);
 			}
 		}
 		
 		client.registerCommand(new SwitchCommand());
-		client.registerCommand(new RestartCommand());
 		client.registerCommand(new ClearNewsCommand());
 		client.registerCommand(new RedateCommand());
 		client.registerCommand(new RefreshCommand());
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new PreviewCommand());
+		client.registerCommand(new InstanceCommand());
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();
+	}
+	
+	/**
+	 * Runs a command on the server.
+	 * @param cmd The command to run.
+	 * @throws WebException When an exception occurs.
+	 */
+	public static void runCommand(String cmd) throws WebException{
+		try{
+			int code = new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor();
+			if(0 != code){
+				throw new IOException("Executed command returned exit code: " + code);
+			}
+		}catch(InterruptedException ignore){
+			Thread.currentThread().interrupt();
+			throw new WebException(ignore);
+		}catch(IOException ignore){
+			throw new WebException(ignore);
+		}
 	}
 }

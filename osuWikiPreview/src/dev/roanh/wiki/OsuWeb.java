@@ -19,15 +19,17 @@
  */
 package dev.roanh.wiki;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
+import dev.roanh.infinity.config.Configuration;
+import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.wiki.db.Database;
-import dev.roanh.wiki.db.RemoteDatabase;
+import dev.roanh.infinity.db.concurrent.DBExecutorService;
+import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -36,17 +38,13 @@ import dev.roanh.wiki.exception.WebException;
  */
 public class OsuWeb{
 	/**
-	 * The domain this instance can be browsed at.
+	 * The instance this osu! web instance is associated with.
 	 */
-	private final String domain;
+	private final Instance instance;
 	/**
-	 * Numerical ID of this instance to identify associated docker containers.
+	 * The osu! web database connection for this instance.
 	 */
-	private final int id;
-	/**
-	 * The connection to the database.
-	 */
-	private final Database database;
+	private final DBExecutorService executor;
 	/**
 	 * Lock to prevent simultaneous command runs.
 	 */
@@ -58,12 +56,12 @@ public class OsuWeb{
 	
 	/**
 	 * Constructs a new osu! web instance with the given domain.
-	 * @param id Numerical ID used to identify this instance and associated services.
+	 * @param config The general configuration file.
+	 * @param instance The instance for this osu! web instance.
 	 */
-	public OsuWeb(int id){
-		domain = "https://osu" + id + "." + Main.DOMAIN + "/";
-		this.id = id;
-		database = new RemoteDatabase(id);
+	public OsuWeb(Configuration config, Instance instance){
+		this.instance = instance;
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchema(), "osuweb", config.readString("db-pass")), "wiki" + instance.id());
 	}
 	
 	/**
@@ -84,7 +82,7 @@ public class OsuWeb{
 	 */
 	public void setCurrentState(WebState state) throws DBException{
 		currentState = state;
-		database.saveState(id, currentState);
+		MainDatabase.saveState(instance.id(), currentState);
 	}
 	
 	/**
@@ -107,19 +105,27 @@ public class OsuWeb{
 	}
 	
 	/**
-	 * Gets the website domain for this instance.
-	 * @return The domain for this instance.
+	 * Gets the GitHub branched used by this instance.
+	 * @return The GitHub sync branch for this instance.
 	 */
-	public String getDomain(){
-		return domain;
+	public String getWikiSyncBranch(){
+		return instance.getGitHubBranch();
 	}
 	
 	/**
-	 * Gets the ID for this osu! web instance.
-	 * @return The ID for this instance.
+	 * Gets the instance for this osu! web instance.
+	 * @return The instance for this web instance.
 	 */
-	public int getID(){
-		return id;
+	public Instance getInstance(){
+		return instance;
+	}
+	
+	/**
+	 * Constructs a manager for this instance.
+	 * @return The manager for this instance.
+	 */
+	public InstanceManager getManager(){
+		return new InstanceManager(instance);
 	}
 	
 	/**
@@ -149,7 +155,7 @@ public class OsuWeb{
 	public void fixLinks(DiffEntry news) throws DBException{
 		String path = news.getNewPath();
 		if(path.startsWith("news/")){
-			database.runQuery("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=osu" + id + ".roanh.dev\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
+			executor.update("UPDATE news_posts SET page = REPLACE(page, \"parent=osu.ppy.sh\", \"parent=" + instance.getDomain() + "\") WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
 		}
 	}
 	
@@ -158,7 +164,7 @@ public class OsuWeb{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public void redateNews() throws DBException{
-		database.runQuery("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
+		executor.update("UPDATE news_posts SET published_at = CURRENT_TIMESTAMP() WHERE published_at > CURRENT_TIMESTAMP()");
 	}
 	
 	/**
@@ -166,7 +172,7 @@ public class OsuWeb{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public void clearNewsDatabase() throws DBException{
-		database.runQuery("DELETE FROM news_posts");
+		executor.delete("DELETE FROM news_posts");
 	}
 	
 	/**
@@ -177,7 +183,7 @@ public class OsuWeb{
 	public void clearNewsPost(DiffEntry news) throws DBException{
 		String path = news.getNewPath();
 		if(path.startsWith("news/")){
-			database.runQuery("DELETE FROM news_posts WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
+			executor.delete("DELETE FROM news_posts WHERE slug = ?", path.substring(path.lastIndexOf('/') + 1, path.length() - 3));
 		}
 	}
 		
@@ -197,9 +203,8 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void start() throws DBException, WebException{
-		database.init();
-		currentState = database.getState(id);
-		runCommand("docker start osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
+		currentState = MainDatabase.getState(instance.id());
+		Main.runCommand("docker start " + instance.getWebContainer());
 	}
 	
 	/**
@@ -208,8 +213,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void stop() throws DBException, WebException{
-		runCommand("docker stop osu-web-redis-" + id + " osu-web-elasticsearch-" + id + " osu-web-" + id);
-		database.shutdown();
+		Main.runCommand("docker stop " + instance.getWebContainer());
 	}
 	
 	/**
@@ -218,25 +222,6 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void runArtisan(String cmd) throws WebException{
-		runCommand("docker exec -t osu-web-" + id + " php artisan tinker --execute=\"" + cmd + "\"");
-	}
-	
-	/**
-	 * Runs a command on the server.
-	 * @param cmd The command to run.
-	 * @throws WebException When an exception occurs.
-	 */
-	public void runCommand(String cmd) throws WebException{
-		try{
-			int code = new ProcessBuilder("bash", "-c", cmd).directory(Main.DEPLOY_PATH).inheritIO().start().waitFor();
-			if(0 != code){
-				throw new IOException("Executed command returned exit code: " + code);
-			}
-		}catch(InterruptedException ignore){
-			Thread.currentThread().interrupt();
-			throw new WebException(ignore);
-		}catch(IOException ignore){
-			throw new WebException(ignore);
-		}
+		Main.runCommand("docker exec -t " + instance.getWebContainer() + " php artisan tinker --execute=\"" + cmd + "\"");
 	}
 }

@@ -57,6 +57,7 @@ compileTestJava.options.encoding = 'UTF-8'
 jacocoTestReport.reports.xml.required = true
 sourceCompatibility = 1.17
 javadoc.options.memberLevel = JavadocMemberLevel.PRIVATE
+javadoc.options.encoding = 'UTF-8'
 group = 'dev.roanh.wiki'
 ext.artifact = 'wiki'
 shadowJar.archiveBaseName = 'osuWikiPreview'

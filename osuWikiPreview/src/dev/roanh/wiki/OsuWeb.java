@@ -104,6 +104,10 @@ public class OsuWeb{
 		busy.set(false);
 	}
 	
+	/**
+	 * Gets the GitHub branched used by this instance.
+	 * @return The GitHub sync branch for this instance.
+	 */
 	public String getWikiSyncBranch(){
 		return instance.getGitHubBranch();
 	}

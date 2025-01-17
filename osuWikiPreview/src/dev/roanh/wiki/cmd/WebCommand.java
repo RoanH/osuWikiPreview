@@ -77,6 +77,14 @@ public abstract class WebCommand extends Command{
 	 */
 	public abstract void executeWeb(OsuWeb web, CommandMap args, CommandEvent event);
 	
+	/**
+	 * Constructs a new web command.
+	 * @param name The name of the command.
+	 * @param description The description for the command.
+	 * @param permission The permission required for the command.
+	 * @param handler The handler to invoke when running the command.
+	 * @return The newly constructed command.
+	 */
 	public static WebCommand of(String name, String description, CommandPermission permission, WebCommandRunnable handler){
 		return new WebCommand(name, description, permission){
 			
@@ -87,6 +95,10 @@ public abstract class WebCommand extends Command{
 		};
 	}
 	
+	/**
+	 * Command handler for web instance commands.
+	 * @author Roan
+	 */
 	@FunctionalInterface
 	public static abstract interface WebCommandRunnable{
 		

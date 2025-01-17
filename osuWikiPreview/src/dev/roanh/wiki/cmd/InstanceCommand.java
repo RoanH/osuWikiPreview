@@ -34,9 +34,19 @@ import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.exception.WebException;
 
+/**
+ * Administrative command to (help) manage osu! web instances.
+ * @author Roan
+ */
 public class InstanceCommand extends CommandGroup{
+	/**
+	 * The category instance channels are under.
+	 */
 	private static final long INSTANCES_CATEGORY = 1133099341079384165L;
 	
+	/**
+	 * Constructs a new instance management command.
+	 */
 	public InstanceCommand(){
 		super("instance", "Creates and configures a new osu! web instance.");
 		addOptionInt("id", "The identifier for the instance.");
@@ -72,6 +82,12 @@ public class InstanceCommand extends CommandGroup{
 		}
 	}
 
+	/**
+	 * Generates a (new) environment configuration file an instance.
+	 * @param web The instance to write a new environment config for.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void generateEnv(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			web.getManager().generateEnv();
@@ -82,6 +98,12 @@ public class InstanceCommand extends CommandGroup{
 		}
 	}
 	
+	/**
+	 * Runs a new container for this web instance.
+	 * @param web The instance to run a new container for.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void runInstance(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			web.getManager().runInstance();
@@ -92,6 +114,12 @@ public class InstanceCommand extends CommandGroup{
 		}
 	}
 	
+	/**
+	 * Recreates the docker container for this instance (and runs it).
+	 * @param web The osu! web instance to re-create (not re-seed).
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void recreateContainer(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			InstanceManager manager = web.getManager();
@@ -104,6 +132,11 @@ public class InstanceCommand extends CommandGroup{
 		}
 	}
 
+	/**
+	 * Creates a completely new osu! web instance.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void createInstance(CommandMap args, CommandEvent event){
 		final int id = args.get("id").getAsInt();
 		final int port = args.get("port").getAsInt();
@@ -119,7 +152,7 @@ public class InstanceCommand extends CommandGroup{
 					InstanceManager manager = new InstanceManager(new Instance(id, chan.getIdLong(), port));
 					manager.createInstance();
 					manager.runInstance();
-					event.reply("Instance created succesfully (network configuration remains).");
+					event.reply("Instance created succesfully (network configuration and branch remain).");
 				}catch(DBException | IOException | WebException e){
 					event.logError(e, "[InstanceCommand] Failed to create instance", Severity.MINOR, Priority.MEDIUM, args);
 					event.internalError();

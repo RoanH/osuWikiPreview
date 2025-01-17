@@ -55,7 +55,7 @@ public class InstanceCommand extends CommandGroup{
 		
 		registerCommand(WebCommand.of("recreate", "Creates the osu! web container again.", CommandPermission.DEV, this::recreateContainer));
 		
-		registerCommand(WebCommand.of("restart", "Runs a new container for the osu! web instance.", CommandPermission.DEV, this::runInstance));
+		registerCommand(WebCommand.of("run", "Runs a new container for the osu! web instance.", CommandPermission.DEV, this::runInstance));
 		
 		registerCommand(WebCommand.of("restart", "Restarts the entire osu! web instance.", CommandPermission.DEV, this::restartInstance));
 		

@@ -5,6 +5,8 @@ Preview sites:
 - https://osu1.roanh.dev/home
 - https://osu2.roanh.dev/home
 - https://osu3.roanh.dev/home
+- https://osu4.roanh.dev/home
+- https://osu5.roanh.dev/home
 
 Docker setup information for osu! web is under [Scripts](Scripts).
 

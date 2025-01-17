@@ -49,7 +49,6 @@ public class InstanceCommand extends CommandGroup{
 	 */
 	public InstanceCommand(){
 		super("instance", "Creates and configures a new osu! web instance.");
-		addOptionInt("id", "The identifier for the instance.");
 		
 		registerCommand(WebCommand.of("env", "Regenerate the .env file for the given instance.", CommandPermission.DEV, this::generateEnv));
 		
@@ -60,6 +59,7 @@ public class InstanceCommand extends CommandGroup{
 		registerCommand(WebCommand.of("restart", "Restarts the entire osu! web instance.", CommandPermission.DEV, this::restartInstance));
 		
 		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, false, this::createInstance);
+		create.addOptionInt("id", "The identifier for the instance.", 1, 15);//need to edit the redis config to go above 15
 		create.addOptionInt("port", "The web port for the new instance.", 1024, 65535);
 		registerCommand(create);
 	}
@@ -149,13 +149,16 @@ public class InstanceCommand extends CommandGroup{
 		event.deferReply(deferred->{
 			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel("osu" + id).queue(chan->{
 				try{
-					InstanceManager manager = new InstanceManager(new Instance(id, chan.getIdLong(), port));
+					Instance instance = new Instance(id, chan.getIdLong(), port);
+					chan.getManager().setTopic("osu! web instance with preview site: " + instance.getSiteUrl()).queue();
+					
+					InstanceManager manager = new InstanceManager(instance);
 					manager.createInstance();
 					manager.runInstance();
-					event.reply("Instance created succesfully (network configuration and branch remain).");
+					deferred.reply("Instance created succesfully (network configuration and branch remain).");
 				}catch(DBException | IOException | WebException e){
-					event.logError(e, "[InstanceCommand] Failed to create instance", Severity.MINOR, Priority.MEDIUM, args);
-					event.internalError();
+					deferred.logError(e, "[InstanceCommand] Failed to create instance", Severity.MINOR, Priority.MEDIUM, args);
+					deferred.internalError();
 				}
 			});
 		});

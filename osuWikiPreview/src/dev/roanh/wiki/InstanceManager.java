@@ -39,10 +39,6 @@ import dev.roanh.wiki.exception.WebException;
  */
 public class InstanceManager{
 	/**
-	 * Deployment instances by ID.
-	 */
-	private static final Map<Integer, OsuWeb> instancesById = new HashMap<Integer, OsuWeb>();
-	/**
 	 * Deployment instances by Discord channel.
 	 */
 	private static final Map<Long, OsuWeb> instancesByChannel = new HashMap<Long, OsuWeb>();
@@ -51,10 +47,21 @@ public class InstanceManager{
 	 */
 	private final Instance instance;
 	
+	/**
+	 * Constructs a new manager for the given instance.
+	 * @param instance The instance to configure (possibly non-existant).
+	 */
 	public InstanceManager(Instance instance){
 		this.instance = instance;
 	}
 	
+	/**
+	 * Creates a completely new instance except for the GitHub
+	 * branch and network configuration.
+	 * @throws DBException When a database exception occurs.
+	 * @throws IOException When an IOException occurs.
+	 * @throws WebException When an instance (docker) command fails.
+	 */
 	public void createInstance() throws DBException, IOException, WebException{
 		MainDatabase.addInstance(instance);
 		generateEnv();
@@ -65,15 +72,27 @@ public class InstanceManager{
 		registerInstance(Main.client.getConfig(), instance);
 	}
 	
+	/**
+	 * Stops and delete the container for this instance.
+	 * @throws WebException When a docker exception occurs.
+	 */
 	public void deleteInstanceContainer() throws WebException{
 		Main.runCommand("docker stop " + instance.getWebContainer());
 		Main.runCommand("docker rm " + instance.getWebContainer());
 	}
 	
+	/**
+	 * Runs a new docker container for the instance.
+	 * @throws WebException When a docker exception occurs. 
+	 */
 	public void runInstance() throws WebException{
 		Main.runCommand("docker run -d --name " + instance.getWebContainer() + " --env-file " + instance.getEnvFile() + " -p " + instance.port() + ":8000 pppy/osu-web:latest octane");
 	}
 	
+	/**
+	 * Prepare a newly created instance by running all seed/migration actions.
+	 * @throws WebException When a docker exception occurs. 
+	 */
 	private void prepareInstance() throws WebException{
 		runArtisan("db:create");
 		runArtisan("migrate --force");
@@ -82,6 +101,10 @@ public class InstanceManager{
 		runArtisan("es:index-wiki --create-only");
 	}
 
+	/**
+	 * Writes a new environment configuration for this instance.
+	 * @throws IOException When an IOException occurs.
+	 */
 	public void generateEnv() throws IOException{
 		Configuration config = new PropertiesFileConfiguration(Paths.get("secrets.properties"));
 		try(PrintWriter out = new PrintWriter(Files.newBufferedWriter(Main.DEPLOY_PATH.toPath().resolve(instance.getEnvFile())))){
@@ -153,32 +176,49 @@ public class InstanceManager{
 		}
 	}
 	
+	/**
+	 * Runs an artisan command for this instance in a new temporary container.
+	 * @param cmd The artisan command to execute.
+	 * @throws WebException When a docker exception occurs. 
+	 */
 	private void runArtisan(String cmd) throws WebException{
 		Main.runCommand("docker run --rm -t --env-file " + instance.getEnvFile() + " pppy/osu-web:latest artisan " + cmd + " --no-interaction");
 	}
 	
+	/**
+	 * Initialises the instance repository.
+	 * @param config The application configuration file
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static void init(Configuration config) throws DBException{
 		for(Instance instance : MainDatabase.getInstances()){
 			registerInstance(config, instance);
 		}
 	}
 	
-	public static OsuWeb getInstanceById(int id){
-		return instancesById.get(id);
-	}
-	
+	/**
+	 * Gets an instance by the Discord channel that is used to manage it.
+	 * @param channel The ID of the discord channel for this instance.
+	 * @return The instance for the given channel if any, else null.
+	 */
 	public static OsuWeb getInstanceByChannel(long channel){
 		return instancesByChannel.get(channel);
 	}
 	
-	
+	/**
+	 * Returns a collection of all registered instances.
+	 * @return A collection of all registered instances.
+	 */
 	public static Collection<OsuWeb> getInstances(){
-		return instancesById.values();
+		return instancesByChannel.values();
 	}
 	
+	/**
+	 * Registers a new instance.
+	 * @param config The application configuration.
+	 * @param instance The instance to register.
+	 */
 	private static void registerInstance(Configuration config, Instance instance){
-		OsuWeb web = new OsuWeb(config, instance);
-		instancesById.put(instance.id(), web);
-		instancesByChannel.put(instance.channel(), web);
+		instancesByChannel.put(instance.channel(), new OsuWeb(config, instance));
 	}
 }

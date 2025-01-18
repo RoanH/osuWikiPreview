@@ -48,7 +48,7 @@ public class SyncNewsCommand extends WebCommand{
 			web.syncAllNews();
 			event.reply("osu! web news database cleared and re-synced succesfully.");
 		}catch(DBException | WebException e){
-			event.logError(e, "[ClearNewsCommand] Failed to sync news database", Severity.MINOR, Priority.MEDIUM);
+			event.logError(e, "[SyncNewsCommand] Failed to sync news database", Severity.MINOR, Priority.MEDIUM);
 			event.internalError();
 		}
 	}

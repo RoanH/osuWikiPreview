@@ -139,11 +139,19 @@ public class OsuWeb{
 			clearNewsPost(file);
 		}
 
-		runArtisan("NewsPost::syncAll()");
+		syncAllNews();
 		
 		for(DiffEntry file : diff){
 			fixLinks(file);
 		}
+	}
+	
+	/**
+	 * Sync's all news posts.
+	 * @throws WebException When an exception occurs.
+	 */
+	public void syncAllNews() throws WebException{
+		runArtisan("NewsPost::syncAll()");
 	}
 	
 	/**

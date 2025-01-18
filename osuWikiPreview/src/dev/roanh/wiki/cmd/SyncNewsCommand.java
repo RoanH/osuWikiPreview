@@ -22,31 +22,33 @@ package dev.roanh.wiki.cmd;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
+import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
+import dev.roanh.wiki.exception.WebException;
 
 /**
- * Command to clear the news posts database.
+ * Command to sync the news posts database.
  * @author Roan
  */
-public class ClearNewsCommand extends WebCommand{
+public class SyncNewsCommand extends WebCommand{
 
 	/**
-	 * Constructs a new clear news command.
+	 * Constructs a new news sync command.
 	 */
-	public ClearNewsCommand(){
-		super("clearnews", "Clears all generated news posts from the database.", Main.PERMISSION);
+	public SyncNewsCommand(){
+		super("syncnews", "Deletes all news posts and sync's them again.", CommandPermission.DEV);
 	}
 
 	@Override
 	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			web.clearNewsDatabase();
-			event.reply("osu! web news database cleared succesfully.");
-		}catch(DBException e){
-			event.logError(e, "[ClearNewsCommand] Failed to clear news database", Severity.MINOR, Priority.MEDIUM);
+			web.syncAllNews();
+			event.reply("osu! web news database cleared and re-synced succesfully.");
+		}catch(DBException | WebException e){
+			event.logError(e, "[ClearNewsCommand] Failed to sync news database", Severity.MINOR, Priority.MEDIUM);
 			event.internalError();
 		}
 	}

@@ -29,7 +29,7 @@ import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.cmd.ClearNewsCommand;
+import dev.roanh.wiki.cmd.SyncNewsCommand;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.PreviewCommand;
@@ -95,7 +95,7 @@ public class Main{
 		}
 		
 		client.registerCommand(new SwitchCommand());
-		client.registerCommand(new ClearNewsCommand());
+		client.registerCommand(new SyncNewsCommand());
 		client.registerCommand(new RedateCommand());
 		client.registerCommand(new RefreshCommand());
 		client.registerCommand(new MergeMasterCommand());

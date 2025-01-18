@@ -55,7 +55,7 @@ public abstract class WebCommand extends Command{
 		original.deferReply(event->{
 			try{
 				if(web.tryLock()){
-					original.reply("Already running a task, please try again later.");
+					event.reply("Already running a task, please try again later.");
 					return;
 				}
 				

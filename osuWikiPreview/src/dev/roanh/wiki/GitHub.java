@@ -125,7 +125,7 @@ public final class GitHub{
 	 * @param number The PR number as shown in the web UI.
 	 * @param base The base ref for the PR.
 	 */
-	public static final record PullRequestInfo(int id, int number, BaseRef base){
+	public static final record PullRequestInfo(long id, int number, BaseRef base){
 
 		/**
 		 * Gets the complete web url for this PR assuming it is in the official repository.

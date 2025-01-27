@@ -35,6 +35,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
+import dev.roanh.isla.reporting.Detail;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.GitHub;
@@ -213,8 +214,9 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	private static final Optional<PullRequestInfo> retrievePullRequest(String namespace, String sha){
 		try{
 			return GitHub.instance().getPullRequestForCommit(namespace, sha);
-		}catch(GitHubException ignore){
-			//missing PR info should not hold back an embed
+		}catch(GitHubException e){
+			Main.client.logError(e, "[BaseSwitchCommand] Failed to retrieve PR status from GitHub", Severity.MINOR, Priority.LOW, Detail.of("Namespace", namespace), Detail.of("Commit", sha));
+			//missing PR info should not hold back an embed (for now)
 			return Optional.empty();
 		}
 	}

@@ -46,15 +46,15 @@ public class Main{
 	/**
 	 * Path to the osu! web wiki.
 	 */
-	public static final File WIKI_PATH = new File("/home/roan/wiki/osu-wiki");
+	public static final File WIKI_PATH = new File("osu-wiki").getAbsoluteFile();
 	/**
 	 * Path to the osu! web deploy key.
 	 */
-	public static final File AUTH_PATH = new File("/home/roan/wiki/auth");
+	public static final File AUTH_PATH = new File("auth").getAbsoluteFile();
 	/**
 	 * Path to the osu! web deploy instance root.
 	 */
-	public static final File DEPLOY_PATH = new File("/home/roan/wiki/deploy");
+	public static final File DEPLOY_PATH = new File("deploy").getAbsoluteFile();
 	/**
 	 * Root domain for all instances.
 	 */

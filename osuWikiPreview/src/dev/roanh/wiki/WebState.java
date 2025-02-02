@@ -19,6 +19,9 @@
  */
 package dev.roanh.wiki;
 
+import java.time.Instant;
+import java.util.Optional;
+
 /**
  * Record containing information on the current state of an osu! web
  * instance. This contains both information on the currently checked
@@ -30,7 +33,9 @@ package dev.roanh.wiki;
  * @param redate Whether news posts were redated.
  * @param master Whether ppy/master was merged into the ref beforehand.
  */
-public record WebState(String namespace, String ref, boolean redate, boolean master){
+public record WebState(String namespace, String ref, boolean redate, boolean master, Optional<Long> pr, Instant available){
+	//TODO need PR number + id | OR can I work with only the PR number?
+	//TODO is this really a record and not a class?
 
 	/**
 	 * Gets the link to the GitHub tree associated with this state.
@@ -40,12 +45,28 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 		return "https://github.com/" + namespace + "/osu-wiki/tree/" + ref;
 	}
 	
+	public String getNamespaceWithRef(){
+		return namespace + "/" + ref;
+	}
+	
+	public boolean hasPR(){
+		
+	}
+	
+	public String getPrLink(){
+		
+	}
+	
+	public int getPrNumber(){
+		
+	}
+	
 	/**
 	 * Returns a new web state with the redate flag set to true.
 	 * @return A copy of this web state with the redate flag set to true.
 	 */
 	public WebState withRedate(){
-		return new WebState(namespace, ref, true, master);
+		return new WebState(namespace, ref, true, master, pr, available);
 	}
 
 	/**
@@ -53,7 +74,7 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 	 * @return A copy of this web state with the master flag set to true.
 	 */
 	public WebState withMaster(){
-		return new WebState(namespace, ref, redate, true);
+		return new WebState(namespace, ref, redate, true, pr, available);
 	}
 	
 	/**

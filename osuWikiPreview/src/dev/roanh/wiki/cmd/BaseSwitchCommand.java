@@ -168,7 +168,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		
 		EmbedBuilder embed = new EmbedBuilder();
 		embed.setColor(new Color(255, 142, 230));
-		embed.setAuthor("Ref: " + state.namespace() + "/" + state.ref(), state.getGitHubTree(), null);
+		embed.setAuthor("Ref: " + state.getNamespaceWithRef(), state.getGitHubTree(), null);
 		embed.setFooter(footer);
 
 		StringBuilder desc = embed.getDescriptionBuilder();

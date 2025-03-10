@@ -22,6 +22,7 @@ package dev.roanh.wiki.cmd;
 import java.io.IOException;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandGroup;
@@ -58,7 +59,7 @@ public class InstanceCommand extends CommandGroup{
 		
 		registerCommand(WebCommand.of("restart", "Restarts the entire osu! web instance.", CommandPermission.DEV, this::restartInstance));
 		
-		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, false, this::createInstance);
+		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, CommandScope.GUILD_AND_DM, this::createInstance);
 		create.addOptionInt("id", "The identifier for the instance.", 1, 15);//need to edit the redis config to go above 15
 		create.addOptionInt("port", "The web port for the new instance.", 1024, 65535);
 		registerCommand(create);

@@ -19,6 +19,7 @@
  */
 package dev.roanh.wiki.cmd;
 
+import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
@@ -41,7 +42,7 @@ public abstract class WebCommand extends Command{
 	 * @param permission The permission the user needs to be allowed to execute this command.
 	 */
 	protected WebCommand(String name, String description, CommandPermission permission){
-		super(name, description, permission, true);
+		super(name, description, permission, CommandScope.GUILD);
 	}
 
 	@Override

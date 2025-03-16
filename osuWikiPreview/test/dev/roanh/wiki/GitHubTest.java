@@ -56,7 +56,6 @@ public class GitHubTest{
 		assertEquals(2106313984, pr.id());
 		assertEquals(12265, pr.number());
 		assertTrue(pr.isOfficial());
-		assertEquals("https://github.com/ppy/osu-wiki/pull/12265", pr.getUrl());
 	}
 	
 	private static ResponseDefinitionBuilder readJson(String name) throws IOException{

@@ -59,9 +59,10 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static void saveState(int id, WebState state) throws DBException{
+		PullRequest pr = state.getPullRequest().orElse(new PullRequest(-1L, -1));
 		executor.insert(
-			"REPLACE INTO state (id, namespace, ref, redate, master) VALUES (?, ?, ?, ?, ?)",
-			id, state.namespace(), state.ref(), state.redate(), state.master()
+			"REPLACE INTO state (id, namespace, ref, redate, master, pr_id, pr_num, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			id, state.getNamespace(), state.getRef(), state.hasRedate(), state.hasMaster(), pr.id(), pr.number(), state.getAvailableAt().getEpochSecond()
 		);
 	}
 	
@@ -72,16 +73,9 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static WebState getState(int id) throws DBException{
-		return executor.selectFirst("SELECT * FROM state WHERE id = ?", rs->{
-			return new WebState(
-				rs.getString("namespace"),
-				rs.getString("ref"),
-				rs.getBoolean("redate"),
-				rs.getBoolean("master")
-			);
-		}, id).orElse(null);
+		return executor.selectFirst("SELECT * FROM state WHERE id = ?", WebState::new, id).orElse(null);
 	}
-
+	
 	/**
 	 * Registers a new osu! web instance.
 	 * @param instance The new instance to register.

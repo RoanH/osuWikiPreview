@@ -128,15 +128,6 @@ public final class GitHub{
 	public static final record PullRequestInfo(long id, int number, BaseRef base){
 
 		/**
-		 * Gets the complete web url for this PR assuming it is in the official repository.
-		 * @return The PR web url.
-		 * @see #isOfficial()
-		 */
-		public String getUrl(){
-			return "https://github.com/ppy/osu-wiki/pull/" + number;
-		}
-		
-		/**
 		 * Checks if this PR is on the official ppy repository.
 		 * @return True if this PR is on the official wiki repository.
 		 */

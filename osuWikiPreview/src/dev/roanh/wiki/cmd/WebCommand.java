@@ -19,6 +19,8 @@
  */
 package dev.roanh.wiki.cmd;
 
+import java.awt.Color;
+
 import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.command.slash.Command;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -34,6 +36,10 @@ import dev.roanh.wiki.OsuWeb;
  * @author Roan
  */
 public abstract class WebCommand extends Command{
+	/**
+	 * Theme color used in various embeds.
+	 */
+	public static final Color THEME_COLOR = new Color(255, 142, 230);
 	
 	/**
 	 * Constructs a new web command.

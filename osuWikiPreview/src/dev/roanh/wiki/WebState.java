@@ -19,23 +19,59 @@
  */
 package dev.roanh.wiki;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Optional;
 
+import dev.roanh.wiki.GitHub.PullRequestInfo;
+import dev.roanh.wiki.cmd.BaseSwitchCommand;
+
 /**
- * Record containing information on the current state of an osu! web
+ * Object containing information on the current state of an osu! web
  * instance. This contains both information on the currently checked
  * out wiki reference as well as information on any other changes.
  * @author Roan
- * @param namespace The namespace (user or organisation) the checked
- *        out reference is under.
- * @param ref The reference (branch/sha/tag) that is currently checked out.
- * @param redate Whether news posts were redated.
- * @param master Whether ppy/master was merged into the ref beforehand.
  */
-public record WebState(String namespace, String ref, boolean redate, boolean master, Optional<Long> pr, Instant available){
-	//TODO need PR number + id | OR can I work with only the PR number?
-	//TODO is this really a record and not a class?
+public class WebState{
+	/**
+	 * The namespace (user or organisation) the checked
+	 * out reference is under.
+	 */
+	private String namespace;
+	/**
+	 * The reference (branch/sha/tag) that is currently checked out.
+	 */
+	private String ref;
+	/**
+	 * Whether news posts were redated.
+	 */
+	private boolean redate;
+	/**
+	 * Whether ppy/master was merged into the ref beforehand.
+	 */
+	private boolean master;
+	private PullRequest pr;
+	private Instant available;
+	
+	public WebState(ResultSet rs) throws SQLException{
+		long prId = rs.getLong("pr_id"); 
+		pr = prId == -1L ? null : new PullRequest(prId, rs.getInt("pr_num"));
+		namespace = rs.getString("namespace");
+		ref = rs.getString("ref");
+		redate = rs.getBoolean("redate");
+		master = rs.getBoolean("master");
+		available = Instant.ofEpochSecond(rs.getLong("available"));
+	}
+	
+	private WebState(String namespace, String ref, boolean redate, boolean master){
+		this.namespace = namespace;
+		this.ref = ref;
+		this.redate = redate;
+		this.master = master;
+		pr = null;
+		available = Instant.now().plus(BaseSwitchCommand.DEFAULT_CLAIM_TIME);
+	}
 
 	/**
 	 * Gets the link to the GitHub tree associated with this state.
@@ -45,20 +81,44 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 		return "https://github.com/" + namespace + "/osu-wiki/tree/" + ref;
 	}
 	
+	public String getNamespace(){
+		return namespace;
+	}
+	
 	public String getNamespaceWithRef(){
 		return namespace + "/" + ref;
 	}
 	
+	public boolean hasRedate(){
+		return redate;
+	}
+	
+	public boolean hasMaster(){
+		return master;
+	}
+	
+	public String getRef(){
+		return ref;
+	}
+	
 	public boolean hasPR(){
+		return pr != null;
+	}
+	
+	public Optional<PullRequest> getPullRequest(){
+		return Optional.ofNullable(pr);
+	}
+	
+	public void setPullRequest(PullRequest pr){
 		
 	}
 	
-	public String getPrLink(){
-		
+	public void setPullRequest(PullRequestInfo pr){
+		setPullRequest(new PullRequest(pr.id(), pr.number()));
 	}
 	
-	public int getPrNumber(){
-		
+	public Instant getAvailableAt(){
+		return available;
 	}
 	
 	/**
@@ -66,7 +126,8 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 	 * @return A copy of this web state with the redate flag set to true.
 	 */
 	public WebState withRedate(){
-		return new WebState(namespace, ref, true, master, pr, available);
+		redate = true;
+		return this;
 	}
 
 	/**
@@ -74,7 +135,8 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 	 * @return A copy of this web state with the master flag set to true.
 	 */
 	public WebState withMaster(){
-		return new WebState(namespace, ref, redate, true, pr, available);
+		master = true;
+		return this;
 	}
 	
 	/**
@@ -83,5 +145,13 @@ public record WebState(String namespace, String ref, boolean redate, boolean mas
 	 */
 	public boolean isInternalBranch(){
 		return namespace.equals("RoanH") && ref.startsWith("wikisync-");
+	}
+	
+	public static final WebState forNewspostPreview(OsuWeb web){
+		return new WebState("RoanH", web.getWikiSyncBranch(), true, false);
+	}
+	
+	public static final WebState forRef(String namespace, String ref, boolean redate, boolean master){
+		return new WebState(namespace, ref, redate, master);
 	}
 }

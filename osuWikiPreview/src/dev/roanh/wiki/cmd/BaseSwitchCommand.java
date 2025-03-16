@@ -19,8 +19,8 @@
  */
 package dev.roanh.wiki.cmd;
 
-import java.awt.Color;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -45,6 +45,7 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
+import dev.roanh.wiki.PullRequest;
 import dev.roanh.wiki.WebState;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.exception.MergeConflictException;
@@ -55,6 +56,7 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public abstract class BaseSwitchCommand extends WebCommand{
+	public static final Duration DEFAULT_CLAIM_TIME = Duration.ofHours(1L);
 	
 	/**
 	 * Constructs a new base switch command.
@@ -114,7 +116,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws WebException When a web exception occurs.
 	 */
 	protected void pushBranch(CommandEvent event, OsuWeb web, CommandMap args, byte[] data, int year, String filename) throws GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, new WebState("RoanH", web.getWikiSyncBranch(), true, false), web, OsuWiki.pushNews(data, year, filename, web));
+		switchBranch(event, WebState.forNewspostPreview(web), web, OsuWiki.pushNews(data, year, filename, web));
 	}
 	
 	/**
@@ -130,7 +132,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws MergeConflictException When a merge is requested which results in a conflict.
 	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, state, web, OsuWiki.switchBranch(state.namespace(), state.ref(), state.master(), web));
+		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRef(), state.hasMaster(), web));
 	}
 
 	/**
@@ -142,9 +144,13 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws DBException When a database exception occurs.
 	 */
 	private void switchBranch(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
+		if(!state.isInternalBranch()){
+			retrievePullRequest(state.getNamespace(), diff.head()).ifPresent(state::setPullRequest);
+		}
+		
 		web.setCurrentState(state);
 
-		if(state.redate() && diff.hasNews()){
+		if(state.hasRedate() && diff.hasNews()){
 			web.redateNews();
 		}
 
@@ -160,29 +166,26 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 */
 	private static final MessageEmbed createEmbed(SwitchResult diff, WebState state, OsuWeb web){
 		String footer = "HEAD: " + diff.head();
-		if(state.redate() && diff.hasNews()){
-			footer += state.master() ? " (with redate & master)" : " (with redate)";
-		}else if(state.master()){
+		if(state.hasRedate() && diff.hasNews()){
+			footer += state.hasMaster() ? " (with redate & master)" : " (with redate)";
+		}else if(state.hasMaster()){
 			footer += " (with master)";
 		}
 		
 		EmbedBuilder embed = new EmbedBuilder();
-		embed.setColor(new Color(255, 142, 230));
+		embed.setColor(THEME_COLOR);
 		embed.setAuthor("Ref: " + state.getNamespaceWithRef(), state.getGitHubTree(), null);
 		embed.setFooter(footer);
 
 		StringBuilder desc = embed.getDescriptionBuilder();
 		
-		if(!state.isInternalBranch()){
-			Optional<PullRequestInfo> pr = retrievePullRequest(state.namespace(), diff.head());
-			if(pr.isPresent()){
-				PullRequestInfo info = pr.get();
-				desc.append("Pull request [#");
-				desc.append(info.number());
-				desc.append("](");
-				desc.append(info.getUrl());
-				desc.append(").\n");
-			}
+		if(state.hasPR()){
+			PullRequest pr = state.getPullRequest().get();
+			desc.append("Pull request [#");
+			desc.append(pr.number());
+			desc.append("](");
+			desc.append(pr.getPrLink());
+			desc.append(").\n");
 		}
 		
 		for(DiffEntry item : diff.diff()){

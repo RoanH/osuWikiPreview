@@ -19,9 +19,7 @@
  */
 package dev.roanh.wiki;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.db.DBContext;
@@ -61,9 +59,10 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static void saveState(int id, WebState state) throws DBException{
+		PullRequest pr = state.getPullRequest().orElse(new PullRequest(-1L, -1));
 		executor.insert(
-			"REPLACE INTO state (id, namespace, ref, redate, master, pr, available) VALUES (?, ?, ?, ?, ?, ?, ?)",
-			id, state.namespace(), state.ref(), state.redate(), state.master(), state.pr().orElse(-1L), state.available().getEpochSecond()
+			"REPLACE INTO state (id, namespace, ref, redate, master, pr_id, pr_num, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			id, state.getNamespace(), state.getRef(), state.hasRedate(), state.hasMaster(), pr.id(), pr.number(), state.getAvailableAt().getEpochSecond()
 		);
 	}
 	
@@ -74,20 +73,8 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static WebState getState(int id) throws DBException{
-		return executor.selectFirst("SELECT * FROM state WHERE id = ?", rs->{
-			final long pr =rs.getLong("pr"); 
-			return new WebState(
-				rs.getString("namespace"),
-				rs.getString("ref"),
-				rs.getBoolean("redate"),
-				rs.getBoolean("master"),
-				pr == -1L ? Optional.empty() : Optional.of(pr),
-				Instant.ofEpochSecond(rs.getLong("available"))
-			);
-		}, id).orElse(null);
+		return executor.selectFirst("SELECT * FROM state WHERE id = ?", WebState::new, id).orElse(null);
 	}
-
-	
 	
 	/**
 	 * Registers a new osu! web instance.

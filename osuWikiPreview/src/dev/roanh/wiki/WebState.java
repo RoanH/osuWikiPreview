@@ -38,11 +38,11 @@ public class WebState{
 	 * The namespace (user or organisation) the checked
 	 * out reference is under.
 	 */
-	private String namespace;
+	private final String namespace;
 	/**
 	 * The reference (branch/sha/tag) that is currently checked out.
 	 */
-	private String ref;
+	private final String ref;
 	/**
 	 * Whether news posts were redated.
 	 */

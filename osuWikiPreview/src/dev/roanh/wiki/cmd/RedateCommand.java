@@ -38,7 +38,7 @@ public class RedateCommand extends WebCommand{
 	 * Constructs a new redate news command.
 	 */
 	public RedateCommand(){
-		super("redate", "Sets the published date for all news posts to the current date time.", Main.PERMISSION, true);
+		super("redate", "Sets the published date for all news posts to the current date time.", Main.PERMISSION);
 	}
 
 	@Override

@@ -19,8 +19,8 @@
  */
 package dev.roanh.wiki.cmd;
 
-import java.awt.Color;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -35,12 +35,16 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
+import dev.roanh.isla.reporting.Detail;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.InstanceStatus;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
+import dev.roanh.wiki.PullRequest;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
@@ -53,6 +57,10 @@ import dev.roanh.wiki.github.GitHub.PullRequestInfo;
  * @author Roan
  */
 public abstract class BaseSwitchCommand extends WebCommand{
+	/**
+	 * Default amount of time automatic claims last.
+	 */
+	private static final Duration DEFAULT_CLAIM_TIME = Duration.ofHours(1L);
 	
 	/**
 	 * Constructs a new base switch command.
@@ -60,7 +68,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @param description The description of this command.
 	 */
 	protected BaseSwitchCommand(String name, String description){
-		super(name, description, Main.PERMISSION, true);
+		super(name, description, Main.PERMISSION);
 	}
 	
 	@Override
@@ -112,7 +120,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws WebException When a web exception occurs.
 	 */
 	protected void pushBranch(CommandEvent event, OsuWeb web, CommandMap args, byte[] data, int year, String filename) throws GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, new WebState("RoanH", "wikisync-" + web.getID(), true, false), web, OsuWiki.pushNews(data, year, filename, web));
+		switchBranch(event, WebState.forNewspostPreview(web), web, OsuWiki.pushNews(data, year, filename, web));
 	}
 	
 	/**
@@ -128,7 +136,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws MergeConflictException When a merge is requested which results in a conflict.
 	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, state, web, OsuWiki.switchBranch(state.namespace(), state.ref(), state.master(), web));
+		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRef(), state.hasMaster(), web));
 	}
 
 	/**
@@ -140,13 +148,19 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws DBException When a database exception occurs.
 	 */
 	private void switchBranch(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
+		if(!state.isInternalBranch()){
+			retrievePullRequest(state.getNamespace(), diff.head()).ifPresent(state::setPullRequest);
+		}
+		
+		state.refreshClaim(DEFAULT_CLAIM_TIME);
 		web.setCurrentState(state);
 
-		if(state.redate() && diff.hasNews()){
+		if(state.hasRedate() && diff.hasNews()){
 			web.redateNews();
 		}
 
 		event.replyEmbeds(createEmbed(diff, state, web));
+		InstanceStatus.updateOverview();
 	}
 	
 	/**
@@ -158,33 +172,30 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 */
 	private static final MessageEmbed createEmbed(SwitchResult diff, WebState state, OsuWeb web){
 		String footer = "HEAD: " + diff.head();
-		if(state.redate() && diff.hasNews()){
-			footer += state.master() ? " (with redate & master)" : " (with redate)";
-		}else if(state.master()){
+		if(state.hasRedate() && diff.hasNews()){
+			footer += state.hasMaster() ? " (with redate & master)" : " (with redate)";
+		}else if(state.hasMaster()){
 			footer += " (with master)";
 		}
 		
 		EmbedBuilder embed = new EmbedBuilder();
-		embed.setColor(new Color(255, 142, 230));
-		embed.setAuthor("Ref: " + state.namespace() + "/" + state.ref(), state.getGitHubTree(), null);
+		embed.setColor(THEME_COLOR);
+		embed.setAuthor("Ref: " + state.getNamespaceWithRef(), state.getGitHubTree(), null);
 		embed.setFooter(footer);
 
 		StringBuilder desc = embed.getDescriptionBuilder();
 		
-		if(!state.isInternalBranch()){
-			Optional<PullRequestInfo> pr = retrievePullRequest(state.namespace(), diff.head());
-			if(pr.isPresent()){
-				PullRequestInfo info = pr.get();
-				desc.append("Pull request [#");
-				desc.append(info.number());
-				desc.append("](");
-				desc.append(info.getUrl());
-				desc.append(").\n");
-			}
+		if(state.hasPullRequest()){
+			PullRequest pr = state.getPullRequest().orElseThrow();
+			desc.append("Pull request [#");
+			desc.append(pr.number());
+			desc.append("](");
+			desc.append(pr.getPrLink());
+			desc.append(").\n");
 		}
 		
 		for(DiffEntry item : diff.diff()){
-			String path = resolveSitePath(item.getNewPath(), web);
+			String path = resolveSitePath(item.getNewPath(), web.getInstance());
 			if(path != null){
 				int len = desc.length();
 				desc.append("- [");
@@ -212,8 +223,9 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	private static final Optional<PullRequestInfo> retrievePullRequest(String namespace, String sha){
 		try{
 			return GitHub.instance().getPullRequestForCommit(namespace, sha);
-		}catch(GitHubException ignore){
-			//missing PR info should not hold back an embed
+		}catch(GitHubException e){
+			Main.client.logError(e, "[BaseSwitchCommand] Failed to retrieve PR status from GitHub", Severity.MINOR, Priority.LOW, Detail.of("Namespace", namespace), Detail.of("Commit", sha));
+			//missing PR info should not hold back an embed (for now)
 			return Optional.empty();
 		}
 	}
@@ -223,12 +235,12 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * inside the osu! wiki repository.
 	 * @param repoPath The path of the markdown file in the osu! wiki
 	 *        repository, this path is assumed to end with <code>.md</code>.
-	 * @param instance The osu! web instance to resolve site paths with.
+	 * @param instance The instance to resolve site paths with.
 	 * @return The osu! web path for the given osu! wiki path or
 	 *         <code>null</code> if the given path does not point to
 	 *         a file that is visible on the website.
 	 */
-	private static final String resolveSitePath(String repoPath, OsuWeb instance){
+	private static final String resolveSitePath(String repoPath, Instance instance){
 		int pathEnd = repoPath.lastIndexOf('/');
 		if(pathEnd == -1){
 			//some markdown file at the root of the repository
@@ -237,15 +249,15 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		
 		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
 		if(repoPath.startsWith("news/")){
-			return instance.getDomain() + "home/news/" + filename;
+			return instance.getSiteUrl() + "/home/news/" + filename;
 		}else if(repoPath.startsWith("wiki/Legal/")){
 			if(pathEnd < 11){//root so no sub-path
-				return instance.getDomain() + "legal/" + filename;
+				return instance.getSiteUrl() + "/legal/" + filename;
 			}else{
-				return instance.getDomain() + "legal/" + filename + "/" + repoPath.substring(11, pathEnd);
+				return instance.getSiteUrl() + "/legal/" + filename + "/" + repoPath.substring(11, pathEnd);
 			}
 		}else if(repoPath.startsWith("wiki/")){
-			return instance.getDomain() + "wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
+			return instance.getSiteUrl() + "/wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
 		}else{
 			return null;
 		}

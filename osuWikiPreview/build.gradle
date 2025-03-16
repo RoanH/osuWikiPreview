@@ -25,7 +25,7 @@ dependencies{
 	implementation "dev.roanh.infinitycore:infinitycore-io:4.19"
 
 	//Isla Lib
-	implementation "dev.roanh.islalib:islalib:7.31"
+	implementation "dev.roanh.islalib:islalib:7.32"
 	
 	//JGit
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
@@ -60,6 +60,7 @@ compileTestJava.options.encoding = 'UTF-8'
 jacocoTestReport.reports.xml.required = true
 sourceCompatibility = 1.17
 javadoc.options.memberLevel = JavadocMemberLevel.PRIVATE
+javadoc.options.encoding = 'UTF-8'
 group = 'dev.roanh.wiki'
 ext.artifact = 'wiki'
 shadowJar.archiveBaseName = 'osuWikiPreview'

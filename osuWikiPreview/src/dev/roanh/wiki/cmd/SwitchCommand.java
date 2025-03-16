@@ -66,6 +66,6 @@ public class SwitchCommand extends BaseSwitchCommand{
 			}
 		}
 
-		switchBranch(event, new WebState(name, ref, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false)), web, args);
+		switchBranch(event, WebState.forRef(name, ref, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false)), web, args);
 	}
 }

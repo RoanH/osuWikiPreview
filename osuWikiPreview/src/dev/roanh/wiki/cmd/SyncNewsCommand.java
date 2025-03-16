@@ -22,33 +22,33 @@ package dev.roanh.wiki.cmd;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
+import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.exception.WebException;
 
 /**
- * Command to restart the entire osu! web instance.
+ * Command to sync the news posts database.
  * @author Roan
  */
-public class RestartCommand extends WebCommand{
+public class SyncNewsCommand extends WebCommand{
 
 	/**
-	 * Constructs a new restart command.
+	 * Constructs a new news sync command.
 	 */
-	public RestartCommand(){
-		super("restart", "Restarts the entire osu! web instance.", Main.PERMISSION, true);
+	public SyncNewsCommand(){
+		super("syncnews", "Deletes all news posts and sync's them again.", CommandPermission.DEV);
 	}
 
 	@Override
 	public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
-			web.stop();
-			web.start();
-			event.reply("osu! web instance succesfully restarted.");
-		}catch(WebException | DBException e){
-			event.logError(e, "[RestartCommand] Failed to restart osu! web instance", Severity.MINOR, Priority.MEDIUM);
+			web.clearNewsDatabase();
+			web.syncAllNews();
+			event.reply("osu! web news database cleared and re-synced succesfully.");
+		}catch(DBException | WebException e){
+			event.logError(e, "[SyncNewsCommand] Failed to sync news database", Severity.MINOR, Priority.MEDIUM);
 			event.internalError();
 		}
 	}

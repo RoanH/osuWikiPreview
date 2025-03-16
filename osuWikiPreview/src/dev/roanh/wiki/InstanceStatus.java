@@ -69,6 +69,8 @@ public final class InstanceStatus{
 					refs.append("None\n");
 					available.append(Instant.now());
 				}
+				
+				available.append("\n");
 			});
 			
 			embed.addField("Instance", instances.toString(), true);

@@ -56,7 +56,10 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public abstract class BaseSwitchCommand extends WebCommand{
-	public static final Duration DEFAULT_CLAIM_TIME = Duration.ofHours(1L);
+	/**
+	 * Default amount of time automatic claims last.
+	 */
+	private static final Duration DEFAULT_CLAIM_TIME = Duration.ofHours(1L);
 	
 	/**
 	 * Constructs a new base switch command.
@@ -148,6 +151,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 			retrievePullRequest(state.getNamespace(), diff.head()).ifPresent(state::setPullRequest);
 		}
 		
+		state.refreshClaim(DEFAULT_CLAIM_TIME);
 		web.setCurrentState(state);
 
 		if(state.hasRedate() && diff.hasNews()){
@@ -179,7 +183,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 
 		StringBuilder desc = embed.getDescriptionBuilder();
 		
-		if(state.hasPR()){
+		if(state.hasPullRequest()){
 			PullRequest pr = state.getPullRequest().get();
 			desc.append("Pull request [#");
 			desc.append(pr.number());

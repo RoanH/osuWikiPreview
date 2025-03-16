@@ -21,11 +21,11 @@ package dev.roanh.wiki;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
 import dev.roanh.wiki.GitHub.PullRequestInfo;
-import dev.roanh.wiki.cmd.BaseSwitchCommand;
 
 /**
  * Object containing information on the current state of an osu! web
@@ -70,7 +70,7 @@ public class WebState{
 		this.redate = redate;
 		this.master = master;
 		pr = null;
-		available = Instant.now().plus(BaseSwitchCommand.DEFAULT_CLAIM_TIME);
+		available = Instant.now();
 	}
 
 	/**
@@ -101,7 +101,7 @@ public class WebState{
 		return ref;
 	}
 	
-	public boolean hasPR(){
+	public boolean hasPullRequest(){
 		return pr != null;
 	}
 	
@@ -121,9 +121,13 @@ public class WebState{
 		return available;
 	}
 	
+	public void refreshClaim(Duration duration){
+		available = Instant.now().plus(duration);
+	}
+	
 	/**
 	 * Returns a new web state with the redate flag set to true.
-	 * @return A copy of this web state with the redate flag set to true.
+	 * @return This web state with the redate flag set to true.
 	 */
 	public WebState withRedate(){
 		redate = true;
@@ -132,7 +136,7 @@ public class WebState{
 
 	/**
 	 * Returns a new web state with the master flag set to true.
-	 * @return A copy of this web state with the master flag set to true.
+	 * @return This web state with the master flag set to true.
 	 */
 	public WebState withMaster(){
 		master = true;

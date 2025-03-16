@@ -61,7 +61,7 @@ public final class InstanceStatus{
 						refs.append(pr.number());
 						refs.append("](");
 						refs.append(pr.getPrLink());
-						refs.append(")");
+						refs.append("))");
 					}
 					
 					refs.append("\n");

@@ -16,11 +16,11 @@ public final class InstanceStatus{
 	/**
 	 * The status overview channel.
 	 */
-	private static final long STATUS_CHANNEL = 1350939456172982283L;
+	private static final long STATUS_CHANNEL = 1350938353637396510L;
 	/**
 	 * The status message to update.
 	 */
-	private static final long STATUS_MESSAGE = 1350938353637396510L;
+	private static final long STATUS_MESSAGE = 1350939456172982283L;
 
 	/**
 	 * Prevent instantiation.

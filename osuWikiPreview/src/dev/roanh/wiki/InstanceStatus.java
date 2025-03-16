@@ -57,7 +57,7 @@ public final class InstanceStatus{
 					
 					if(state.hasPullRequest()){
 						PullRequest pr = state.getPullRequest().orElseThrow();
-						refs.append(" ([PR #");
+						refs.append(" ([#");
 						refs.append(pr.number());
 						refs.append("](");
 						refs.append(pr.getPrLink());

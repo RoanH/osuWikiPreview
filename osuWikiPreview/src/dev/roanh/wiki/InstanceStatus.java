@@ -2,7 +2,6 @@ package dev.roanh.wiki;
 
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.Optional;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.TimeFormat;
@@ -56,10 +55,12 @@ public final class InstanceStatus{
 					refs.append(state.getGitHubTree());
 					refs.append(")");
 					
-					Optional<PullRequest> pr = state.getPullRequest();
-					if(pr.isPresent()){
-						refs.append(" ([PR");
-						refs.append(pr.get().getPrLink());
+					if(state.hasPullRequest()){
+						PullRequest pr = state.getPullRequest().orElseThrow();
+						refs.append(" ([PR #");
+						refs.append(pr.number());
+						refs.append("](");
+						refs.append(pr.getPrLink());
 						refs.append(")");
 					}
 					

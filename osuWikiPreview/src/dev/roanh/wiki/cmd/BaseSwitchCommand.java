@@ -186,7 +186,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		StringBuilder desc = embed.getDescriptionBuilder();
 		
 		if(state.hasPullRequest()){
-			PullRequest pr = state.getPullRequest().get();
+			PullRequest pr = state.getPullRequest().orElseThrow();
 			desc.append("Pull request [#");
 			desc.append(pr.number());
 			desc.append("](");

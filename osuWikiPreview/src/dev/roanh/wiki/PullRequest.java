@@ -1,5 +1,11 @@
 package dev.roanh.wiki;
 
+/**
+ * Basic GitHub pull request identification.
+ * @author Roan
+ * @param id The globally unique ID of the pull request.
+ * @param number The repository specific pull request number.
+ */
 public record PullRequest(long id, int number){
 
 	/**

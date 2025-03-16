@@ -39,6 +39,7 @@ import dev.roanh.isla.reporting.Detail;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.GitHub;
+import dev.roanh.wiki.InstanceStatus;
 import dev.roanh.wiki.GitHub.GitHubException;
 import dev.roanh.wiki.GitHub.PullRequestInfo;
 import dev.roanh.wiki.Main;
@@ -159,6 +160,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		}
 
 		event.replyEmbeds(createEmbed(diff, state, web));
+		InstanceStatus.updateOverview();
 	}
 	
 	/**

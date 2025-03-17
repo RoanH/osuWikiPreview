@@ -46,10 +46,10 @@ import dev.roanh.wiki.OsuWiki.SwitchResult;
 import dev.roanh.wiki.PullRequest;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.WebState;
+import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 import dev.roanh.wiki.github.GitHub;
-import dev.roanh.wiki.github.GitHub.GitHubException;
 import dev.roanh.wiki.github.GitHub.PullRequestInfo;
 
 /**

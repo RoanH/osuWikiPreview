@@ -35,7 +35,7 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
-import dev.roanh.wiki.github.GitHub.GitHubException;
+import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.github.GitHub.PullRequestInfo;
 
 @WireMockTest(httpPort = 12345)

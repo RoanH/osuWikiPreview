@@ -40,6 +40,8 @@ import javax.crypto.spec.SecretKeySpec;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import dev.roanh.wiki.exception.GitHubException;
+
 /**
  * Simple GitHub API wrapper.
  * @author Roan
@@ -186,25 +188,6 @@ public final class GitHub{
 		 */
 		public boolean isOfficial(){
 			return label.startsWith("ppy:");
-		}
-	}
-	
-	/**
-	 * Exception thrown for GitHub API issues.
-	 * @author Roan
-	 */
-	public static final class GitHubException extends Exception{
-		/**
-		 * Serial ID.
-		 */
-		private static final long serialVersionUID = 1202212041452857347L;
-		
-		/**
-		 * Constructs a new GitHub exception with the given cause.
-		 * @param cause The root cause.
-		 */
-		public GitHubException(Exception cause){
-			super(cause);
 		}
 	}
 }

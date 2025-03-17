@@ -31,6 +31,10 @@ public abstract class WebhookTest{
 		webhook.stop();
 	}
 	
+	protected static void sendPullRequestCommentPayload() throws Exception{
+		sendJson("pr_comment_created", "issue_comment", DEFAULT_KEY);
+	}
+	
 	protected static void sendJson(String name, String eventType, Key signingKey) throws Exception{
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("resources/github/" + name + ".json")){
 			String payload = new String(in.readAllBytes(), StandardCharsets.UTF_8);

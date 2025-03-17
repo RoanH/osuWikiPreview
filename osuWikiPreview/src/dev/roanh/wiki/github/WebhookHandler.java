@@ -39,6 +39,8 @@ import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.BodyHandler;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
 import dev.roanh.wiki.github.handler.PullRequestCommentHandler;
+import dev.roanh.wiki.github.handler.PullRequestCommitHandler;
+import dev.roanh.wiki.github.handler.PullRequestCreatedHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentData;
 
 public class WebhookHandler implements BodyHandler{
@@ -46,6 +48,8 @@ public class WebhookHandler implements BodyHandler{
 	private final WebServer server;
 	private final Key secret;
 	private final List<PullRequestCommentHandler> commentHandlers = new ArrayList<PullRequestCommentHandler>();
+	private final List<PullRequestCreatedHandler> createHandlers = new ArrayList<PullRequestCreatedHandler>();
+	private final List<PullRequestCommitHandler> commitHandlers = new ArrayList<PullRequestCommitHandler>();
 	
 	public WebhookHandler(String secret){
 		this.server = new WebServer(23333);
@@ -70,6 +74,14 @@ public class WebhookHandler implements BodyHandler{
 	
 	public void addPullRequestCommentHandler(PullRequestCommentHandler handler){
 		commentHandlers.add(handler);
+	}
+	
+	public void addPullRequestCreatedHandler(PullRequestCreatedHandler handler){
+		createHandlers.add(handler);
+	}
+
+	public void addPullRequestCommitHandler(PullRequestCommitHandler handler){
+		commitHandlers.add(handler);
 	}
 
 	@Override

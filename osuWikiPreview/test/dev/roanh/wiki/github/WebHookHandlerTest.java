@@ -30,7 +30,7 @@ public class WebHookHandlerTest extends WebhookTest{
 			latch.countDown();
 		});
 
-		sendJson("pr_comment_created", "issue_comment", DEFAULT_KEY);
+		sendPullRequestCommentPayload();
 		latch.await(10, TimeUnit.SECONDS);
 
 		IssueCommentData data = var.getValue();

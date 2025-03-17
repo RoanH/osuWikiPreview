@@ -68,7 +68,7 @@ public class WebState{
 	 * @param rs The result set to read from.
 	 * @throws SQLException When an SQL exception occurs.
 	 */
-	protected WebState(ResultSet rs) throws SQLException{
+	public WebState(ResultSet rs) throws SQLException{
 		long prId = rs.getLong("pr_id"); 
 		pr = prId == -1L ? null : new PullRequest(prId, rs.getInt("pr_num"));
 		namespace = rs.getString("namespace");

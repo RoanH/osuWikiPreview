@@ -41,13 +41,13 @@ import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
 import dev.roanh.wiki.github.handler.PullRequestCommentHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentData;
 
-public class WebHookHandler implements BodyHandler{
+public class WebhookHandler implements BodyHandler{
 	private static final Gson gson;
 	private final WebServer server;
 	private final Key secret;
 	private final List<PullRequestCommentHandler> commentHandlers = new ArrayList<PullRequestCommentHandler>();
 	
-	public WebHookHandler(String secret){
+	public WebhookHandler(String secret){
 		this.server = new WebServer(23333);
 		this.secret = GitHub.createSigningKey(secret);
 		//TODO register exception handler

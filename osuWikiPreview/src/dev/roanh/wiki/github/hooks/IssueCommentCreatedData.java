@@ -21,14 +21,12 @@ package dev.roanh.wiki.github.hooks;
 
 import dev.roanh.wiki.github.obj.GitHubComment;
 import dev.roanh.wiki.github.obj.GitHubIssue;
-import dev.roanh.wiki.github.obj.IssueCommentActionType;
 
 /**
  * Web hook data for an issue comment (PRs are also issues).
  * @author Roan
- * @param action The comment event type.
  * @param comment Information about the comment.
  * @param issue Information about the issue the comment is on.
  */
-public record IssueCommentData(IssueCommentActionType action, GitHubComment comment, GitHubIssue issue){
+public record IssueCommentCreatedData(GitHubComment comment, GitHubIssue issue){
 }

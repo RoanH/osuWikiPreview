@@ -28,13 +28,13 @@ dependencies{
 	implementation "dev.roanh.islalib:islalib:7.33"
 	
 	//JGit
-	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r'
-	implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r'
+	implementation "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r"
+	implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r"
 
 	//Testing
 	testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")
 	testImplementation("org.junit.platform:junit-platform-launcher")
-	testImplementation('org.wiremock:wiremock:3.5.4')
+	testImplementation("org.wiremock:wiremock:3.5.4")
 }
 
 repositories{

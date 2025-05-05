@@ -35,7 +35,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import dev.roanh.gitlab.api.base.IssueState;
 import dev.roanh.infinity.io.netty.http.HttpBody;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.BodyHandler;
@@ -43,8 +42,8 @@ import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
 import dev.roanh.wiki.github.handler.IssueCommentHandler;
 import dev.roanh.wiki.github.handler.PullRequestCommitHandler;
 import dev.roanh.wiki.github.handler.PullRequestOpenedHandler;
-import dev.roanh.wiki.github.hooks.IssueCommentData;
-import dev.roanh.wiki.github.obj.IssueCommentActionType;
+import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
+import dev.roanh.wiki.github.obj.IssueState;
 import dev.roanh.wiki.github.obj.UserType;
 
 public class WebhookHandler implements BodyHandler{
@@ -115,35 +114,39 @@ public class WebhookHandler implements BodyHandler{
 		//separate table for pr (id/number) - comment
 		
 		
-//		new Gson().fromJson(signatureHeader, null)
 		
-		
-		// TODO Auto-generated method stub
-		
-		
+		JsonObject requestObject = gson.fromJson(payload, JsonObject.class);
 		String type = request.headers().get("X-GitHub-Event");
-		System.out.println("type: " + type);
 		switch(type){
 		case "issue_comment"://pr's are also issues
-			handleIssueCommentEvent(payload);
+			handleIssueCommentEvent(requestObject);
 			break;
 		case "pull_request":
-			
+			handlePullRequestEvent(requestObject);
+			break;
 		}
 		
 		return RequestHandler.ok();
 	}
 	
-	private void handlePullRequestEvent(String json) throws IOException{
-		
-		
-		
+	private void handlePullRequestEvent(JsonObject json) throws IOException{
+		JsonObject obj = gson.fromJson(json, JsonObject.class);
+		switch(obj.get("action").getAsString()){
+		case "created":
+			//TODO
+			break;
+		case "synchronize":
+			//TODO 
+			break;
+		}
 	}
 	
-	private void handleIssueCommentEvent(String json) throws IOException{
-		IssueCommentData data = gson.fromJson(json, IssueCommentData.class);
-		for(IssueCommentHandler handler : commentHandlers){
-			handler.handleComment(data);
+	private void handleIssueCommentEvent(JsonObject json) throws IOException{
+		if(json.get("action").getAsString().equals("created")){
+			IssueCommentCreatedData data = gson.fromJson(json, IssueCommentCreatedData.class);
+			for(IssueCommentHandler handler : commentHandlers){
+				handler.handleComment(data);
+			}
 		}
 	}
 	
@@ -172,7 +175,6 @@ public class WebhookHandler implements BodyHandler{
 		
 		EnumDeserializer enums = new EnumDeserializer();
 		builder.registerTypeAdapter(IssueState.class, enums);
-		builder.registerTypeAdapter(IssueCommentActionType.class, enums);
 		builder.registerTypeAdapter(UserType.class, enums);
 		
 		gson = builder.create();

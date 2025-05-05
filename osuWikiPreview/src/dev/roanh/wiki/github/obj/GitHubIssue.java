@@ -8,8 +8,8 @@ public record GitHubIssue(
 		IssueState state,
 		String title,
 		@SerializedName("pull_request")
-		GitHubIssuePullRequest pullRequest
-		//TODO user?
+		GitHubIssuePullRequest pullRequest,
+		GitHubUser user
 	){
 	
 	public boolean isPullRequest(){

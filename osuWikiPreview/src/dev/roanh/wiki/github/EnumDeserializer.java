@@ -21,6 +21,7 @@ public class EnumDeserializer implements JsonDeserializer<Enum>{
 	@Override
 	public Enum deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException{
 		try{
+			System.out.println("deser: " + json);
 			return Enum.<Enum>valueOf((Class<Enum>)typeOfT, json.getAsString().toUpperCase(Locale.ROOT));
 		}catch(IllegalArgumentException ignore){
 			return Enum.<Enum>valueOf((Class<Enum>)typeOfT, "UNKNOWN");

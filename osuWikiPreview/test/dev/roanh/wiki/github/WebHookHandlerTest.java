@@ -67,4 +67,10 @@ public class WebHookHandlerTest extends WebhookTest{
 		assertEquals("https://avatars.githubusercontent.com/u/8530896?v=4", issueUser.avatarUrl());
 		assertEquals(UserType.USER, issueUser.type());
 	}
+	
+	//TODO PR open
+	
+	//TODO PR commit
+	
+	//TODO PR merged
 }

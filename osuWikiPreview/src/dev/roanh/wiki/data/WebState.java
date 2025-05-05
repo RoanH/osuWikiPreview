@@ -60,7 +60,6 @@ public class WebState{
 	 * The instant the web instance becomes available for automatic claiming.
 	 */
 	private Instant available;
-	//TODO Optional<User> user
 	
 	/**
 	 * Constructs a new web state from the given result set. 

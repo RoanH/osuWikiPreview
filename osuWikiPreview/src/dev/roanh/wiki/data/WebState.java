@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.Optional;
 
 import dev.roanh.wiki.OsuWeb;
-import dev.roanh.wiki.PullRequest;
 import dev.roanh.wiki.github.GitHub.PullRequestInfo;
 
 /**

@@ -1,5 +1,6 @@
 package dev.roanh.wiki.github.hooks;
 
-public record PullRequestOpenData(){
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
+public record PullRequestOpenData(GitHubPullRequest pullRequest){
 }

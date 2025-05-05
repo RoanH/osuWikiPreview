@@ -82,7 +82,7 @@ public class WebhookHandler implements BodyHandler{
 	
 	//TODO event for PR merges to know an instance can be freed
 	
-	public void addCommentHandler(IssueCommentHandler handler){
+	public void addIssueCommentHandler(IssueCommentHandler handler){
 		commentHandlers.add(handler);
 	}
 	

@@ -19,7 +19,12 @@
  */
 package dev.roanh.wiki.github.handler;
 
-//@FunctionalInterface
-public abstract interface PullRequestCreatedHandler{
+import java.io.IOException;
 
+import dev.roanh.wiki.github.hooks.IssueCommentData;
+
+@FunctionalInterface
+public abstract interface IssueCommentHandler{
+
+	public abstract void handleComment(IssueCommentData data) throws IOException;
 }

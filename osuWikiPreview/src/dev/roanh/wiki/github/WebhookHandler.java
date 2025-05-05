@@ -27,6 +27,7 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -34,21 +35,24 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import dev.roanh.gitlab.api.base.IssueState;
 import dev.roanh.infinity.io.netty.http.HttpBody;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.BodyHandler;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
-import dev.roanh.wiki.github.handler.PullRequestCommentHandler;
+import dev.roanh.wiki.github.handler.IssueCommentHandler;
 import dev.roanh.wiki.github.handler.PullRequestCommitHandler;
-import dev.roanh.wiki.github.handler.PullRequestCreatedHandler;
+import dev.roanh.wiki.github.handler.PullRequestOpenedHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentData;
+import dev.roanh.wiki.github.obj.IssueCommentActionType;
+import dev.roanh.wiki.github.obj.UserType;
 
 public class WebhookHandler implements BodyHandler{
 	private static final Gson gson;
 	private final WebServer server;
 	private final Key secret;
-	private final List<PullRequestCommentHandler> commentHandlers = new ArrayList<PullRequestCommentHandler>();
-	private final List<PullRequestCreatedHandler> createHandlers = new ArrayList<PullRequestCreatedHandler>();
+	private final List<IssueCommentHandler> commentHandlers = new ArrayList<IssueCommentHandler>();
+	private final List<PullRequestOpenedHandler> createHandlers = new ArrayList<PullRequestOpenedHandler>();
 	private final List<PullRequestCommitHandler> commitHandlers = new ArrayList<PullRequestCommitHandler>();
 	
 	public WebhookHandler(String secret){
@@ -59,7 +63,11 @@ public class WebhookHandler implements BodyHandler{
 		server.createContext(HttpMethod.POST, "/", this);
 	}
 	
-	
+	public static void main(String[] args) throws InterruptedException{
+		WebhookHandler handler = new WebhookHandler("");
+		handler.start();
+		Thread.sleep(1000000000000L);
+	}
 	
 	
 	
@@ -72,11 +80,13 @@ public class WebhookHandler implements BodyHandler{
 		server.shutdown();
 	}
 	
-	public void addPullRequestCommentHandler(PullRequestCommentHandler handler){
+	//TODO event for PR merges to know an instance can be freed
+	
+	public void addCommentHandler(IssueCommentHandler handler){
 		commentHandlers.add(handler);
 	}
 	
-	public void addPullRequestCreatedHandler(PullRequestCreatedHandler handler){
+	public void addPullRequestCreatedHandler(PullRequestOpenedHandler handler){
 		createHandlers.add(handler);
 	}
 
@@ -87,13 +97,16 @@ public class WebhookHandler implements BodyHandler{
 	@Override
 	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
 		String payload = data.string();
+		
+		System.out.println("received: " + payload);
+
+		
 		if(!validateSignature(payload, request.headers())){
 			System.out.println("payload validation failed: " + "\nsig: " + request.headers().get("X-Hub-Signature-256"));
 			return RequestHandler.status(HttpResponseStatus.FORBIDDEN);
 		}
 		
 		
-		System.out.println("received: " + payload);
 
 		//check if known contributor?
 		
@@ -114,17 +127,23 @@ public class WebhookHandler implements BodyHandler{
 		case "issue_comment"://pr's are also issues
 			handleIssueCommentEvent(payload);
 			break;
+		case "pull_request":
+			
 		}
 		
 		return RequestHandler.ok();
 	}
 	
+	private void handlePullRequestEvent(String json) throws IOException{
+		
+		
+		
+	}
+	
 	private void handleIssueCommentEvent(String json) throws IOException{
 		IssueCommentData data = gson.fromJson(json, IssueCommentData.class);
-		if(data.isCreateAction() && data.issue().isPullRequest()){
-			for(PullRequestCommentHandler handler : commentHandlers){
-				handler.handleComment(data);
-			}
+		for(IssueCommentHandler handler : commentHandlers){
+			handler.handleComment(data);
 		}
 	}
 	
@@ -148,7 +167,14 @@ public class WebhookHandler implements BodyHandler{
 	
 	static{
 		GsonBuilder builder = new GsonBuilder();
+		
 		builder.registerTypeAdapter(Instant.class, new InstantDeserializer());
+		
+		EnumDeserializer enums = new EnumDeserializer();
+		builder.registerTypeAdapter(IssueState.class, enums);
+		builder.registerTypeAdapter(IssueCommentActionType.class, enums);
+		builder.registerTypeAdapter(UserType.class, enums);
+		
 		gson = builder.create();
 	}
 }

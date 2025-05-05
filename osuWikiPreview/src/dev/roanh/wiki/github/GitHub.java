@@ -164,8 +164,7 @@ public final class GitHub{
 	 * @param number The PR number as shown in the web UI.
 	 * @param base The base ref for the PR.
 	 */
-	public static final record PullRequestInfo(int id, int number, BaseRef base){
-
+	public static final record PullRequestInfo(int id, int number, BaseRef base){//TODO
 		/**
 		 * Checks if this PR is on the official ppy repository.
 		 * @return True if this PR is on the official wiki repository.
@@ -180,7 +179,7 @@ public final class GitHub{
 	 * @author Roan
 	 * @param label The namespace:ref label for this reference.
 	 */
-	public static final record BaseRef(String label){
+	public static final record BaseRef(String label){//TODO
 		
 		/**
 		 * Checks if this PR is on the official ppy repository.

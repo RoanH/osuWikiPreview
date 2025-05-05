@@ -1,5 +1,8 @@
 package dev.roanh.wiki.github.obj;
 
-public record GitHubComment(long id, String body, GitHubUser user){
-
+public record GitHubComment(
+		long id,
+		String body,
+		GitHubUser user
+	){
 }

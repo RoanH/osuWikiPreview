@@ -1,5 +1,12 @@
 package dev.roanh.wiki.github.obj;
 
-public record GitHubUser(String login){
+import com.google.gson.annotations.SerializedName;
 
+public record GitHubUser(
+		String login,
+		int id,
+		@SerializedName("avatar_url")
+		String avatarUrl,
+		UserType type
+	){
 }

@@ -45,6 +45,7 @@ public class WebHookHandlerTest extends WebhookTest{
 		GitHubUser user = comment.user();
 		assertNotNull(user);
 		assertEquals("RoanH", user.login());
+		assertEquals(8530896, user.id());
 
 		GitHubIssue issue = data.issue();
 		assertEquals(2664436632L, issue.id());

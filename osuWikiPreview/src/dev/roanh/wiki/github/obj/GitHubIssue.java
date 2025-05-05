@@ -5,23 +5,14 @@ import com.google.gson.annotations.SerializedName;
 public record GitHubIssue(
 		long id,
 		int number,
-		String state,
+		IssueState state,
 		String title,
 		@SerializedName("pull_request")
-		GitHubIssuePullRequest pullRequest){
+		GitHubIssuePullRequest pullRequest
+		//TODO user?
+	){
 	
 	public boolean isPullRequest(){
 		return pullRequest != null;
-	}
-	
-	//state = open | closed
-	
-	
-	public boolean isOpen(){
-		return "open".equals(state);
-	}
-
-	public boolean isClosed(){
-		return "closed".equals(state);
 	}
 }

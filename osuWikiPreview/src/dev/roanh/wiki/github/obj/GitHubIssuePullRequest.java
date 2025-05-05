@@ -8,4 +8,8 @@ public record GitHubIssuePullRequest(
 		@SerializedName("merged_at")
 		Instant mergedInstant
 	){
+	
+	public boolean isMerged(){
+		return mergedInstant != null;
+	}
 }

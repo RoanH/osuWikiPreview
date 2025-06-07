@@ -52,6 +52,9 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.slf4j.LoggerFactory;
 
+import io.prometheus.client.Summary;
+import io.prometheus.client.Summary.Timer;
+
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
@@ -64,6 +67,14 @@ import ch.qos.logback.classic.Logger;
  * @author Roan
  */
 public class OsuWiki{
+	/**
+	 * Summary of the time it takes to switch and update the osu! web instance.
+	 */
+	private static final Summary switchTime = Summary.build("wikipreview_git_switch_time", "Time spent switching and syncing the web instance.").register();
+	/**
+	 * Summary of the time it takes to update the osu! web instance after a switch.
+	 */
+	private static final Summary webSyncTime = Summary.build("wikipreview_git_web_sync_time", "Time spent ssyncing the web instance.").register();
 	/**
 	 * Wiki repository bound git instance.
 	 */
@@ -147,22 +158,24 @@ public class OsuWiki{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		refs.add(ref);
-		
-		//update master copy
-		ObjectId from = updateMaster();
+		try(Timer timer = switchTime.startTimer()){
+			refs.add(ref);
+			
+			//update master copy
+			ObjectId from = updateMaster();
 
-		//reset to the new branch
-		findRemote(name);
-		forceFetch(name);
-		reset(name, ref);
-		
-		//merge changes from master if requested
-		if(mergeMaster){
-			mergeMaster(from);
+			//reset to the new branch
+			findRemote(name);
+			forceFetch(name);
+			reset(name, ref);
+			
+			//merge changes from master if requested
+			if(mergeMaster){
+				mergeMaster(from);
+			}
+			
+			return pushBranch(from, instance);
 		}
-		
-		return pushBranch(from, instance);
 	}
 	
 	/**
@@ -180,19 +193,21 @@ public class OsuWiki{
 		forcePush(instance.getWikiSyncBranch());
 
 		//update the website wiki
-		ObjectId to = getHead();
-		instance.runWikiUpdate("master", instance.getWikiSyncBranch());
+		try(Timer timer = webSyncTime.startTimer()){
+			ObjectId to = getHead();
+			instance.runWikiUpdate("master", instance.getWikiSyncBranch());
 
-		//compute the diff
-		SwitchResult diff = new SwitchResult(computeDiff(from, to), to.getName());
+			//compute the diff
+			SwitchResult diff = new SwitchResult(computeDiff(from, to), to.getName());
 
-		//update the website news
-		if(diff.hasNews()){
-			instance.runNewsUpdate(diff.diff());
+			//update the website news
+			if(diff.hasNews()){
+				instance.runNewsUpdate(diff.diff());
+			}
+
+			//return the diff
+			return diff;
 		}
-
-		//return the diff
-		return diff;
 	}
 	
 	/**

@@ -99,7 +99,6 @@ public class InstanceManager{
 	 */
 	private void prepareInstance() throws WebException{
 		pullImageTag(instance.getTag());
-		runArtisan("db:create");
 		migrateInstance();
 		runArtisan("es:index-documents");
 		runArtisan("es:create-search-blacklist");
@@ -126,6 +125,7 @@ public class InstanceManager{
 	 * @throws WebException When a docker exception occurs.
 	 */
 	private void migrateInstance() throws WebException{
+		runArtisan("db:create");
 		runArtisan("migrate --force");
 	}
 

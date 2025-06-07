@@ -32,7 +32,7 @@ import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.OsuWeb;
 
 /**
- * Abstract base class for command that affect an osu! web instance.
+ * Abstract base class for commands that affect an osu! web instance.
  * @author Roan
  */
 public abstract class WebCommand extends Command{

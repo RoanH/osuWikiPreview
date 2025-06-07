@@ -91,7 +91,7 @@ public class InstanceManager{
 	 * @throws WebException When a docker exception occurs.
 	 */
 	public void runInstance() throws WebException{
-		Main.runCommand("docker run -d --name " + instance.getWebContainer() + " --env-file " + instance.getEnvFile() + " -p " + instance.port() + ":8000 pppy/osu-web:" + instance.tag() + " octane");
+		Main.runCommand("docker run -d --name " + instance.getWebContainer() + " --env-file " + instance.getEnvFile() + " -p " + instance.getPort() + ":8000 pppy/osu-web:" + instance.getTag() + " octane");
 	}
 	
 	/**
@@ -99,7 +99,7 @@ public class InstanceManager{
 	 * @throws WebException When a docker exception occurs.
 	 */
 	private void prepareInstance() throws WebException{
-		pullImageTag(instance.tag());
+		pullImageTag(instance.getTag());
 		runArtisan("db:create");
 		migrateInstance();
 		runArtisan("es:index-documents");
@@ -125,7 +125,7 @@ public class InstanceManager{
 	public void generateEnv() throws IOException{
 		Configuration config = new PropertiesFileConfiguration(Paths.get("secrets.properties"));
 		try(PrintWriter out = new PrintWriter(Files.newBufferedWriter(Main.DEPLOY_PATH.toPath().resolve(instance.getEnvFile())))){
-			out.println("# osu! web instance " + instance.id());
+			out.println("# osu! web instance " + instance.getId());
 			out.println("APP_URL=" + instance.getSiteUrl());
 			out.println("APP_ENV=production");
 			out.println("OCTANE_HTTPS=true");
@@ -145,10 +145,10 @@ public class InstanceManager{
 			out.println("# Redis");
 			out.println("REDIS_HOST=" + config.readString("REDIS_HOST"));
 			out.println("REDIS_PORT=6379");
-			out.println("REDIS_DB=" + instance.id());
+			out.println("REDIS_DB=" + instance.getId());
 			out.println("CACHE_REDIS_HOST=" + config.readString("REDIS_HOST"));
 			out.println("CACHE_REDIS_PORT=6379");
-			out.println("CACHE_REDIS_DB=" + instance.id());
+			out.println("CACHE_REDIS_DB=" + instance.getId());
 			out.println();
 			out.println("# GitHub");
 			out.println("GITHUB_TOKEN=" + config.readString("GITHUB_TOKEN"));
@@ -199,7 +199,7 @@ public class InstanceManager{
 	 * @throws WebException When a docker exception occurs.
 	 */
 	private void runArtisan(String cmd) throws WebException{
-		Main.runCommand("docker run --rm -t --env-file " + instance.getEnvFile() + " pppy/osu-web:" + instance.tag() + " artisan " + cmd + " --no-interaction");
+		Main.runCommand("docker run --rm -t --env-file " + instance.getEnvFile() + " pppy/osu-web:" + instance.getTag() + " artisan " + cmd + " --no-interaction");
 	}
 	
 	/**
@@ -250,6 +250,6 @@ public class InstanceManager{
 	 * @param instance The instance to register.
 	 */
 	private static void registerInstance(Configuration config, Instance instance){
-		instancesByChannel.put(instance.channel(), new OsuWeb(config, instance));
+		instancesByChannel.put(instance.getChannel(), new OsuWeb(config, instance));
 	}
 }

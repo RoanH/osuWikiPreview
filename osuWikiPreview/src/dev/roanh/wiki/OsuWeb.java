@@ -61,7 +61,7 @@ public class OsuWeb{
 	 */
 	public OsuWeb(Configuration config, Instance instance){
 		this.instance = instance;
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchema(), "osuweb", config.readString("db-pass")), "wiki" + instance.id());
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchema(), "osuweb", config.readString("db-pass")), "wiki" + instance.getId());
 	}
 	
 	/**
@@ -82,7 +82,7 @@ public class OsuWeb{
 	 */
 	public void setCurrentState(WebState state) throws DBException{
 		currentState = state;
-		MainDatabase.saveState(instance.id(), currentState);
+		MainDatabase.saveState(instance.getId(), currentState);
 	}
 	
 	/**
@@ -211,7 +211,7 @@ public class OsuWeb{
 	 * @throws WebException When an exception occurs.
 	 */
 	public void start() throws DBException, WebException{
-		currentState = MainDatabase.getState(instance.id());
+		currentState = MainDatabase.getState(instance.getId());
 		Main.runCommand("docker start " + instance.getWebContainer());
 	}
 	

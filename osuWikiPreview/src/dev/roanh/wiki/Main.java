@@ -90,7 +90,7 @@ public class Main{
 			try{
 				site.start();
 			}catch(WebException | DBException e){
-				client.logError(e, "[Main] Failed to start site with ID " + site.getInstance().id(), Severity.MINOR, Priority.MEDIUM);
+				client.logError(e, "[Main] Failed to start site with ID " + site.getInstance().getId(), Severity.MINOR, Priority.MEDIUM);
 			}
 		}
 		

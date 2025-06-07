@@ -24,12 +24,47 @@ import dev.roanh.wiki.Main;
 /**
  * Constant information about a web instance.
  * @author Roan
- * @param id The ID of the instance.
- * @param channel The ID of the discord channel for this instance.
- * @param port The external docker container port for the website.
- * @param tag The osu-web docker image tag.
  */
-public record Instance(int id, long channel, int port, String tag){
+public class Instance{
+	/**
+	 * The ID of the instance.
+	 */
+	private final int id;
+	/**
+	 * The ID of the discord channel for this instance.
+	 */
+	private final long channel;
+	/**
+	 * The external docker container port for the website.
+	 */
+	private final int port;
+	/**
+	 * The osu! web docker image tag.
+	 */
+	private String tag;
+	
+	public Instance(int id, long channel, int port, String tag){
+		this.id = id;
+		this.channel = channel;
+		this.port = port;
+		this.tag = tag;
+	}
+	
+	public int getId(){
+		return id;
+	}
+	
+	public long getChannel(){
+		return channel;
+	}
+	
+	public int getPort(){
+		return port;
+	}
+	
+	public String getTag(){
+		return tag;
+	}
 	
 	/**
 	 * The name of the wiki preview sync branch for this instance.

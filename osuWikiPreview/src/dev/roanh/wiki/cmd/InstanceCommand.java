@@ -155,7 +155,7 @@ public class InstanceCommand extends CommandGroup{
 		final int id = args.get("id").getAsInt();
 		final int port = args.get("port").getAsInt();
 		
-		if(InstanceManager.getInstances().stream().map(OsuWeb::getInstance).anyMatch(instance->instance.id() == id || instance.port() == port)){
+		if(InstanceManager.getInstances().stream().map(OsuWeb::getInstance).anyMatch(instance->instance.getId() == id || instance.getPort() == port)){
 			event.reply("An instance with the given port or ID already exists.");
 			return;
 		}

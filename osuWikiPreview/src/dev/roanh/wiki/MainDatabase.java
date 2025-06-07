@@ -100,16 +100,4 @@ public final class MainDatabase{
 			);
 		});
 	}
-
-	/**
-	 * Drops all the schemas that are not really used but created by osu! web instances.
-	 * @throws DBException When a database exception occurs.
-	 */
-	public static void dropExtraSchemas() throws DBException{
-		executor.delete("DROP DATABASE `osu_charts`");
-		executor.delete("DROP DATABASE `osu_chat`");
-		executor.delete("DROP DATABASE `osu_mp`");
-		executor.delete("DROP DATABASE `osu_store`");
-		executor.delete("DROP DATABASE `osu_updates`");
-	}
 }

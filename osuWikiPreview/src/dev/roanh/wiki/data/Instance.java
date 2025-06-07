@@ -130,10 +130,10 @@ public class Instance{
 	}
 	
 	/**
-	 * Gets the name of the main osu! web database schema for this instance.
-	 * @return The main schema name.
+	 * Gets the name of the osu! web database schema prefix for this instance.
+	 * @return The main schema name and prefix for other schema names.
 	 */
-	public String getDatabaseSchema(){
+	public String getDatabaseSchemaPrefix(){
 		return "osu" + id;
 	}
 	

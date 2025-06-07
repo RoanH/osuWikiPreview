@@ -61,7 +61,7 @@ public class OsuWeb{
 	 */
 	public OsuWeb(Configuration config, Instance instance){
 		this.instance = instance;
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchema(), "osuweb", config.readString("db-pass")), "wiki" + instance.getId());
+		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchemaPrefix(), "osuweb", config.readString("db-pass")), "wiki" + instance.getId());
 	}
 	
 	/**

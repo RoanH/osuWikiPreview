@@ -70,7 +70,6 @@ public class InstanceManager{
 	public void createInstance() throws DBException, IOException, WebException{
 		MainDatabase.saveInstance(instance);
 		generateEnv();
-		MainDatabase.dropExtraSchemas();
 		prepareInstance();
 		//technically should also push a new GitHub branch but I just made 9 in advance for now
 		
@@ -150,7 +149,12 @@ public class InstanceManager{
 			out.println();
 			out.println("# MySQL");
 			out.println("DB_HOST=" + config.readString("DB_HOST"));
-			out.println("DB_DATABASE=" + instance.getDatabaseSchema());
+			out.println("DB_DATABASE=" + instance.getDatabaseSchemaPrefix());
+			out.println("DB_DATABASE_CHAT=" + instance.getDatabaseSchemaPrefix() + "_chat");
+			out.println("DB_DATABASE_MP=" + instance.getDatabaseSchemaPrefix() + "_mp");
+			out.println("DB_DATABASE_STORE=" + instance.getDatabaseSchemaPrefix() + "_store");
+			out.println("DB_DATABASE_UPDATES=" + instance.getDatabaseSchemaPrefix() + "_updates");
+			out.println("DB_DATABASE_CHARTS=" + instance.getDatabaseSchemaPrefix() + "_charts");
 			out.println("DB_USERNAME=osuweb");
 			out.println("DB_PASSWORD=" + config.readString("DB_PASSWORD"));
 			out.println();

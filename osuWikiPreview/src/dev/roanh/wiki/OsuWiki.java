@@ -74,7 +74,7 @@ public class OsuWiki{
 	/**
 	 * Summary of the time it takes to update the osu! web instance after a switch.
 	 */
-	private static final Summary webSyncTime = Summary.build("wikipreview_git_web_sync_time", "Time spent ssyncing the web instance.").register();
+	private static final Summary webSyncTime = Summary.build("wikipreview_git_web_sync_time", "Time spent syncing the web instance.").register();
 	/**
 	 * Wiki repository bound git instance.
 	 */

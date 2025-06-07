@@ -27,8 +27,9 @@ import dev.roanh.wiki.Main;
  * @param id The ID of the instance.
  * @param channel The ID of the discord channel for this instance.
  * @param port The external docker container port for the website.
+ * @param tag The osu-web docker image tag.
  */
-public record Instance(int id, long channel, int port){
+public record Instance(int id, long channel, int port, String tag){
 	
 	/**
 	 * The name of the wiki preview sync branch for this instance.
@@ -79,7 +80,7 @@ public record Instance(int id, long channel, int port){
 	}
 	
 	/**
-	 * Gets the Elasticsearch prefixed used by this instance. 
+	 * Gets the Elasticsearch prefixed used by this instance.
 	 * @return The Elasticsearch prefix used by this instance.
 	 */
 	public String getElasticsearchPrefix(){

@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import dev.roanh.infinity.config.Configuration;
 import dev.roanh.infinity.config.PropertiesFileConfiguration;
@@ -38,6 +39,10 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public class InstanceManager{
+	/**
+	 * Format for osu! web docker image release tags.
+	 */
+	private static final Pattern RELEASE_TAG_REGEX = Pattern.compile("\\d{4}\\.\\d+\\.\\d+");
 	/**
 	 * Deployment instances by Discord channel.
 	 */
@@ -83,22 +88,34 @@ public class InstanceManager{
 	
 	/**
 	 * Runs a new docker container for the instance.
-	 * @throws WebException When a docker exception occurs. 
+	 * @throws WebException When a docker exception occurs.
 	 */
 	public void runInstance() throws WebException{
-		Main.runCommand("docker run -d --name " + instance.getWebContainer() + " --env-file " + instance.getEnvFile() + " -p " + instance.port() + ":8000 pppy/osu-web:latest octane");
+		Main.runCommand("docker run -d --name " + instance.getWebContainer() + " --env-file " + instance.getEnvFile() + " -p " + instance.port() + ":8000 pppy/osu-web:" + instance.tag() + " octane");
 	}
 	
 	/**
 	 * Prepare a newly created instance by running all seed/migration actions.
-	 * @throws WebException When a docker exception occurs. 
+	 * @throws WebException When a docker exception occurs.
 	 */
 	private void prepareInstance() throws WebException{
+		pullImageTag(instance.tag());
 		runArtisan("db:create");
-		runArtisan("migrate --force");
+		migrateInstance();
 		runArtisan("es:index-documents");
 		runArtisan("es:create-search-blacklist");
 		runArtisan("es:index-wiki --create-only");
+	}
+	
+	public void updateInstance(String tag) throws WebException{
+		pullImageTag(tag);
+		//TODO set new tag
+		deleteInstanceContainer();
+		migrateInstance();
+	}
+	
+	private void migrateInstance() throws WebException{
+		runArtisan("migrate --force");
 	}
 
 	/**
@@ -179,10 +196,24 @@ public class InstanceManager{
 	/**
 	 * Runs an artisan command for this instance in a new temporary container.
 	 * @param cmd The artisan command to execute.
-	 * @throws WebException When a docker exception occurs. 
+	 * @throws WebException When a docker exception occurs.
 	 */
 	private void runArtisan(String cmd) throws WebException{
-		Main.runCommand("docker run --rm -t --env-file " + instance.getEnvFile() + " pppy/osu-web:latest artisan " + cmd + " --no-interaction");
+		Main.runCommand("docker run --rm -t --env-file " + instance.getEnvFile() + " pppy/osu-web:" + instance.tag() + " artisan " + cmd + " --no-interaction");
+	}
+	
+	/**
+	 * Pulls the given osu! web docker tag.
+	 * @param tag The tag to pull.
+	 * @throws WebException When a docker exception occurs,
+	 *         or when the given tag is not a valid release tag.
+	 */
+	private static void pullImageTag(String tag) throws WebException{
+		if(!RELEASE_TAG_REGEX.matcher(tag).matches()){
+			throw new WebException("The given docker image tag '" + tag + "' does not look like a valid release tag.");
+		}
+		
+		Main.runCommand("docker pull pppy/osu-web:" + tag);
 	}
 	
 	/**

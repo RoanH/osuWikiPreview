@@ -62,6 +62,7 @@ public class InstanceCommand extends CommandGroup{
 		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, CommandScope.GUILD_AND_DM, this::createInstance);
 		create.addOptionInt("id", "The identifier for the instance.", 1, 15);//need to edit the redis config to go above 15
 		create.addOptionInt("port", "The web port for the new instance.", 1024, 65535);
+		create.addOptionString("tag", "The osu! web docker image tag.");
 		registerCommand(create);
 	}
 	
@@ -128,7 +129,19 @@ public class InstanceCommand extends CommandGroup{
 			manager.runInstance();
 			event.reply("Instance recreated and started successfully.");
 		}catch(WebException e){
-			event.logError(e, "[InstanceCommand] Failed to generate environment", Severity.MINOR, Priority.MEDIUM, args);
+			event.logError(e, "[InstanceCommand] Failed to recreate instance", Severity.MINOR, Priority.MEDIUM, args);
+			event.internalError();
+		}
+	}
+	
+	private void updateContainer(OsuWeb web, CommandMap args, CommandEvent event){
+		try{
+			InstanceManager manager = web.getManager();
+			manager.updateInstance(args.get("tag").getAsString());
+			manager.runInstance();
+			event.reply("Instance updated and started successfully.");
+		}catch(WebException e){
+			event.logError(e, "[InstanceCommand] Failed to update instance", Severity.MINOR, Priority.MEDIUM, args);
 			event.internalError();
 		}
 	}
@@ -141,7 +154,7 @@ public class InstanceCommand extends CommandGroup{
 	private void createInstance(CommandMap args, CommandEvent event){
 		final int id = args.get("id").getAsInt();
 		final int port = args.get("port").getAsInt();
-
+		
 		if(InstanceManager.getInstances().stream().map(OsuWeb::getInstance).anyMatch(instance->instance.id() == id || instance.port() == port)){
 			event.reply("An instance with the given port or ID already exists.");
 			return;
@@ -150,7 +163,7 @@ public class InstanceCommand extends CommandGroup{
 		event.deferReply(deferred->{
 			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel("osu" + id).queue(chan->{
 				try{
-					Instance instance = new Instance(id, chan.getIdLong(), port);
+					Instance instance = new Instance(id, chan.getIdLong(), port, args.get("tag").getAsString());
 					chan.getManager().setTopic("osu! web instance with preview site: " + instance.getSiteUrl()).queue();
 					
 					InstanceManager manager = new InstanceManager(instance);

@@ -82,7 +82,7 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static void addInstance(Instance instance) throws DBException{
-		executor.insert("INSERT INTO instances (id, channel, port) VALUES (?, ?, ?)", instance.id(), instance.channel(), instance.port());
+		executor.insert("INSERT INTO instances (id, channel, port, tag) VALUES (?, ?, ?, ?)", instance.id(), instance.channel(), instance.port(), instance.tag());
 	}
 	
 	/**
@@ -95,7 +95,8 @@ public final class MainDatabase{
 			return new Instance(
 				rs.getInt("id"),
 				rs.getLong("channel"),
-				rs.getInt("port")
+				rs.getInt("port"),
+				rs.getString("tag")
 			);
 		});
 	}

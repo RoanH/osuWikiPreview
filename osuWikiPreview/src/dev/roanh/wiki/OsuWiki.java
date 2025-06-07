@@ -76,6 +76,10 @@ public class OsuWiki{
 	 */
 	private static final Summary webSyncTime = Summary.build("wikipreview_git_web_sync_time", "Time spent syncing the web instance.").register();
 	/**
+	 * Summary of the time it takes to compute the repository diff after a switch.
+	 */
+	private static final Summary diffTime = Summary.build("wikipreview_git_diff_time", "Time spent computing repository diffs.").register();
+	/**
 	 * Wiki repository bound git instance.
 	 */
 	private static Git git;
@@ -221,27 +225,29 @@ public class OsuWiki{
 	 * @throws GitAPIException When some git exception occurs.
 	 */
 	private static List<DiffEntry> computeDiff(ObjectId from, ObjectId to) throws IOException, GitAPIException{
-		Repository repo = git.getRepository();
-		try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
-			//attempt to find the merge base of both commits
-			rev.setRetainBody(false);
-			RevCommit target = rev.parseCommit(to);
-			RevCommit source = rev.parseCommit(from);
-			rev.markStart(source);
-			rev.markStart(target);
-			rev.setRevFilter(RevFilter.MERGE_BASE);
-			
-			//merge base tree
-			CanonicalTreeParser oldTree = new CanonicalTreeParser();
-			oldTree.reset(reader, rev.next().getTree());
-			
-			//current head tree
-			CanonicalTreeParser newTree = new CanonicalTreeParser();
-			newTree.reset(reader, target.getTree());
-			
-			return git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call().stream().filter(item->{
-				return item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md");
-			}).toList();
+		try(Timer timer = diffTime.startTimer()){
+			Repository repo = git.getRepository();
+			try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
+				//attempt to find the merge base of both commits
+				rev.setRetainBody(false);
+				RevCommit target = rev.parseCommit(to);
+				RevCommit source = rev.parseCommit(from);
+				rev.markStart(source);
+				rev.markStart(target);
+				rev.setRevFilter(RevFilter.MERGE_BASE);
+				
+				//merge base tree
+				CanonicalTreeParser oldTree = new CanonicalTreeParser();
+				oldTree.reset(reader, rev.next().getTree());
+				
+				//current head tree
+				CanonicalTreeParser newTree = new CanonicalTreeParser();
+				newTree.reset(reader, target.getTree());
+				
+				return git.diff().setOldTree(oldTree).setNewTree(newTree).setShowNameOnly(true).call().stream().filter(item->{
+					return item.getChangeType() != ChangeType.DELETE && item.getNewPath().endsWith(".md");
+				}).toList();
+			}
 		}
 	}
 	

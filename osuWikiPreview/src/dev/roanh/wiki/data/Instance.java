@@ -43,6 +43,13 @@ public class Instance{
 	 */
 	private String tag;
 	
+	/**
+	 * Constructs a new instance.
+	 * @param id The ID of the instance.
+	 * @param channel The discord channel for the instance.
+	 * @param port The port for the website.
+	 * @param tag The docker image tag.
+	 */
 	public Instance(int id, long channel, int port, String tag){
 		this.id = id;
 		this.channel = channel;
@@ -50,20 +57,44 @@ public class Instance{
 		this.tag = tag;
 	}
 	
+	/**
+	 * Gets the ID of the instance.
+	 * @return The instance ID.
+	 */
 	public int getId(){
 		return id;
 	}
 	
+	/**
+	 * Gets the ID of the discord channel for this instance.
+	 * @return The ID of the discord channel.
+	 */
 	public long getChannel(){
 		return channel;
 	}
 	
+	/**
+	 * Gets the external docker container port for the website.
+	 * @return The website port for the instance.
+	 */
 	public int getPort(){
 		return port;
 	}
 	
+	/**
+	 * Gets the osu! web docker image tag for this instance.
+	 * @return The osu! web docker tag.
+	 */
 	public String getTag(){
 		return tag;
+	}
+	
+	/**
+	 * Sets a new osu! web docker release image tag for this instance.
+	 * @param tag The new osu! web docker image tag.
+	 */
+	public void setTag(String tag){
+		this.tag = tag;
 	}
 	
 	/**

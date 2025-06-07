@@ -59,6 +59,10 @@ public class InstanceCommand extends CommandGroup{
 		
 		registerCommand(WebCommand.of("restart", "Restarts the entire osu! web instance.", CommandPermission.DEV, this::restartInstance));
 		
+		Command update = WebCommand.of("update", "Update to a new osu! web release.", CommandPermission.DEV, this::updateInstance);
+		update.addOptionString("tag", "The new osu! web docker image tag.");
+		registerCommand(update);
+		
 		Command create = Command.of("create", "Creates a new osu! web instance.", CommandPermission.DEV, CommandScope.GUILD_AND_DM, this::createInstance);
 		create.addOptionInt("id", "The identifier for the instance.", 1, 15);//need to edit the redis config to go above 15
 		create.addOptionInt("port", "The web port for the new instance.", 1024, 65535);
@@ -134,13 +138,19 @@ public class InstanceCommand extends CommandGroup{
 		}
 	}
 	
-	private void updateContainer(OsuWeb web, CommandMap args, CommandEvent event){
+	/**
+	 * Updates the docker container for this instance (and runs it).
+	 * @param web The osu! web instance to update and migrate.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
+	private void updateInstance(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			InstanceManager manager = web.getManager();
 			manager.updateInstance(args.get("tag").getAsString());
 			manager.runInstance();
 			event.reply("Instance updated and started successfully.");
-		}catch(WebException e){
+		}catch(WebException | DBException e){
 			event.logError(e, "[InstanceCommand] Failed to update instance", Severity.MINOR, Priority.MEDIUM, args);
 			event.internalError();
 		}

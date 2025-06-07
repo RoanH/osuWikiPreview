@@ -81,8 +81,8 @@ public final class MainDatabase{
 	 * @param instance The new instance to register.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public static void addInstance(Instance instance) throws DBException{
-		executor.insert("INSERT INTO instances (id, channel, port, tag) VALUES (?, ?, ?, ?)", instance.getId(), instance.getChannel(), instance.getPort(), instance.getTag());
+	public static void saveInstance(Instance instance) throws DBException{
+		executor.insert("REPLACE INTO instances (id, channel, port, tag) VALUES (?, ?, ?, ?)", instance.getId(), instance.getChannel(), instance.getPort(), instance.getTag());
 	}
 	
 	/**

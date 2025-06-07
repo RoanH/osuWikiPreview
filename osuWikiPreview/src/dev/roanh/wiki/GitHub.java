@@ -121,7 +121,7 @@ public final class GitHub{
 	/**
 	 * Record with information about a PR.
 	 * @author Roan
-	 * @param getId The GitHub internal pull request ID.
+	 * @param id The GitHub internal pull request ID.
 	 * @param number The PR number as shown in the web UI.
 	 * @param base The base ref for the PR.
 	 */

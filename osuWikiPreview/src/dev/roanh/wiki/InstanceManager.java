@@ -68,7 +68,7 @@ public class InstanceManager{
 	 * @throws WebException When an instance (docker) command fails.
 	 */
 	public void createInstance() throws DBException, IOException, WebException{
-		MainDatabase.addInstance(instance);
+		MainDatabase.saveInstance(instance);
 		generateEnv();
 		MainDatabase.dropExtraSchemas();
 		prepareInstance();
@@ -107,13 +107,25 @@ public class InstanceManager{
 		runArtisan("es:index-wiki --create-only");
 	}
 	
-	public void updateInstance(String tag) throws WebException{
+	/**
+	 * Deletes the current instance container and runs migrations
+	 * to update to the given release tag.
+	 * @param tag The new release tag for the instance.
+	 * @throws WebException When a docker exception occurs.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public void updateInstance(String tag) throws WebException, DBException {
 		pullImageTag(tag);
-		//TODO set new tag
+		instance.setTag(tag);
+		MainDatabase.saveInstance(instance);
 		deleteInstanceContainer();
 		migrateInstance();
 	}
 	
+	/**
+	 * Runs migrations for this instance.
+	 * @throws WebException When a docker exception occurs.
+	 */
 	private void migrateInstance() throws WebException{
 		runArtisan("migrate --force");
 	}

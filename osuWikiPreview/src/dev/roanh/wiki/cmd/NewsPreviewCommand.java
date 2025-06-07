@@ -40,7 +40,7 @@ import dev.roanh.wiki.exception.WebException;
  * a properly named and formatted newspost file instead of a git ref.
  * @author Roan
  */
-public class PreviewCommand extends BaseSwitchCommand{
+public class NewsPreviewCommand extends BaseSwitchCommand{
 	/**
 	 * Newspost filename regex.
 	 * Group 1: The year for the newspost.
@@ -50,8 +50,8 @@ public class PreviewCommand extends BaseSwitchCommand{
 	/**
 	 * Constructs a new refresh command command.
 	 */
-	public PreviewCommand(){
-		super("preview", "Create a preview for the given newspost.");
+	public NewsPreviewCommand(){
+		super("newspreview", "Create a preview for the given newspost.");
 		addOptionAttachment("newspost", "The newspost markdown file to preview.");
 	}
 

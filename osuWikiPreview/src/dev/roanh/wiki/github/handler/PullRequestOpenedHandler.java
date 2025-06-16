@@ -19,7 +19,11 @@
  */
 package dev.roanh.wiki.github.handler;
 
-//@FunctionalInterface
+import dev.roanh.wiki.github.hooks.PullRequestOpenData;
+
+//https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
+@FunctionalInterface
 public abstract interface PullRequestOpenedHandler{
 
+	public abstract void handlePullRequestOpen(PullRequestOpenData data);
 }

@@ -19,12 +19,10 @@
  */
 package dev.roanh.wiki.github.handler;
 
-import java.io.IOException;
-
 import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
 
 @FunctionalInterface
 public abstract interface IssueCommentHandler{
 
-	public abstract void handleComment(IssueCommentCreatedData data) throws IOException;
+	public abstract void handleComment(IssueCommentCreatedData data);
 }

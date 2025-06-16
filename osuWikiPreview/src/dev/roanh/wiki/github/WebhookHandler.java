@@ -43,6 +43,7 @@ import dev.roanh.wiki.github.handler.IssueCommentHandler;
 import dev.roanh.wiki.github.handler.PullRequestCommitHandler;
 import dev.roanh.wiki.github.handler.PullRequestOpenedHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
+import dev.roanh.wiki.github.hooks.PullRequestOpenData;
 import dev.roanh.wiki.github.obj.IssueState;
 import dev.roanh.wiki.github.obj.UserType;
 
@@ -51,7 +52,7 @@ public class WebhookHandler implements BodyHandler{
 	private final WebServer server;
 	private final Key secret;
 	private final List<IssueCommentHandler> commentHandlers = new ArrayList<IssueCommentHandler>();
-	private final List<PullRequestOpenedHandler> createHandlers = new ArrayList<PullRequestOpenedHandler>();
+	private final List<PullRequestOpenedHandler> pullRequestCreateHandlers = new ArrayList<PullRequestOpenedHandler>();
 	private final List<PullRequestCommitHandler> commitHandlers = new ArrayList<PullRequestCommitHandler>();
 	
 	public WebhookHandler(String secret){
@@ -86,7 +87,7 @@ public class WebhookHandler implements BodyHandler{
 	}
 	
 	public void addPullRequestCreatedHandler(PullRequestOpenedHandler handler){
-		createHandlers.add(handler);
+		pullRequestCreateHandlers.add(handler);
 	}
 
 	public void addPullRequestCommitHandler(PullRequestCommitHandler handler){
@@ -129,14 +130,17 @@ public class WebhookHandler implements BodyHandler{
 		return RequestHandler.ok();
 	}
 	
-	private void handlePullRequestEvent(JsonObject json) throws IOException{
+	private void handlePullRequestEvent(JsonObject json){
 		JsonObject obj = gson.fromJson(json, JsonObject.class);
 		switch(obj.get("action").getAsString()){
-		case "created":
-			//TODO
+		case "opened":
+			PullRequestOpenData data = gson.fromJson(json, PullRequestOpenData.class);
+			for(PullRequestOpenedHandler handler : pullRequestCreateHandlers){
+				handler.handlePullRequestOpen(data);
+			}
 			break;
 		case "synchronize":
-			//TODO 
+			//TODO
 			break;
 		}
 	}

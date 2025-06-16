@@ -19,7 +19,17 @@
  */
 package dev.roanh.wiki.github.handler;
 
-//@FunctionalInterface
+import dev.roanh.wiki.github.hooks.PullRequestSyncData;
+
+/**
+ * Handler invoked when a pull request's head branch was updated. For example, the head branch
+ * was updated from the base branch or new commits were pushed to the head branch.
+ * @author Roan
+ * @see PullRequestSyncData
+ * @see <a href="https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=synchronize#pull_request">Pull Request Synchronize Event</a>
+ */
+@FunctionalInterface
 public abstract interface PullRequestCommitHandler{
 
+	public abstract void handlePullRequestCommit(PullRequestSyncData data);
 }

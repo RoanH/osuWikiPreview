@@ -30,7 +30,6 @@ package dev.roanh.wiki.github.obj;
  * @param body The pull request description, can be null if absent.
  * @param head The branch associated with this pull request.
  * @param base The source branch the branch for this pull requested was based on.
- *
  */
 public record GitHubPullRequest(
 		long id,

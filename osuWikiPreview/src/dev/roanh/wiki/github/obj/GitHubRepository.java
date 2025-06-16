@@ -20,4 +20,8 @@
 package dev.roanh.wiki.github.obj;
 
 public record GitHubRepository(String name, GitHubUser owner){
+	
+	public boolean isOfficial(){
+		return "osu-wiki".equals(name) && owner.id() == 995763;
+	}
 }

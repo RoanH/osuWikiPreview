@@ -33,6 +33,10 @@ public enum UserType{
 	 */
 	BOT,
 	/**
+	 * Indicates a GitHub organisation.
+	 */
+	ORGANIZATION,
+	/**
 	 * Used for unrecognised user types.
 	 */
 	UNKNOWN;

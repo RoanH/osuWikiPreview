@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Optional;
@@ -38,9 +39,13 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
+import dev.roanh.wiki.github.obj.IssueState;
+import dev.roanh.wiki.github.obj.UserType;
 
 /**
  * Simple GitHub API wrapper.
@@ -58,7 +63,7 @@ public final class GitHub{
 	/**
 	 * The GSON instance to use to deserialise response payloads.
 	 */
-	private static final Gson gson = new Gson();
+	private static final Gson gson;
 	/**
 	 * The instance of the GitHub API.
 	 */
@@ -98,11 +103,11 @@ public final class GitHub{
 	 * @return An open PR with the given commit.
 	 * @throws GitHubException When some GitHub API exception occurs.
 	 */
-	public final Optional<PullRequestInfo> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
+	public final Optional<GitHubPullRequest> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
 		try{
 			return Arrays.stream(
-				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), PullRequestInfo[].class)
-			).filter(PullRequestInfo::isOfficial).findFirst();
+				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), GitHubPullRequest[].class)
+			).filter(pr->pr.base().repo().isOfficial()).findFirst();
 		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();
 			throw new GitHubException(ignore);
@@ -157,37 +162,53 @@ public final class GitHub{
 		}
 	}
 	
-	/**
-	 * Record with information about a PR.
-	 * @author Roan
-	 * @param id The GitHub internal pull request ID.
-	 * @param number The PR number as shown in the web UI.
-	 * @param base The base ref for the PR.
-	 */
-	public static final record PullRequestInfo(int id, int number, BaseRef base){//TODO
-		
-		/**
-		 * Checks if this PR is on the official ppy repository.
-		 * @return True if this PR is on the official wiki repository.
-		 */
-		public boolean isOfficial(){
-			return base.isOfficial();
-		}
+//	/**
+//	 * Record with information about a PR.
+//	 * @author Roan
+//	 * @param id The GitHub internal pull request ID.
+//	 * @param number The PR number as shown in the web UI.
+//	 * @param base The base ref for the PR.
+//	 */
+//	public static final record PullRequestInfo(int id, int number, BaseRef base){//TODO
+//
+//		/**
+//		 * Checks if this PR is on the official ppy repository.
+//		 * @return True if this PR is on the official wiki repository.
+//		 */
+//		public boolean isOfficial(){
+//			return base.isOfficial();
+//		}
+//	}
+//
+//	/**
+//	 * PR base reference record.
+//	 * @author Roan
+//	 * @param label The namespace:ref label for this reference.
+//	 */
+//	public static final record BaseRef(String label){//TODO
+//
+//		/**
+//		 * Checks if this PR is on the official ppy repository.
+//		 * @return True if this PR is on the official wiki repository.
+//		 */
+//		public boolean isOfficial(){
+//			return label.startsWith("ppy:");
+//		}
+//	}
+	
+	protected static final Gson getGson(){
+		return gson;
 	}
 
-	/**
-	 * PR base reference record.
-	 * @author Roan
-	 * @param label The namespace:ref label for this reference.
-	 */
-	public static final record BaseRef(String label){//TODO
+	static{
+		GsonBuilder builder = new GsonBuilder();
 		
-		/**
-		 * Checks if this PR is on the official ppy repository.
-		 * @return True if this PR is on the official wiki repository.
-		 */
-		public boolean isOfficial(){
-			return label.startsWith("ppy:");
-		}
+		builder.registerTypeAdapter(Instant.class, new InstantDeserializer());
+		
+		EnumDeserializer enums = new EnumDeserializer();
+		builder.registerTypeAdapter(IssueState.class, enums);
+		builder.registerTypeAdapter(UserType.class, enums);
+		
+		gson = builder.create();
 	}
 }

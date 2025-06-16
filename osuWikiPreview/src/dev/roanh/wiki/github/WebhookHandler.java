@@ -20,12 +20,9 @@
 package dev.roanh.wiki.github;
 
 import java.security.Key;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -44,11 +41,8 @@ import dev.roanh.wiki.github.handler.PullRequestOpenedHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
 import dev.roanh.wiki.github.hooks.PullRequestOpenData;
 import dev.roanh.wiki.github.hooks.PullRequestSyncData;
-import dev.roanh.wiki.github.obj.IssueState;
-import dev.roanh.wiki.github.obj.UserType;
 
 public class WebhookHandler implements BodyHandler{
-	private static final Gson gson;
 	private final WebServer server;
 	private final Key secret;
 	private final List<IssueCommentHandler> commentHandlers = new ArrayList<IssueCommentHandler>();
@@ -112,7 +106,7 @@ public class WebhookHandler implements BodyHandler{
 		
 		
 		
-		JsonObject requestObject = gson.fromJson(payload, JsonObject.class);
+		JsonObject requestObject = GitHub.getGson().fromJson(payload, JsonObject.class);
 		String type = request.headers().get("X-GitHub-Event");
 		switch(type){
 		case "issue_comment"://pr's are also issues
@@ -127,11 +121,11 @@ public class WebhookHandler implements BodyHandler{
 	}
 	
 	private void handlePullRequestEvent(JsonObject json){
-		JsonObject obj = gson.fromJson(json, JsonObject.class);
+		JsonObject obj = GitHub.getGson().fromJson(json, JsonObject.class);
 		switch(obj.get("action").getAsString()){
 		case "opened":
 			{
-				PullRequestOpenData data = gson.fromJson(json, PullRequestOpenData.class);
+				PullRequestOpenData data = GitHub.getGson().fromJson(json, PullRequestOpenData.class);
 				for(PullRequestOpenedHandler handler : pullRequestCreateHandlers){
 					handler.handlePullRequestOpen(data);
 				}
@@ -139,7 +133,7 @@ public class WebhookHandler implements BodyHandler{
 			break;
 		case "synchronize":
 			{
-				PullRequestSyncData data = gson.fromJson(json, PullRequestSyncData.class);
+				PullRequestSyncData data = GitHub.getGson().fromJson(json, PullRequestSyncData.class);
 				for(PullRequestCommitHandler handler : pullRequestCommitHandlers){
 					handler.handlePullRequestCommit(data);
 				}
@@ -150,7 +144,7 @@ public class WebhookHandler implements BodyHandler{
 	
 	private void handleIssueCommentEvent(JsonObject json){
 		if(json.get("action").getAsString().equals("created")){
-			IssueCommentCreatedData data = gson.fromJson(json, IssueCommentCreatedData.class);
+			IssueCommentCreatedData data = GitHub.getGson().fromJson(json, IssueCommentCreatedData.class);
 			for(IssueCommentHandler handler : commentHandlers){
 				handler.handleComment(data);
 			}
@@ -175,15 +169,4 @@ public class WebhookHandler implements BodyHandler{
 	
 	
 	
-	static{
-		GsonBuilder builder = new GsonBuilder();
-		
-		builder.registerTypeAdapter(Instant.class, new InstantDeserializer());
-		
-		EnumDeserializer enums = new EnumDeserializer();
-		builder.registerTypeAdapter(IssueState.class, enums);
-		builder.registerTypeAdapter(UserType.class, enums);
-		
-		gson = builder.create();
-	}
 }

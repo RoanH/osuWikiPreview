@@ -50,7 +50,7 @@ import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 import dev.roanh.wiki.github.GitHub;
-import dev.roanh.wiki.github.GitHub.PullRequestInfo;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
 /**
  * Base for commands that switch the active preview branch.
@@ -220,7 +220,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @param sha The commit hash to find.
 	 * @return If found information about the pull requested associated with the commit.
 	 */
-	private static final Optional<PullRequestInfo> retrievePullRequest(String namespace, String sha){
+	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String sha){
 		try{
 			return GitHub.instance().getPullRequestForCommit(namespace, sha);
 		}catch(GitHubException e){

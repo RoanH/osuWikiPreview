@@ -21,6 +21,7 @@ package dev.roanh.wiki.github;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -36,7 +37,12 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 import dev.roanh.wiki.exception.GitHubException;
-import dev.roanh.wiki.github.GitHub.PullRequestInfo;
+import dev.roanh.wiki.github.obj.GitHubBranch;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
+import dev.roanh.wiki.github.obj.GitHubRepository;
+import dev.roanh.wiki.github.obj.GitHubUser;
+import dev.roanh.wiki.github.obj.IssueState;
+import dev.roanh.wiki.github.obj.UserType;
 
 @WireMockTest(httpPort = 12345)
 public class GitHubTest{
@@ -50,13 +56,56 @@ public class GitHubTest{
 	
 	@Test
 	public void getPullRequestForCommit() throws GitHubException{
-		Optional<PullRequestInfo> found = github.getPullRequestForCommit("itsmehoaq", "1ea83f97f8fa13a679417e9687b1305215199005");
+		Optional<GitHubPullRequest> found = github.getPullRequestForCommit("itsmehoaq", "1ea83f97f8fa13a679417e9687b1305215199005");
 		assertTrue(found.isPresent());
 		
-		PullRequestInfo pr = found.get();
+		GitHubPullRequest pr = found.get();
 		assertEquals(2106313984, pr.id());
 		assertEquals(12265, pr.number());
-		assertTrue(pr.isOfficial());
+		assertEquals(IssueState.CLOSED, pr.state());
+		assertEquals("Add `Resurrection Cup 2024 Concludes` news post", pr.title());
+		assertEquals("[web preview](https://osu1.roanh.dev/home/news/2024-11-04-resurrection-cup-2024-results)", pr.body());
+		
+		GitHubUser user = pr.user();
+		assertNotNull(user);
+		assertEquals("itsmehoaq", user.login());
+		assertEquals(69494393, user.id());
+		assertEquals("https://avatars.githubusercontent.com/u/69494393?v=4", user.avatarUrl());
+		assertEquals(UserType.USER, user.type());
+		
+		GitHubBranch head = pr.head();
+		assertNotNull(head);
+		assertEquals("itsmehoaq:resurrection-cup-2024", head.label());
+		assertEquals("resurrection-cup-2024", head.ref());
+		
+		GitHubRepository headRepo = head.repo();
+		assertNotNull(headRepo);
+		assertEquals("osu-wiki", headRepo.name());
+		assertFalse(headRepo.isOfficial());
+		
+		GitHubUser headRepoOwner = headRepo.owner();
+		assertNotNull(headRepoOwner);
+		assertEquals("itsmehoaq", headRepoOwner.login());
+		assertEquals(69494393, headRepoOwner.id());
+		assertEquals("https://avatars.githubusercontent.com/u/69494393?v=4", headRepoOwner.avatarUrl());
+		assertEquals(UserType.USER, headRepoOwner.type());
+		
+		GitHubBranch base = pr.base();
+		assertNotNull(base);
+		assertEquals("ppy:master", base.label());
+		assertEquals("master", base.ref());
+		
+		GitHubRepository baseRepo = base.repo();
+		assertNotNull(baseRepo);
+		assertEquals("osu-wiki", baseRepo.name());
+		assertTrue(baseRepo.isOfficial());
+		
+		GitHubUser baseRepoOwner = baseRepo.owner();
+		assertNotNull(baseRepoOwner);
+		assertEquals("ppy", baseRepoOwner.login());
+		assertEquals(995763, baseRepoOwner.id());
+		assertEquals("https://avatars.githubusercontent.com/u/995763?v=4", baseRepoOwner.avatarUrl());
+		assertEquals(UserType.ORGANIZATION, baseRepoOwner.type());
 	}
 	
 	@Test

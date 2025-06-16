@@ -58,6 +58,10 @@ public abstract class WebhookTest{
 		sendJson("pr_opened", "pull_request", DEFAULT_KEY);
 	}
 	
+	protected static void sendPullRequestCommitPayload() throws Exception{
+		sendJson("pr_commit_created", "pull_request", DEFAULT_KEY);
+	}
+	
 	protected static void sendJson(String name, String eventType, Key signingKey) throws Exception{
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("resources/github/" + name + ".json")){
 			String payload = new String(in.readAllBytes(), StandardCharsets.UTF_8);

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import dev.roanh.infinity.util.Variable;
 import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
 import dev.roanh.wiki.github.hooks.PullRequestOpenData;
+import dev.roanh.wiki.github.hooks.PullRequestSyncData;
 import dev.roanh.wiki.github.obj.GitHubBranch;
 import dev.roanh.wiki.github.obj.GitHubComment;
 import dev.roanh.wiki.github.obj.GitHubIssue;
@@ -64,13 +65,7 @@ public class WebHookHandlerTest extends WebhookTest{
 		assertNotNull(comment);
 		assertEquals(2480604277L, comment.id());
 		assertEquals("Test 3", comment.body());
-
-		GitHubUser commentUser = comment.user();
-		assertNotNull(commentUser);
-		assertEquals("RoanH", commentUser.login());
-		assertEquals(8530896, commentUser.id());
-		assertEquals("https://avatars.githubusercontent.com/u/8530896?v=4", commentUser.avatarUrl());
-		assertEquals(UserType.USER, commentUser.type());
+		assertRoan(comment.user());
 
 		GitHubIssue issue = data.issue();
 		assertNotNull(issue);
@@ -79,17 +74,11 @@ public class WebHookHandlerTest extends WebhookTest{
 		assertEquals(IssueState.OPEN, issue.state());
 		assertEquals("Preview Test", issue.title());
 		assertTrue(issue.isPullRequest());
+		assertRoan(issue.user());
 
 		GitHubIssuePullRequest pr = issue.pullRequest();
 		assertNotNull(pr);
 		assertNull(pr.mergedInstant());
-		
-		GitHubUser issueUser = comment.user();
-		assertNotNull(issueUser);
-		assertEquals("RoanH", issueUser.login());
-		assertEquals(8530896, issueUser.id());
-		assertEquals("https://avatars.githubusercontent.com/u/8530896?v=4", issueUser.avatarUrl());
-		assertEquals(UserType.USER, issueUser.type());
 	}
 	
 	@Test
@@ -115,13 +104,7 @@ public class WebHookHandlerTest extends WebhookTest{
 		assertEquals(IssueState.OPEN, pr.state());
 		assertEquals("Preview Test 2", pr.title());
 		assertEquals("Test", pr.body());
-		
-		GitHubUser user = pr.user();
-		assertNotNull(user);
-		assertEquals("RoanH", user.login());
-		assertEquals(8530896, user.id());
-		assertEquals("https://avatars.githubusercontent.com/u/8530896?v=4", user.avatarUrl());
-		assertEquals(UserType.USER, user.type());
+		assertRoan(pr.user());
 		
 		GitHubBranch head = pr.head();
 		assertNotNull(head);
@@ -131,16 +114,52 @@ public class WebHookHandlerTest extends WebhookTest{
 		GitHubRepository repo = head.repo();
 		assertNotNull(repo);
 		assertEquals("osu-wiki", repo.name());
-		
-		GitHubUser owner = repo.owner();
-		assertNotNull(owner);
-		assertEquals("RoanH", owner.login());
-		assertEquals(8530896, owner.id());
-		assertEquals("https://avatars.githubusercontent.com/u/8530896?v=4", owner.avatarUrl());
-		assertEquals(UserType.USER, owner.type());
+		assertRoan(repo.owner());
 	}
 	
-	//TODO PR commit
+	@Test
+	public void pullRequestSyncEvent() throws Exception{
+		Variable<PullRequestSyncData> value = new Variable<PullRequestSyncData>();
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		webhook.addPullRequestCommitHandler(data->{
+			value.setValue(data);
+			latch.countDown();
+		});
+
+		sendPullRequestCommitPayload();
+		latch.await(10, TimeUnit.SECONDS);
+		
+		PullRequestSyncData data = value.getValue();
+		assertNotNull(data);
+		assertEquals("57771b7601b0bdc36cb19f74dbac2dc465e4d5af", data.before());
+		assertEquals("8cf0ed64f36bbc283ad4bfdefbc50472836f5c10", data.after());
+		
+		GitHubPullRequest pr = data.pullRequest();
+		assertNotNull(pr);
+		assertEquals(2183222396L, pr.id());
+		assertEquals(2, pr.number());
+		assertEquals(IssueState.OPEN, pr.state());
+		assertEquals("Preview Test", pr.title());
+		assertEquals("Test 1", pr.body());
+		assertRoan(pr.user());
+		
+		GitHubBranch head = pr.head();
+		assertNotNull(head);
+		assertEquals("RoanH:preview", head.label());
+		assertEquals("preview", head.ref());
+		
+		GitHubRepository repo = head.repo();
+		assertNotNull(repo);
+		assertEquals("osu-wiki", repo.name());
+		assertRoan(repo.owner());
+	}
 	
-	//TODO PR merged
+	private static void assertRoan(GitHubUser user){
+		assertNotNull(user);
+		assertEquals("RoanH", user.login());
+		assertEquals(8530896, user.id());
+		assertEquals("https://avatars.githubusercontent.com/u/8530896?v=4", user.avatarUrl());
+		assertEquals(UserType.USER, user.type());
+	}
 }

@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki.github;
 
-import java.io.IOException;
 import java.security.Key;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -44,6 +43,7 @@ import dev.roanh.wiki.github.handler.PullRequestCommitHandler;
 import dev.roanh.wiki.github.handler.PullRequestOpenedHandler;
 import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
 import dev.roanh.wiki.github.hooks.PullRequestOpenData;
+import dev.roanh.wiki.github.hooks.PullRequestSyncData;
 import dev.roanh.wiki.github.obj.IssueState;
 import dev.roanh.wiki.github.obj.UserType;
 
@@ -53,7 +53,7 @@ public class WebhookHandler implements BodyHandler{
 	private final Key secret;
 	private final List<IssueCommentHandler> commentHandlers = new ArrayList<IssueCommentHandler>();
 	private final List<PullRequestOpenedHandler> pullRequestCreateHandlers = new ArrayList<PullRequestOpenedHandler>();
-	private final List<PullRequestCommitHandler> commitHandlers = new ArrayList<PullRequestCommitHandler>();
+	private final List<PullRequestCommitHandler> pullRequestCommitHandlers = new ArrayList<PullRequestCommitHandler>();
 	
 	public WebhookHandler(String secret){
 		this.server = new WebServer(23333);
@@ -91,7 +91,7 @@ public class WebhookHandler implements BodyHandler{
 	}
 
 	public void addPullRequestCommitHandler(PullRequestCommitHandler handler){
-		commitHandlers.add(handler);
+		pullRequestCommitHandlers.add(handler);
 	}
 
 	@Override
@@ -107,10 +107,6 @@ public class WebhookHandler implements BodyHandler{
 		}
 		
 		
-
-		//check if known contributor?
-		
-		//TODO not receiving comments right now
 		
 		//separate table for pr (id/number) - comment
 		
@@ -134,18 +130,25 @@ public class WebhookHandler implements BodyHandler{
 		JsonObject obj = gson.fromJson(json, JsonObject.class);
 		switch(obj.get("action").getAsString()){
 		case "opened":
-			PullRequestOpenData data = gson.fromJson(json, PullRequestOpenData.class);
-			for(PullRequestOpenedHandler handler : pullRequestCreateHandlers){
-				handler.handlePullRequestOpen(data);
+			{
+				PullRequestOpenData data = gson.fromJson(json, PullRequestOpenData.class);
+				for(PullRequestOpenedHandler handler : pullRequestCreateHandlers){
+					handler.handlePullRequestOpen(data);
+				}
 			}
 			break;
 		case "synchronize":
-			//TODO
+			{
+				PullRequestSyncData data = gson.fromJson(json, PullRequestSyncData.class);
+				for(PullRequestCommitHandler handler : pullRequestCommitHandlers){
+					handler.handlePullRequestCommit(data);
+				}
+			}
 			break;
 		}
 	}
 	
-	private void handleIssueCommentEvent(JsonObject json) throws IOException{
+	private void handleIssueCommentEvent(JsonObject json){
 		if(json.get("action").getAsString().equals("created")){
 			IssueCommentCreatedData data = gson.fromJson(json, IssueCommentCreatedData.class);
 			for(IssueCommentHandler handler : commentHandlers){

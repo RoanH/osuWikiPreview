@@ -25,7 +25,7 @@ public record GitHubPullRequest(
 		IssueState state,
 		String title,
 		GitHubUser user,
-		String body,
+		String body,//can be null if there is none
 		GitHubBranch head
 	){
 }

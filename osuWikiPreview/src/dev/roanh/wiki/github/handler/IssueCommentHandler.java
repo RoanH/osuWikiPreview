@@ -21,9 +21,18 @@ package dev.roanh.wiki.github.handler;
 
 import dev.roanh.wiki.github.hooks.IssueCommentCreatedData;
 
-//https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#issue_comment A comment on an issue or pull request was created.
+/**
+ * Handler invoked when a comment is placed on an issue or a pull request.
+ * @author Roan
+ * @see IssueCommentCreatedData
+ * @see <a href="https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#issue_comment">Issue Comment Created Event</a>
+ */
 @FunctionalInterface
 public abstract interface IssueCommentHandler{
-
+	
+	/**
+	 * Called when a new comment is created.
+	 * @param data Data about the newly created comment.
+	 */
 	public abstract void handleComment(IssueCommentCreatedData data);
 }

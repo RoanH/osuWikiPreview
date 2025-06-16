@@ -31,5 +31,9 @@ import dev.roanh.wiki.github.hooks.PullRequestSyncData;
 @FunctionalInterface
 public abstract interface PullRequestCommitHandler{
 
+	/**
+	 * Called when a new commit is pushed.
+	 * @param data Data about the synchronisation action.
+	 */
 	public abstract void handlePullRequestCommit(PullRequestSyncData data);
 }

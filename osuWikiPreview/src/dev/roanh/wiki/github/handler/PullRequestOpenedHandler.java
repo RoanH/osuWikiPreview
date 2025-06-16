@@ -21,9 +21,18 @@ package dev.roanh.wiki.github.handler;
 
 import dev.roanh.wiki.github.hooks.PullRequestOpenData;
 
-//https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
+/**
+ * Handler invoked when a pull request is created.
+ * @author Roan
+ * @see PullRequestOpenData
+ * @see <a href="https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request">Pull Request Opened Event</a>
+ */
 @FunctionalInterface
 public abstract interface PullRequestOpenedHandler{
 
+	/**
+	 * Called when a pull request was opened.
+	 * @param data Data about the newly opened pull request.
+	 */
 	public abstract void handlePullRequestOpen(PullRequestOpenData data);
 }

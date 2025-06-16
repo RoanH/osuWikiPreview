@@ -105,16 +105,13 @@ public class WebHookHandlerTest extends WebhookTest{
 		assertEquals("Preview Test 2", pr.title());
 		assertEquals("Test", pr.body());
 		assertRoan(pr.user());
+		assertMaster(pr.base());
 		
 		GitHubBranch head = pr.head();
 		assertNotNull(head);
 		assertEquals("RoanH:preview2", head.label());
 		assertEquals("preview2", head.ref());
-		
-		GitHubRepository repo = head.repo();
-		assertNotNull(repo);
-		assertEquals("osu-wiki", repo.name());
-		assertRoan(repo.owner());
+		assertOwnRepo(head.repo());
 	}
 	
 	@Test
@@ -143,13 +140,23 @@ public class WebHookHandlerTest extends WebhookTest{
 		assertEquals("Preview Test", pr.title());
 		assertEquals("Test 1", pr.body());
 		assertRoan(pr.user());
+		assertMaster(pr.base());
 		
 		GitHubBranch head = pr.head();
 		assertNotNull(head);
 		assertEquals("RoanH:preview", head.label());
 		assertEquals("preview", head.ref());
-		
-		GitHubRepository repo = head.repo();
+		assertOwnRepo(head.repo());
+	}
+	
+	private static void assertMaster(GitHubBranch branch){
+		assertNotNull(branch);
+		assertEquals("RoanH:master", branch.label());
+		assertEquals("master", branch.ref());
+		assertOwnRepo(branch.repo());
+	}
+	
+	private static void assertOwnRepo(GitHubRepository repo){
 		assertNotNull(repo);
 		assertEquals("osu-wiki", repo.name());
 		assertRoan(repo.owner());

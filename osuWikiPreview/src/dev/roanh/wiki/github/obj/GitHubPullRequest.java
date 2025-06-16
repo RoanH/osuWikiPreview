@@ -26,6 +26,7 @@ public record GitHubPullRequest(
 		String title,
 		GitHubUser user,
 		String body,//can be null if there is none
-		GitHubBranch head
+		GitHubBranch head,
+		GitHubBranch base
 	){
 }

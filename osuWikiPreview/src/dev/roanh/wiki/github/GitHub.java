@@ -165,6 +165,7 @@ public final class GitHub{
 	 * @param base The base ref for the PR.
 	 */
 	public static final record PullRequestInfo(int id, int number, BaseRef base){//TODO
+		
 		/**
 		 * Checks if this PR is on the official ppy repository.
 		 * @return True if this PR is on the official wiki repository.

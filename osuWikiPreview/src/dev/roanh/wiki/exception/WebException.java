@@ -36,4 +36,12 @@ public class WebException extends Exception{
 	public WebException(Throwable cause){
 		super(cause);
 	}
+	
+	/**
+	 * Constructs a new web exception with the given reason.
+	 * @param reason The reason for the exception.
+	 */
+	public WebException(String reason){
+		super(reason);
+	}
 }

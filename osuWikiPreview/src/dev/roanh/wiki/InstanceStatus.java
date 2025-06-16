@@ -63,9 +63,9 @@ public final class InstanceStatus{
 			StringBuilder instances = new StringBuilder();
 			StringBuilder refs = new StringBuilder();
 			StringBuilder available = new StringBuilder();
-			InstanceManager.getInstances().stream().sorted(Comparator.comparing(w->w.getInstance().id())).forEach(web->{
+			InstanceManager.getInstances().stream().sorted(Comparator.comparing(w->w.getInstance().getId())).forEach(web->{
 				instances.append("<#");
-				instances.append(web.getInstance().channel());
+				instances.append(web.getInstance().getChannel());
 				instances.append(">\n");
 				
 				WebState state = web.getCurrentState();

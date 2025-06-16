@@ -24,11 +24,78 @@ import dev.roanh.wiki.Main;
 /**
  * Constant information about a web instance.
  * @author Roan
- * @param id The ID of the instance.
- * @param channel The ID of the discord channel for this instance.
- * @param port The external docker container port for the website.
  */
-public record Instance(int id, long channel, int port){
+public class Instance{
+	/**
+	 * The ID of the instance.
+	 */
+	private final int id;
+	/**
+	 * The ID of the discord channel for this instance.
+	 */
+	private final long channel;
+	/**
+	 * The external docker container port for the website.
+	 */
+	private final int port;
+	/**
+	 * The osu! web docker image tag.
+	 */
+	private String tag;
+	
+	/**
+	 * Constructs a new instance.
+	 * @param id The ID of the instance.
+	 * @param channel The discord channel for the instance.
+	 * @param port The port for the website.
+	 * @param tag The docker image tag.
+	 */
+	public Instance(int id, long channel, int port, String tag){
+		this.id = id;
+		this.channel = channel;
+		this.port = port;
+		this.tag = tag;
+	}
+	
+	/**
+	 * Gets the ID of the instance.
+	 * @return The instance ID.
+	 */
+	public int getId(){
+		return id;
+	}
+	
+	/**
+	 * Gets the ID of the discord channel for this instance.
+	 * @return The ID of the discord channel.
+	 */
+	public long getChannel(){
+		return channel;
+	}
+	
+	/**
+	 * Gets the external docker container port for the website.
+	 * @return The website port for the instance.
+	 */
+	public int getPort(){
+		return port;
+	}
+	
+	/**
+	 * Gets the osu! web docker image tag for this instance.
+	 * @return The osu! web docker tag.
+	 */
+	public String getTag(){
+		return tag;
+	}
+	
+	/**
+	 * Sets a new osu! web docker release image tag for this instance.
+	 * @param tag The new osu! web docker image tag.
+	 */
+	public void setTag(String tag){
+		this.tag = tag;
+	}
 	
 	/**
 	 * The name of the wiki preview sync branch for this instance.
@@ -63,10 +130,10 @@ public record Instance(int id, long channel, int port){
 	}
 	
 	/**
-	 * Gets the name of the main osu! web database schema for this instance.
-	 * @return The main schema name.
+	 * Gets the name of the osu! web database schema prefix for this instance.
+	 * @return The main schema name and prefix for other schema names.
 	 */
-	public String getDatabaseSchema(){
+	public String getDatabaseSchemaPrefix(){
 		return "osu" + id;
 	}
 	
@@ -79,7 +146,7 @@ public record Instance(int id, long channel, int port){
 	}
 	
 	/**
-	 * Gets the Elasticsearch prefixed used by this instance. 
+	 * Gets the Elasticsearch prefixed used by this instance.
 	 * @return The Elasticsearch prefix used by this instance.
 	 */
 	public String getElasticsearchPrefix(){

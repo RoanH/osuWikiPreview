@@ -32,7 +32,7 @@ import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.cmd.SyncNewsCommand;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
-import dev.roanh.wiki.cmd.PreviewCommand;
+import dev.roanh.wiki.cmd.NewsPreviewCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
@@ -90,7 +90,7 @@ public class Main{
 			try{
 				site.start();
 			}catch(WebException | DBException e){
-				client.logError(e, "[Main] Failed to start site with ID " + site.getInstance().id(), Severity.MINOR, Priority.MEDIUM);
+				client.logError(e, "[Main] Failed to start site with ID " + site.getInstance().getId(), Severity.MINOR, Priority.MEDIUM);
 			}
 		}
 		
@@ -99,7 +99,7 @@ public class Main{
 		client.registerCommand(new RedateCommand());
 		client.registerCommand(new RefreshCommand());
 		client.registerCommand(new MergeMasterCommand());
-		client.registerCommand(new PreviewCommand());
+		client.registerCommand(new NewsPreviewCommand());
 		client.registerCommand(new InstanceCommand());
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);

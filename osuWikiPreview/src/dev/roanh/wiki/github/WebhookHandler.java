@@ -63,9 +63,6 @@ public class WebhookHandler implements BodyHandler{
 		Thread.sleep(1000000000000L);
 	}
 	
-	
-	
-	
 	public void start(){
 		server.runAsync();
 	}
@@ -151,22 +148,8 @@ public class WebhookHandler implements BodyHandler{
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	
 	private final boolean validateSignature(String payload, HttpHeaders headers){
 		String signatureHeader = headers.get("X-Hub-Signature-256");
 		return signatureHeader != null && signatureHeader.length() == 64 + 7 && signatureHeader.startsWith("sha256=") && GitHub.validateSignature(secret, signatureHeader.substring(7), payload);
 	}
-	
-	
-	
 }

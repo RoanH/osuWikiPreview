@@ -65,6 +65,7 @@ public class GitHubTest{
 		assertEquals(IssueState.CLOSED, pr.state());
 		assertEquals("Add `Resurrection Cup 2024 Concludes` news post", pr.title());
 		assertEquals("[web preview](https://osu1.roanh.dev/home/news/2024-11-04-resurrection-cup-2024-results)", pr.body());
+		assertTrue(pr.isOnOfficialRepository());
 		
 		GitHubUser user = pr.user();
 		assertNotNull(user);

@@ -107,7 +107,7 @@ public final class GitHub{
 		try{
 			return Arrays.stream(
 				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), GitHubPullRequest[].class)
-			).filter(pr->pr.base().repo().isOfficial()).findFirst();
+			).filter(GitHubPullRequest::isOnOfficialRepository).findFirst();
 		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();
 			throw new GitHubException(ignore);
@@ -161,40 +161,6 @@ public final class GitHub{
 			return false;
 		}
 	}
-	
-//	/**
-//	 * Record with information about a PR.
-//	 * @author Roan
-//	 * @param id The GitHub internal pull request ID.
-//	 * @param number The PR number as shown in the web UI.
-//	 * @param base The base ref for the PR.
-//	 */
-//	public static final record PullRequestInfo(int id, int number, BaseRef base){//TODO
-//
-//		/**
-//		 * Checks if this PR is on the official ppy repository.
-//		 * @return True if this PR is on the official wiki repository.
-//		 */
-//		public boolean isOfficial(){
-//			return base.isOfficial();
-//		}
-//	}
-//
-//	/**
-//	 * PR base reference record.
-//	 * @author Roan
-//	 * @param label The namespace:ref label for this reference.
-//	 */
-//	public static final record BaseRef(String label){//TODO
-//
-//		/**
-//		 * Checks if this PR is on the official ppy repository.
-//		 * @return True if this PR is on the official wiki repository.
-//		 */
-//		public boolean isOfficial(){
-//			return label.startsWith("ppy:");
-//		}
-//	}
 	
 	protected static final Gson getGson(){
 		return gson;

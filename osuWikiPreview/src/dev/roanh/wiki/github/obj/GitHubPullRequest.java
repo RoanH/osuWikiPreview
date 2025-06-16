@@ -19,16 +19,35 @@
  */
 package dev.roanh.wiki.github.obj;
 
+/**
+ * Information about a GitHub pull request (PR).
+ * @author Roan
+ * @param id The GitHub internal pull request ID.
+ * @param number The PR number as shown in the web UI.
+ * @param state The state of this pull request.
+ * @param title The title of this pull request.
+ * @param user The user that created this pull request.
+ * @param body The pull request description, can be null if absent.
+ * @param head The branch associated with this pull request.
+ * @param base The source branch the branch for this pull requested was based on.
+ *
+ */
 public record GitHubPullRequest(
 		long id,
 		int number,
 		IssueState state,
 		String title,
 		GitHubUser user,
-		String body,//can be null if there is none
+		String body,
 		GitHubBranch head,
 		GitHubBranch base
 	){
 	
-	
+	/**
+	 * Checks if this pull request was opened on the official osu! wiki repository.
+	 * @return True if this pull request was opened on the official wiki repository.
+	 */
+	public boolean isOnOfficialRepository(){
+		return base.repo().isOfficial();
+	}
 }

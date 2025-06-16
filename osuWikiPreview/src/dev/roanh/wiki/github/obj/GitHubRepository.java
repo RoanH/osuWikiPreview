@@ -19,8 +19,18 @@
  */
 package dev.roanh.wiki.github.obj;
 
+/**
+ * Identifying information about a GitHub repository.
+ * @author Roan
+ * @param name The name of the GitHub repository.
+ * @param owner The accounting that owns the repository.
+ */
 public record GitHubRepository(String name, GitHubUser owner){
 	
+	/**
+	 * Checks if this is the official ppy osu! wiki GitHub repository.
+	 * @return True if this repository is the official wiki repository.
+	 */
 	public boolean isOfficial(){
 		return "osu-wiki".equals(name) && owner.id() == 995763;
 	}

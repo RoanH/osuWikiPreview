@@ -19,5 +19,12 @@
  */
 package dev.roanh.wiki.github.obj;
 
+/**
+ * Compact reference to a GitHub branch.
+ * @author Roan
+ * @param label The <code>namespace:ref</code> label for this branch.
+ * @param ref The ref name for this branch, e.g., <code>master</code>.
+ * @param repo The repository this branch is in.
+ */
 public record GitHubBranch(String label, String ref, GitHubRepository repo){
 }

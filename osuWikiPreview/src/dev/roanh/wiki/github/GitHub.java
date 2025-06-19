@@ -137,16 +137,36 @@ public final class GitHub{
 		return response.body();
 	}
 	
+	/**
+	 * Creates a new secret key based on the given secret string.
+	 * @param secret The secret string.
+	 * @return A signing key derived from the given secret string.
+	 */
 	public static final Key createSigningKey(String secret){
 		return new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
 	}
 	
+	/**
+	 * Signs the given payload with the given key.
+	 * @param secret The key to sign with.
+	 * @param payload The payload to sign.
+	 * @return The signature that was created.
+	 * @throws NoSuchAlgorithmException When HMAC does not exist.
+	 * @throws InvalidKeyException When the given key is invalid.
+	 */
 	public static final byte[] sign(Key secret, String payload) throws NoSuchAlgorithmException, InvalidKeyException{
 		Mac mac = Mac.getInstance(HMAC_ALGORITHM);
 		mac.init(secret);
 		return mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
 	}
 	
+	/**
+	 * Validates that the given signature on the given payload was created by the given key.
+	 * @param secret The key used to create the signature.
+	 * @param signature The signature that was created.
+	 * @param payload The payload that was signed.
+	 * @return True if the given signature is valid.
+	 */
 	public static final boolean validateSignature(Key secret, String signature, String payload){
 		try{
 			byte[] hexSignature = sign(secret, payload);
@@ -162,6 +182,10 @@ public final class GitHub{
 		}
 	}
 	
+	/**
+	 * Gets the gson instance used to deserialise GitHub payloads.
+	 * @return The gson instance to use for serialisation.
+	 */
 	protected static final Gson getGson(){
 		return gson;
 	}

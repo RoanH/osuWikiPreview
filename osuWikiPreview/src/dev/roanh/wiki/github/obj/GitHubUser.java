@@ -21,6 +21,14 @@ package dev.roanh.wiki.github.obj;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Information about a GitHub user.
+ * @author Roan
+ * @param login The login name of the user.
+ * @param id The unique ID of the GitHub user.
+ * @param avatarUrl The avatar URL for this GitHub user.
+ * @param type The type of this user.
+ */
 public record GitHubUser(
 		String login,
 		int id,

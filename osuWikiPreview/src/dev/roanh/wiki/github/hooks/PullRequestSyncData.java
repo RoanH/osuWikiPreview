@@ -21,8 +21,17 @@ package dev.roanh.wiki.github.hooks;
 
 import com.google.gson.annotations.SerializedName;
 
+import dev.roanh.wiki.github.handler.PullRequestCommitHandler;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
+/**
+ * Web hook data for a pull request sync event (e.g., a new commit).
+ * @author Roan
+ * @param pullRequest The pull request that was updated.
+ * @param before The head SHA hash before the update.
+ * @param after The head SHA hash after the update.
+ * @see PullRequestCommitHandler
+ */
 public record PullRequestSyncData(
 		@SerializedName("pull_request")
 		GitHubPullRequest pullRequest,

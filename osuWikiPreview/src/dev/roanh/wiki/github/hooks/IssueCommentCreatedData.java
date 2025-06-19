@@ -19,6 +19,7 @@
  */
 package dev.roanh.wiki.github.hooks;
 
+import dev.roanh.wiki.github.handler.IssueCommentHandler;
 import dev.roanh.wiki.github.obj.GitHubComment;
 import dev.roanh.wiki.github.obj.GitHubIssue;
 
@@ -27,6 +28,7 @@ import dev.roanh.wiki.github.obj.GitHubIssue;
  * @author Roan
  * @param comment Information about the comment.
  * @param issue Information about the issue the comment is on.
+ * @see IssueCommentHandler
  */
 public record IssueCommentCreatedData(GitHubComment comment, GitHubIssue issue){
 }

@@ -21,8 +21,15 @@ package dev.roanh.wiki.github.hooks;
 
 import com.google.gson.annotations.SerializedName;
 
+import dev.roanh.wiki.github.handler.PullRequestOpenedHandler;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
+/**
+ * Web hook data for a pull request open event.
+ * @author Roan
+ * @param pullRequest The pull request that was opened.
+ * @see PullRequestOpenedHandler
+ */
 public record PullRequestOpenData(
 		@SerializedName("pull_request")
 		GitHubPullRequest pullRequest

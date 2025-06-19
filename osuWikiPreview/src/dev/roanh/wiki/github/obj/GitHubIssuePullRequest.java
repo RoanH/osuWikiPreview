@@ -23,11 +23,22 @@ import java.time.Instant;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Additional information about issues that are also pull requests.
+ * @author Roan
+ * @param mergedInstant The instant the pull request was merged, or
+ *        null if the pull request was not merged yet.
+ * @see GitHubIssue
+ */
 public record GitHubIssuePullRequest(
 		@SerializedName("merged_at")
 		Instant mergedInstant
 	){
 	
+	/**
+	 * Checks if this pull request was merged.
+	 * @return True if the pull request was merged.
+	 */
 	public boolean isMerged(){
 		return mergedInstant != null;
 	}

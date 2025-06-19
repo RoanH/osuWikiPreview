@@ -19,6 +19,13 @@
  */
 package dev.roanh.wiki.github.obj;
 
+/**
+ * GitHub comment on an issue or pull request.
+ * @author Roan
+ * @param id The ID of the comment.
+ * @param body The content of the comment.
+ * @param user The user that left the comment.
+ */
 public record GitHubComment(
 		long id,
 		String body,

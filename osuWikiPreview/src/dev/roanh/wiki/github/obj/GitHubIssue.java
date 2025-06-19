@@ -21,6 +21,17 @@ package dev.roanh.wiki.github.obj;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * GitHub issue or pull request (those are also issues).
+ * @author Roan
+ * @param id The unique ID of the issue.
+ * @param number The local repository specific issue/PR ID.
+ * @param state The current state of the issue.
+ * @param title The title of the issue.
+ * @param pullRequest If this issue is a pull request,
+ *        information about the pull request, else null.
+ * @param user The user that created this issue/pr.
+ */
 public record GitHubIssue(
 		long id,
 		int number,
@@ -31,6 +42,10 @@ public record GitHubIssue(
 		GitHubUser user
 	){
 	
+	/**
+	 * Checks if this issue represents a pull request.
+	 * @return True if this issue is a pull request.
+	 */
 	public boolean isPullRequest(){
 		return pullRequest != null;
 	}

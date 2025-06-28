@@ -27,8 +27,4 @@
     <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
   </Match>
   
-  <Match>
-    
-  </Match>
-  
 </FindBugsFilter>

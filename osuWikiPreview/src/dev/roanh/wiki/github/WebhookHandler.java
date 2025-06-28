@@ -123,7 +123,7 @@ public class WebhookHandler implements BodyHandler{
 	}
 
 	@Override
-	public final FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
+	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
 		String payload = data.string();
 		if(!validateSignature(payload, request.headers())){
 			return RequestHandler.status(HttpResponseStatus.FORBIDDEN);

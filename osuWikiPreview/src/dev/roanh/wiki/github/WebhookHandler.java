@@ -80,7 +80,7 @@ public class WebhookHandler implements BodyHandler{
 		this.server = new WebServer(port);
 		this.secret = GitHub.createSigningKey(secret);
 		server.setExceptionHandler(t->Main.client.logError(t, "[WebhookHandler] Unhandled exception: " + t.getMessage(), Severity.MAJOR, Priority.HIGH));
-		server.createContext("/", false, (request, path, data)->RequestHandler.status(HttpResponseStatus.FORBIDDEN));
+		server.createContext("/", false, (request, path, data)->RequestHandler.forbidden());
 		server.createContext(HttpMethod.POST, "/", this);
 	}
 	
@@ -123,7 +123,7 @@ public class WebhookHandler implements BodyHandler{
 	}
 
 	@Override
-	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
+	public final FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
 		String payload = data.string();
 		if(!validateSignature(payload, request.headers())){
 			return RequestHandler.status(HttpResponseStatus.FORBIDDEN);
@@ -137,6 +137,8 @@ public class WebhookHandler implements BodyHandler{
 			break;
 		case "pull_request":
 			handlePullRequestEvent(requestObject);
+			break;
+		default:
 			break;
 		}
 		

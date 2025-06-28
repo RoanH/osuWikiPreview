@@ -41,7 +41,7 @@ public abstract class WebhookTest{
 	
 	@BeforeEach
 	public void startWebhookHandler(){
-		webhook = new WebhookHandler("Test");
+		webhook = new WebhookHandler("Test", 23333);
 		webhook.start();
 	}
 	

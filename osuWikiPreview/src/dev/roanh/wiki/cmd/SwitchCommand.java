@@ -51,7 +51,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 	}
 	
 	@Override
-	public void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
+	public WebState handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		String ref = args.get("ref").getAsString();
 		String name = null;
 		if(args.has("namespace")){
@@ -66,6 +66,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 			}
 		}
 
-		switchBranch(event, WebState.forRef(name, ref, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false)), web, args);
+//		switchBranch(event, WebState.forRef(name, ref, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false)), web, args);
+		return WebState.forRef(name, ref, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false));
 	}
 }

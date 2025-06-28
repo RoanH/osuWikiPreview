@@ -20,7 +20,6 @@
 package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -43,7 +42,6 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
-import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.PullRequest;
 import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.GitHubException;
@@ -56,11 +54,7 @@ import dev.roanh.wiki.github.obj.GitHubPullRequest;
  * Base for commands that switch the active preview branch.
  * @author Roan
  */
-public abstract class BaseSwitchCommand extends WebCommand{
-	/**
-	 * Default amount of time automatic claims last.
-	 */
-	private static final Duration DEFAULT_CLAIM_TIME = Duration.ofHours(1L);
+public abstract class BaseSwitchCommand/* extends WebCommand*/{
 	
 	/**
 	 * Constructs a new base switch command.
@@ -74,7 +68,8 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	@Override
 	public final void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
-			handleSwitch(web, args, event);
+			WebState target = handleSwitch(web, args, event);
+			//TODO
 		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
 			event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
 			ignore.printStackTrace();
@@ -93,18 +88,18 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		}
 	}
 	
-	/**
-	 * Switches the active preview branch based on the user supplied arguments.
-	 * @param web The osu! web instance to update.
-	 * @param args The received input arguments.
-	 * @param event The command event.
-	 * @throws GitAPIException When a git exception occurs.
-	 * @throws IOException When an IOException occurs.
-	 * @throws DBException When a database exception occurs.
-	 * @throws WebException When a web exception occurs.
-	 * @throws MergeConflictException When a merge is requested which results in a conflict.
-	 */
-	protected abstract void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException;
+//	/**
+//	 * Switches the active preview branch based on the user supplied arguments.
+//	 * @param web The osu! web instance to update.
+//	 * @param args The received input arguments.
+//	 * @param event The command event.
+//	 * @throws GitAPIException When a git exception occurs.
+//	 * @throws IOException When an IOException occurs.
+//	 * @throws DBException When a database exception occurs.
+//	 * @throws WebException When a web exception occurs.
+//	 * @throws MergeConflictException When a merge is requested which results in a conflict.
+//	 */
+	protected abstract WebState handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException;
 	
 	/**
 	 * Switches the active preview branch by pushing a file newspost file to ppy/master.
@@ -138,6 +133,8 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRef(), state.hasMaster(), web));
 	}
+	
+//	private void switchBranch();
 
 	/**
 	 * Switches the active preview branch.
@@ -147,7 +144,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @param diff The git diff of the current state against ppy/master.
 	 * @throws DBException When a database exception occurs.
 	 */
-	private void switchBranch(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
+	private void switchBranchOld(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
 		if(!state.isInternalBranch()){
 			retrievePullRequest(state.getNamespace(), diff.head()).ifPresent(state::setPullRequest);
 		}
@@ -226,40 +223,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		}catch(GitHubException e){
 			Main.client.logError(e, "[BaseSwitchCommand] Failed to retrieve PR status from GitHub", Severity.MINOR, Priority.LOW, Detail.of("Namespace", namespace), Detail.of("Commit", sha));
 			//missing PR info should not hold back an embed (for now)
-			return Optional.empty();
-		}
-	}
-	
-	/**
-	 * Determines the osu! web site path for the given file path
-	 * inside the osu! wiki repository.
-	 * @param repoPath The path of the markdown file in the osu! wiki
-	 *        repository, this path is assumed to end with <code>.md</code>.
-	 * @param instance The instance to resolve site paths with.
-	 * @return The osu! web path for the given osu! wiki path or
-	 *         <code>null</code> if the given path does not point to
-	 *         a file that is visible on the website.
-	 */
-	private static final String resolveSitePath(String repoPath, Instance instance){
-		int pathEnd = repoPath.lastIndexOf('/');
-		if(pathEnd == -1){
-			//some markdown file at the root of the repository
-			return null;
-		}
-		
-		String filename = repoPath.substring(pathEnd + 1, repoPath.length() - 3);
-		if(repoPath.startsWith("news/")){
-			return instance.getSiteUrl() + "/home/news/" + filename;
-		}else if(repoPath.startsWith("wiki/Legal/")){
-			if(pathEnd < 11){//root so no sub-path
-				return instance.getSiteUrl() + "/legal/" + filename;
-			}else{
-				return instance.getSiteUrl() + "/legal/" + filename + "/" + repoPath.substring(11, pathEnd);
-			}
-		}else if(repoPath.startsWith("wiki/")){
-			return instance.getSiteUrl() + "/wiki/" + filename + "/" + repoPath.substring(5, pathEnd);
-		}else{
-			return null;
+			return Optional.empty();//TODO ?
 		}
 	}
 }

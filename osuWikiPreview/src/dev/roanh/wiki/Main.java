@@ -29,14 +29,16 @@ import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.cmd.SyncNewsCommand;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.NewsPreviewCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
+import dev.roanh.wiki.cmd.SyncNewsCommand;
+import dev.roanh.wiki.event.RefreshPreviewOnNewCommit;
 import dev.roanh.wiki.exception.WebException;
+import dev.roanh.wiki.github.WebhookHandler;
 
 /**
  * Main entry point of the application that starts the Discord bot.
@@ -104,6 +106,10 @@ public class Main{
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();
+		
+		WebhookHandler hooks = new WebhookHandler(client.getConfig().readString("github-secret"), client.getConfig().readInt("github-port"));
+		hooks.addPullRequestCommitHandler(new RefreshPreviewOnNewCommit());
+		hooks.start();
 	}
 	
 	/**

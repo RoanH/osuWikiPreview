@@ -30,6 +30,7 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.data.Instance;
+import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.WebException;
 
 /**

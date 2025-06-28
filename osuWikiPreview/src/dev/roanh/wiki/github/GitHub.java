@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki;
+package dev.roanh.wiki.github;
 
 import java.io.IOException;
 import java.net.URI;
@@ -26,11 +26,26 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.Optional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+
+import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
+import dev.roanh.wiki.github.obj.IssueState;
+import dev.roanh.wiki.github.obj.UserType;
 
 /**
  * Simple GitHub API wrapper.
@@ -38,13 +53,17 @@ import com.google.gson.JsonSyntaxException;
  */
 public final class GitHub{
 	/**
+	 * Algorithm used by GitHub to sign webhook events.
+	 */
+	private static final String HMAC_ALGORITHM = "HmacSHA256";
+	/**
 	 * HTTP client used to make API requests.
 	 */
 	private static final HttpClient client = HttpClient.newHttpClient();
 	/**
 	 * The GSON instance to use to deserialise response payloads.
 	 */
-	private static final Gson gson = new Gson();
+	private static final Gson gson;
 	/**
 	 * The instance of the GitHub API.
 	 */
@@ -84,11 +103,11 @@ public final class GitHub{
 	 * @return An open PR with the given commit.
 	 * @throws GitHubException When some GitHub API exception occurs.
 	 */
-	public final Optional<PullRequestInfo> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
+	public final Optional<GitHubPullRequest> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
 		try{
 			return Arrays.stream(
-				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), PullRequestInfo[].class)
-			).filter(PullRequestInfo::isOfficial).findFirst();
+				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), GitHubPullRequest[].class)
+			).filter(GitHubPullRequest::isOnOfficialRepository).findFirst();
 		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();
 			throw new GitHubException(ignore);
@@ -119,55 +138,67 @@ public final class GitHub{
 	}
 	
 	/**
-	 * Record with information about a PR.
-	 * @author Roan
-	 * @param id The GitHub internal pull request ID.
-	 * @param number The PR number as shown in the web UI.
-	 * @param base The base ref for the PR.
+	 * Creates a new secret key based on the given secret string.
+	 * @param secret The secret string.
+	 * @return A signing key derived from the given secret string.
 	 */
-	public static final record PullRequestInfo(long id, int number, BaseRef base){
-
-		/**
-		 * Checks if this PR is on the official ppy repository.
-		 * @return True if this PR is on the official wiki repository.
-		 */
-		public boolean isOfficial(){
-			return base.isOfficial();
-		}
+	public static final Key createSigningKey(String secret){
+		return new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
 	}
-
+	
 	/**
-	 * PR base reference record.
-	 * @author Roan
-	 * @param label The namespace:ref label for this reference.
+	 * Signs the given payload with the given key.
+	 * @param secret The key to sign with.
+	 * @param payload The payload to sign.
+	 * @return The signature that was created.
+	 * @throws NoSuchAlgorithmException When HMAC does not exist.
+	 * @throws InvalidKeyException When the given key is invalid.
 	 */
-	public static final record BaseRef(String label){
-		
-		/**
-		 * Checks if this PR is on the official ppy repository.
-		 * @return True if this PR is on the official wiki repository.
-		 */
-		public boolean isOfficial(){
-			return label.startsWith("ppy:");
+	public static final byte[] sign(Key secret, String payload) throws NoSuchAlgorithmException, InvalidKeyException{
+		Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+		mac.init(secret);
+		return mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+	}
+	
+	/**
+	 * Validates that the given signature on the given payload was created by the given key.
+	 * @param secret The key used to create the signature.
+	 * @param signature The signature that was created.
+	 * @param payload The payload that was signed.
+	 * @return True if the given signature is valid.
+	 */
+	public static final boolean validateSignature(Key secret, String signature, String payload){
+		try{
+			byte[] hexSignature = sign(secret, payload);
+			
+			int diff = 0;
+			for(int i = 0; i < hexSignature.length; i++){
+				diff |= ((HexFormat.fromHexDigit(signature.charAt(i * 2)) << 4) | HexFormat.fromHexDigit(signature.charAt(i * 2 + 1))) ^ (hexSignature[i] & 0xFF);
+			}
+			
+			return diff == 0;
+		}catch(NoSuchAlgorithmException | InvalidKeyException ignore){
+			return false;
 		}
 	}
 	
 	/**
-	 * Exception thrown for GitHub API issues.
-	 * @author Roan
+	 * Gets the gson instance used to deserialise GitHub payloads.
+	 * @return The gson instance to use for serialisation.
 	 */
-	public static final class GitHubException extends Exception{
-		/**
-		 * Serial ID.
-		 */
-		private static final long serialVersionUID = 1202212041452857347L;
+	protected static final Gson getGson(){
+		return gson;
+	}
+
+	static{
+		GsonBuilder builder = new GsonBuilder();
 		
-		/**
-		 * Constructs a new GitHub exception with the given cause.
-		 * @param cause The root cause.
-		 */
-		public GitHubException(Exception cause){
-			super(cause);
-		}
+		builder.registerTypeAdapter(Instant.class, new InstantDeserializer());
+		
+		EnumDeserializer enums = new EnumDeserializer();
+		builder.registerTypeAdapter(IssueState.class, enums);
+		builder.registerTypeAdapter(UserType.class, enums);
+		
+		gson = builder.create();
 	}
 }

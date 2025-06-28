@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki;
+package dev.roanh.wiki.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,7 +25,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-import dev.roanh.wiki.GitHub.PullRequestInfo;
+import dev.roanh.wiki.OsuWeb;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
 /**
  * Object containing information on the current state of an osu! web
@@ -61,12 +62,12 @@ public class WebState{
 	private Instant available;
 	
 	/**
-	 * Constructs a new web state from the given result set. 
+	 * Constructs a new web state from the given result set.
 	 * @param rs The result set to read from.
 	 * @throws SQLException When an SQL exception occurs.
 	 */
-	protected WebState(ResultSet rs) throws SQLException{
-		long prId = rs.getLong("pr_id"); 
+	public WebState(ResultSet rs) throws SQLException{
+		long prId = rs.getLong("pr_id");
 		pr = prId == -1L ? null : new PullRequest(prId, rs.getInt("pr_num"));
 		namespace = rs.getString("namespace");
 		ref = rs.getString("ref");
@@ -171,7 +172,7 @@ public class WebState{
 	 * Sets the pull request for the current ref.
 	 * @param pr The pull request for the current ref.
 	 */
-	public void setPullRequest(PullRequestInfo pr){
+	public void setPullRequest(GitHubPullRequest pr){
 		setPullRequest(new PullRequest(pr.id(), pr.number()));
 	}
 	

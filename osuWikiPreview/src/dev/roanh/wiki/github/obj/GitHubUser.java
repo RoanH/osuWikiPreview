@@ -17,21 +17,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.roanh.wiki;
+package dev.roanh.wiki.github.obj;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
- * Basic GitHub pull request identification.
+ * Information about a GitHub user.
  * @author Roan
- * @param id The globally unique ID of the pull request.
- * @param number The repository specific pull request number.
+ * @param login The login name of the user.
+ * @param id The unique ID of the GitHub user.
+ * @param avatarUrl The avatar URL for this GitHub user.
+ * @param type The type of this user.
  */
-public record PullRequest(long id, int number){
-
-	/**
-	 * Gets the complete web URL for this PR assuming it is in the official repository.
-	 * @return The PR web URL.
-	 */
-	public String getPrLink(){
-		return "https://github.com/ppy/osu-wiki/pull/" + number;
-	}
+public record GitHubUser(
+		String login,
+		int id,
+		@SerializedName("avatar_url")
+		String avatarUrl,
+		UserType type
+	){
 }

@@ -22,9 +22,9 @@
   </Match>
   
   <Match>
-	<!-- For testing and temporary -->
-	<Class name="dev.roanh.wiki.GitHub"/>
-	<Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
+    <!-- For testing and this is not a true singleton -->
+    <Class name="dev.roanh.wiki.github.GitHub"/>
+    <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
   </Match>
   
 </FindBugsFilter>

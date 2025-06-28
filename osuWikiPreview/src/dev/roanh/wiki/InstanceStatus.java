@@ -26,6 +26,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.TimeFormat;
 
 import dev.roanh.wiki.cmd.WebCommand;
+import dev.roanh.wiki.data.PullRequest;
+import dev.roanh.wiki.data.WebState;
 
 /**
  * Convenience overview of web instances and their status.

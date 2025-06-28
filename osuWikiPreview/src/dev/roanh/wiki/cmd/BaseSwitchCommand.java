@@ -38,19 +38,19 @@ import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.reporting.Detail;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.GitHub;
 import dev.roanh.wiki.InstanceStatus;
-import dev.roanh.wiki.GitHub.GitHubException;
-import dev.roanh.wiki.GitHub.PullRequestInfo;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
-import dev.roanh.wiki.PullRequest;
-import dev.roanh.wiki.WebState;
 import dev.roanh.wiki.data.Instance;
+import dev.roanh.wiki.data.PullRequest;
+import dev.roanh.wiki.data.WebState;
+import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
+import dev.roanh.wiki.github.GitHub;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
 /**
  * Base for commands that switch the active preview branch.
@@ -220,7 +220,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @param sha The commit hash to find.
 	 * @return If found information about the pull requested associated with the commit.
 	 */
-	private static final Optional<PullRequestInfo> retrievePullRequest(String namespace, String sha){
+	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String sha){
 		try{
 			return GitHub.instance().getPullRequestForCommit(namespace, sha);
 		}catch(GitHubException e){

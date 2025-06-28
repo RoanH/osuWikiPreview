@@ -53,7 +53,7 @@ public class WebhookHandler implements BodyHandler{
 		this.server = new WebServer(23333);
 		this.secret = GitHub.createSigningKey(secret);
 		//TODO register exception handler
-		server.createContext("/", false, (request, data)->RequestHandler.status(HttpResponseStatus.FORBIDDEN));
+		server.createContext("/", false, (request, path, data)->RequestHandler.status(HttpResponseStatus.FORBIDDEN));
 		server.createContext(HttpMethod.POST, "/", this);
 	}
 	

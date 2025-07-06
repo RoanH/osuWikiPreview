@@ -26,16 +26,17 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.DiscordBot;
+import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
-import dev.roanh.wiki.cmd.SyncNewsCommand;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.NewsPreviewCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
+import dev.roanh.wiki.cmd.SyncNewsCommand;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -62,11 +63,11 @@ public class Main{
 	/**
 	 * The permission required to run wiki commands.
 	 */
-	public static final CommandPermission PERMISSION = CommandPermission.forRole(1109514462794358815L);//wiki role
+	public static final CommandPermission PERMISSION = CommandPermission.forRole(1109514462794358815L).alwaysVisible();//wiki role
 	/**
 	 * Discord bot instance.
 	 */
-	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999);
+	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, CommandScope.GUILD);
 	
 	/**
 	 * Starts the Discord bot.

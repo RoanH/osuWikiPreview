@@ -1,5 +1,5 @@
 package dev.roanh.wiki.exception;
 
-public class ForkNotFoundException{
+public class ForkNotFoundException extends SwitchException{
 
 }

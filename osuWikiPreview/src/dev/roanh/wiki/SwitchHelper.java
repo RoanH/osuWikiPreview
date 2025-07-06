@@ -20,12 +20,17 @@
 package dev.roanh.wiki;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.WebState;
+import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.exception.SwitchException;
+import dev.roanh.wiki.github.GitHub;
+import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
 public final class SwitchHelper{
 	/**
@@ -38,7 +43,7 @@ public final class SwitchHelper{
 	
 	
 	//TODO maybe delegate from osuweb?
-	public static SwitchResult switchBranch(WebState target, OsuWeb web){
+	public static SwitchResult switchBranch(WebState target, OsuWeb web) throws SwitchException{
 		
 		
 		
@@ -108,5 +113,16 @@ public final class SwitchHelper{
 		}else{
 			return null;
 		}
+	}
+	
+	/**
+	 * Attempts to retrieve pull request information for the given commit.
+	 * @param namespace The namespace to look under.
+	 * @param sha The commit hash to find.
+	 * @return If found information about the pull requested associated with the commit.
+	 * @throws GitHubException When a GitHub exception occurs.
+	 */
+	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String sha) throws GitHubException{
+		return GitHub.instance().getPullRequestForCommit(namespace, sha);
 	}
 }

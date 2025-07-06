@@ -23,9 +23,13 @@ package dev.roanh.wiki.exception;
  * Exception thrown when a merge fails due to a conflict.
  * @author Roan
  */
-public class MergeConflictException extends Exception{
+public class MergeConflictException extends SwitchException{
 	/**
 	 * Serial ID.
 	 */
 	private static final long serialVersionUID = -2500908624137527567L;
+	
+	protected MergeConflictException(String ref){
+		super("Merge with " + ref + " failed due to merge conflict.");
+	}
 }

@@ -44,6 +44,7 @@ public class WebState{
 	 * The reference (branch/sha/tag) that is currently checked out.
 	 */
 	private final String ref;
+	private final String commit;//TODO -- probably not final in the end
 	/**
 	 * Whether news posts were redated.
 	 */
@@ -102,7 +103,7 @@ public class WebState{
 	
 	/**
 	 * Gets the namespace for the current web state.
-	 * @return The namespace (users / organisation).
+	 * @return The namespace (user / organisation).
 	 */
 	public String getNamespace(){
 		return namespace;

@@ -20,7 +20,6 @@
 package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -34,7 +33,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
-import dev.roanh.isla.reporting.Detail;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.InstanceStatus;
@@ -42,13 +40,11 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.OsuWiki.SwitchResult;
+import dev.roanh.wiki.SwitchHelper;
 import dev.roanh.wiki.data.PullRequest;
 import dev.roanh.wiki.data.WebState;
-import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
-import dev.roanh.wiki.github.GitHub;
-import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
 /**
  * Base for commands that switch the active preview branch.
@@ -69,7 +65,9 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 	public final void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			WebState target = handleSwitch(web, args, event);
-			//TODO
+			SwitchResult diff = SwitchHelper.switchBranch(target, web);
+			event.replyEmbeds(createEmbed(diff, target, web));
+			InstanceStatus.updateOverview();
 		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
 			event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
 			ignore.printStackTrace();
@@ -209,21 +207,5 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 		}
 		
 		return embed.build();
-	}
-	
-	/**
-	 * Attempts to retrieve pull request information for the given commit.
-	 * @param namespace The namespace to look under.
-	 * @param sha The commit hash to find.
-	 * @return If found information about the pull requested associated with the commit.
-	 */
-	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String sha){
-		try{
-			return GitHub.instance().getPullRequestForCommit(namespace, sha);
-		}catch(GitHubException e){
-			Main.client.logError(e, "[BaseSwitchCommand] Failed to retrieve PR status from GitHub", Severity.MINOR, Priority.LOW, Detail.of("Namespace", namespace), Detail.of("Commit", sha));
-			//missing PR info should not hold back an embed (for now)
-			return Optional.empty();//TODO ?
-		}
 	}
 }

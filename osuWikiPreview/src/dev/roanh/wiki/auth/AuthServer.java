@@ -1,9 +1,9 @@
 package dev.roanh.wiki.auth;
 
-import java.io.IOException;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -12,15 +12,21 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import dev.roanh.infinity.io.netty.http.HttpParams;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.infinity.util.Scheduler;
 import dev.roanh.osuapi.OsuAPI;
 import dev.roanh.osuapi.Scope;
 import dev.roanh.osuapi.session.OAuthSessionBuilder;
-import dev.roanh.osuapi.session.RefreshTokenStore;
+import dev.roanh.osuapi.user.Group;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.Main;
 
 public class AuthServer{
-
+	private static final OAuthSessionBuilder sessionBuilder = OsuAPI.oauth(Main.CLIENT_ID, Main.CLIENT_SECRET).setCallback("https://preview.roanh.dev/").addScopes(Scope.IDENTIFY);
+	
+	//TODO not static?
+	private static final Set<String> loginSessions = ConcurrentHashMap.newKeySet();
+	
+	
 	//TODO metrics
 	
 	//osu6.preview.roanh.dev as test I guess
@@ -33,6 +39,7 @@ public class AuthServer{
 	
 	
 	
+	//TODO remove
 	private static void printAll(FullHttpRequest request, String path, HttpParams data){
 		System.out.println("p: " + path);
 		
@@ -61,7 +68,13 @@ public class AuthServer{
 		
 		server.createContext("/auth", true, (request, path, data)->{
 			printAll(request, path, data);
-			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);//200 OK, 401 UNAUTH
+			
+			//TODO do better
+			if(request.headers().get("Cookie").contains("wiki_preview_session=test")){
+				return RequestHandler.status(HttpResponseStatus.OK);
+			}else{
+				return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+			}
 		});
 		
 		
@@ -89,23 +102,19 @@ public class AuthServer{
 //			return RequestHandler.status(HttpResponseStatus.OK);
 //		});
 		
+		
 		authServer.createContext("/login", true, (request, path, data)->{
+			printAll(request, path, data);
 			
-
-			OAuthSessionBuilder builder = OsuAPI.oauth(Main.CLIENT_ID, null);
-			builder.setCallback("https://preview.roanh.dev/");
-			builder.addScopes(Scope.IDENTIFY);
+			String state = UUID.randomUUID().toString();
+			loginSessions.add(state);
+			Scheduler.scheduleIn(15, TimeUnit.MINUTES, ()->loginSessions.remove(state));
 			
-			//diff thread
-//			builder.build().getCurrentUser();
-			
-			//todo return redirect to auth url
 			FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
-				resp.headers().add("Location", builder.getAuthUrl());
-				return resp;
+			resp.headers().add("Location", sessionBuilder.getAuthUrl(state));
+			return resp;
 		});
 		
-		Map<UUID, String> authSessions = new ConcurrentHashMap<UUID, String>();
 		
 		authServer.createContext("/", true, (request, path, data)->{
 			//TODO handle state + token if present else generic page
@@ -126,10 +135,9 @@ public class AuthServer{
 			String state = data.getFirst("state");
 			String code = data.getFirst("code");
 			if(state == null || code == null){
-				return RequestHandler.page("Hi, there's nothing here really, you probably want to go to one of the preview subdomains:");//TODO extract and stuff
+				return RequestHandler.page("Hi, there's nothing here really, you probably want to go to one of the preview subdomains:");//TODO extract and stuff, maybe some login info, relog for group fix idk
 			}else{
-				String origin = authSessions.get(state);
-				if(origin == null){
+				if(!loginSessions.contains(state)){
 					return RequestHandler.page("Your login session timed out, please try again: ");//TODO add link idk
 				}
 				
@@ -140,35 +148,10 @@ public class AuthServer{
 				
 				//---
 				
-				OAuthSessionBuilder builder = OsuAPI.oauth(Main.CLIENT_ID, Main.CLIENT_SECRET);
 				
-//				builder.getAuthUrl();
-				
-//				builder.setAuthPrompt(auth->{});
-//				builder.setCallback("https://preview.roanh.dev/");
-				builder.setRefreshStore(new RefreshTokenStore(){
-
-					@Override
-					public String readRefreshToken() throws IOException{
-						return code;
-					}
-
-					@Override
-					public void writeRefreshToken(String token) throws IOException{
-					}
-				});
-//				builder.setTokenProvider(new TokenProvider(){
-//
-//					@Override
-//					public String getCode(String state) throws IOException, TimeoutException{
-//						// TODO Auto-generated method stub
-//						return null;
-//					}
-//				});
-				builder.addScopes(Scope.IDENTIFY);
 				
 				//diff thread
-				UserExtended user = builder.build().getCurrentUser();
+				UserExtended user = sessionBuilder.build(code).getCurrentUser();
 				//TODO check result
 				
 				//---
@@ -179,8 +162,10 @@ public class AuthServer{
 				
 				
 				
-				return RequestHandler.page(user.getUsername() + ": " + user.getUserGroups());
-				
+				FullHttpResponse resp = RequestHandler.page(user.getUsername() + ": " + user.getUserGroups().stream().map(Group::getShortName).toList());
+				String session = "test";//TODO 300-400 chars or so
+				resp.headers().add("Set-Cookie", "wiki_preview_session=" + session + "; Secure; HttpOnly; Max-Age=31536000; Domain=preview.roanh.dev");
+				return resp;
 				
 				
 				

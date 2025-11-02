@@ -44,8 +44,6 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public class Main{
-	public static final int CLIENT_ID = -1;
-	public static final String CLIENT_SECRET = "snip";
 	/**
 	 * Path to the osu! web wiki.
 	 */
@@ -59,10 +57,6 @@ public class Main{
 	 */
 	public static final File DEPLOY_PATH = new File("deploy").getAbsoluteFile();
 	/**
-	 * Root domain for all instances.
-	 */
-	public static final String DOMAIN = "preview.roanh.dev";
-	/**
 	 * The permission required to run wiki commands.
 	 */
 	public static final CommandPermission PERMISSION = CommandPermission.forRole(1109514462794358815L).alwaysVisible();//wiki role
@@ -70,6 +64,9 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, CommandScope.GUILD);
+	/**
+	 * General application configuration.
+	 */
 	public static final Config config = new Config(client.getConfig());
 	
 	/**

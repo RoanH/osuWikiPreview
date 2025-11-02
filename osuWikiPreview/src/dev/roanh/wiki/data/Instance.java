@@ -118,7 +118,7 @@ public class Instance{
 	 * @return The website domain.
 	 */
 	public String getDomain(){
-		return "osu" + id + "." + Main.DOMAIN;
+		return "osu" + id + "." + Main.config.domain();
 	}
 	
 	/**

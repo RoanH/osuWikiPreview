@@ -49,7 +49,7 @@ public final class MainDatabase{
 	 * @param config The application configuration.
 	 */
 	public static void init(Config config){
-		executor = DBExecutors.newSingleThreadExecutor(config.getDatabaseContext("wikipreview"), "wiki");
+		executor = DBExecutors.newSingleThreadExecutor(config.getMainDatabaseContext(), "wiki");
 	}
 	
 	/**
@@ -99,5 +99,9 @@ public final class MainDatabase{
 				rs.getString("tag")
 			);
 		});
+	}
+	
+	public static void saveUserSession(int osuId, String sessionToken) throws DBException{
+		//TODO
 	}
 }

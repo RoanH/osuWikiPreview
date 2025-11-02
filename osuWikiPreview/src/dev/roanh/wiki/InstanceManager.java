@@ -73,7 +73,7 @@ public class InstanceManager{
 		prepareInstance();
 		//technically should also push a new GitHub branch but I just made 9 in advance for now
 		
-		registerInstance(Main.client.getConfig(), instance);
+		registerInstance(Main.config, instance);
 	}
 	
 	/**
@@ -237,7 +237,7 @@ public class InstanceManager{
 	 * @param config The application configuration file
 	 * @throws DBException When a database exception occurs.
 	 */
-	public static void init(Configuration config) throws DBException{
+	public static void init(Config config) throws DBException{
 		for(Instance instance : MainDatabase.getInstances()){
 			registerInstance(config, instance);
 		}
@@ -265,7 +265,7 @@ public class InstanceManager{
 	 * @param config The application configuration.
 	 * @param instance The instance to register.
 	 */
-	private static void registerInstance(Configuration config, Instance instance){
+	private static void registerInstance(Config config, Instance instance){
 		instancesByChannel.put(instance.getChannel(), new OsuWeb(config, instance));
 	}
 }

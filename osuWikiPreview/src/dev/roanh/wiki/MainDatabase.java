@@ -21,8 +21,6 @@ package dev.roanh.wiki;
 
 import java.util.List;
 
-import dev.roanh.infinity.config.Configuration;
-import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
@@ -50,8 +48,8 @@ public final class MainDatabase{
 	 * Initialises the connection with the database.
 	 * @param config The application configuration.
 	 */
-	public static void init(Configuration config){
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "wikipreview", "osuweb", config.readString("db-pass")), "wiki");
+	public static void init(Config config){
+		executor = DBExecutors.newSingleThreadExecutor(config.getDatabaseContext("wikipreview"), "wiki");
 	}
 	
 	/**

@@ -44,6 +44,8 @@ import dev.roanh.wiki.exception.WebException;
  * @author Roan
  */
 public class Main{
+	public static final int CLIENT_ID = -1;
+	public static final String CLIENT_SECRET = "snip";
 	/**
 	 * Path to the osu! web wiki.
 	 */
@@ -59,7 +61,7 @@ public class Main{
 	/**
 	 * Root domain for all instances.
 	 */
-	public static final String DOMAIN = "roanh.dev";
+	public static final String DOMAIN = "preview.roanh.dev";
 	/**
 	 * The permission required to run wiki commands.
 	 */
@@ -68,6 +70,7 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, CommandScope.GUILD);
+	public static final Config config = new Config(client.getConfig());
 	
 	/**
 	 * Starts the Discord bot.
@@ -81,8 +84,8 @@ public class Main{
 		}
 		
 		try{
-			MainDatabase.init(client.getConfig());
-			InstanceManager.init(client.getConfig());
+			MainDatabase.init(config);
+			InstanceManager.init(config);
 		}catch(DBException e){
 			client.logError(e, "[Main] Failed to retrieve instances.", Severity.MINOR, Priority.MEDIUM);
 		}

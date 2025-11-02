@@ -24,8 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
-import dev.roanh.infinity.config.Configuration;
-import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
@@ -60,9 +58,9 @@ public class OsuWeb{
 	 * @param config The general configuration file.
 	 * @param instance The instance for this osu! web instance.
 	 */
-	public OsuWeb(Configuration config, Instance instance){
+	public OsuWeb(Config config, Instance instance){
 		this.instance = instance;
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchemaPrefix(), "osuweb", config.readString("db-pass")), "wiki" + instance.getId());
+		executor = DBExecutors.newSingleThreadExecutor(config.getDatabaseContext(instance.getDatabaseSchemaPrefix()), "wiki" + instance.getId());
 	}
 	
 	/**

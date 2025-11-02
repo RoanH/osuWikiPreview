@@ -1,0 +1,69 @@
+.content {
+	background: hsl(var(--hsl-b5));
+	border: 2px solid hsl(var(--hsl-b1));
+	border-radius: 4px;
+	box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+	padding: 19px;
+	padding-top: 0px;
+	margin: 30px;
+}
+
+a:link, a:visited, a:hover, a:active {
+	outline-style: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a {
+	outline-style: none;
+	text-decoration: none;
+	transition: color 80ms linear;
+	color: hsl(var(--hsl-l2));
+}
+
+h2 {
+	color: hsl(var(--hsl-l1));
+	font-size: 1.5em;
+}
+
+footer {
+	margin-top: auto;
+	background-color: #140729;
+	padding: 6px;
+	gap: 4px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+body {
+	--base-hue: 255;
+	--hsl-l1: var(--base-hue),40%,80%;
+	--hsl-l2: var(--base-hue),40%,75%;
+	--hsl-b1: var(--base-hue),10%,40%;
+	--hsl-b6: var(--base-hue),10%,10%;
+	--hsl-b5: var(--base-hue),10%,15%;
+	color: #fff;
+	background-color: hsl(var(--hsl-b6));
+	font-family: Torus,Inter,"Helvetica Neue",Tahoma,Arial,"Hiragino Kaku Gothic ProN",Meiryo,"Microsoft YaHei","Apple SD Gothic Neo",sans-serif;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	margin: 0px;
+}
+
+body::before {
+	backface-visibility: hidden;
+	background-image: url(img/background.png);
+	background-size: 500px 500px;
+	content: "";
+	height: 100%;
+	left: 0;
+	opacity: .25;
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: -1;
+}

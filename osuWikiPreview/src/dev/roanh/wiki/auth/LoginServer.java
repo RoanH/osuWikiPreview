@@ -19,6 +19,9 @@
  */
 package dev.roanh.wiki.auth;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,7 +53,7 @@ public class LoginServer{
 	private final Set<String> loginSessions = ConcurrentHashMap.newKeySet();
 	//TODO metrics
 	
-	public LoginServer(Config config){
+	public LoginServer(Config config) throws IOException{
 		this.config = config;
 		sessionBuilder = config.getIdentitySessionBuilder();
 		
@@ -58,10 +61,27 @@ public class LoginServer{
 		server.setExceptionHandler(t->Main.client.logError(t, "[LoginServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
 		server.createContext("/login", true, (request, path, data)->handleLoginRequest());
 		server.createContext("/", true, (request, path, data)->handleLoginAttempt(request, data));
+		
+		try(InputStream in = ClassLoader.getSystemResourceAsStream("css/style.css")){
+			server.createContext("/style.css", true, RequestHandler.sendPage(in));
+		}
+		
+		try(InputStream in = ClassLoader.getSystemResourceAsStream("img/background.png")){
+			server.createContext("/img/background.png", true, RequestHandler.sendPage(in));
+		}
+		
+		try(InputStream in = ClassLoader.getSystemResourceAsStream("img/icon32.png")){
+			server.createContext("/img/icon32.png", true, RequestHandler.sendPage(in));
+		}
 	}
 	
 	public void start(){
 		server.runAsync();
+	}
+	
+	public static void main(String[] args) throws InterruptedException, IOException{
+		new LoginServer(Main.config).start();
+		Thread.sleep(Duration.ofHours(40));
 	}
 	
 	/**

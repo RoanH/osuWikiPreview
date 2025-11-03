@@ -100,8 +100,9 @@ public class LoginServer{
 	
 	/**
 	 * Handles a visit to the root page potentially with login information.
+	 * @throws DBException When a database exception occurs.
 	 */
-	private final FullHttpResponse handleLoginAttempt(FullHttpRequest request, HttpParams data){
+	private final FullHttpResponse handleLoginAttempt(FullHttpRequest request, HttpParams data) throws DBException{
 
 		//TODO handle state + token if present else generic page
 		

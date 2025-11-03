@@ -26,6 +26,7 @@ import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.PullRequest;
+import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.data.WebState;
 
 /**
@@ -103,5 +104,10 @@ public final class MainDatabase{
 	
 	public static void saveUserSession(int osuId, String sessionToken) throws DBException{
 		//TODO
+	}
+	
+	public static User getUserBySession(String session) throws DBException{
+		//TODO
+		return null;
 	}
 }

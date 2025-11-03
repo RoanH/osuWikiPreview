@@ -8,6 +8,23 @@
 	margin: 30px;
 }
 
+.button {
+	border-radius: 5px;
+	cursor: pointer;
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	padding: 5px 15px;
+	text-decoration: none !important;
+	width: fit-content;
+	background-color: #e067ba;
+	color: #fff
+}
+
+.button:hover {
+	background-color: #c04298;
+}
+
 a:link, a:visited, a:hover, a:active {
 	outline-style: none;
 }
@@ -56,7 +73,7 @@ body {
 
 body::before {
 	backface-visibility: hidden;
-	background-image: url(img/background.png);
+	background-image: url(https://preview.roanh.dev/img/background.png);
 	background-size: 500px 500px;
 	content: "";
 	height: 100%;

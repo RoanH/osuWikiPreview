@@ -19,12 +19,15 @@
  */
 package dev.roanh.wiki.auth;
 
+import java.io.IOException;
+
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import dev.roanh.infinity.io.netty.http.HttpParams;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.wiki.data.User;
 
 public class AuthServer{
 	
@@ -56,27 +59,25 @@ public class AuthServer{
 		});
 	}
 	
-	public static void main(String[] args){
+	public static void main(String[] args) throws InterruptedException, IOException{
 		//TODO logging & error handler config for servers
 		
 		WebServer server = new WebServer(1234);
 		
 		server.createContext("/login", true, (request, path, data)->{
-			printAll(request, path, data);
-			//TODO distinguish between no-access not logged in and no-access because not added
-			return RequestHandler.page("Please login!, go here: https://preview.roanh.dev/login");
+			return RequestHandler.page(Pages.getPrivateModePage(SessionManager.getUserFromSession(request)));
 		});
 		
 		server.createContext("/auth", true, (request, path, data)->{
 			printAll(request, path, data);
 			
-			//TODO do better -> LoginServer.SESSION_HEADER -> cookie parser
-			//TODO session manager
-			if(request.headers().get("Cookie").contains("wiki_preview_session=test")){
-				return RequestHandler.status(HttpResponseStatus.OK);
-			}else{
+			User user = SessionManager.getUserFromSession(request);
+			if(user == null){
 				return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
 			}
+			
+			//TODO check if user has access or not, now everyone has access
+			return RequestHandler.status(HttpResponseStatus.OK);
 		});
 		
 		
@@ -87,6 +88,7 @@ public class AuthServer{
 		
 		//---
 		
+		LoginServer.main(null);
 		
 		
 	}

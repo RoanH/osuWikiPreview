@@ -20,9 +20,14 @@
 package dev.roanh.wiki.auth;
 
 import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.DefaultCookie;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.util.Base64;
@@ -51,15 +56,26 @@ public class SessionManager{
 	
 	
 	
-	protected static User getUserFromSession(FullHttpRequest request){
-		//TODO
+	protected static User getUserFromSession(FullHttpRequest request) throws DBException{
+		for(Cookie cookie : ServerCookieDecoder.STRICT.decode(request.headers().get("Cookie"))){
+			if(cookie.name().equals(SESSION_HEADER)){
+				return MainDatabase.getUserBySession(cookie.value());
+			}
+		}
+		
 		return null;
 	}
 	
 	protected static void updateUserSession(UserExtended user, FullHttpResponse response) throws DBException{
 		String session = generateToken();
 		MainDatabase.saveUserSession(user.getId(), session);
-		response.headers().add("Set-Cookie", SESSION_HEADER + "=" + session + "; Secure; HttpOnly; Max-Age=31536000; Domain=" + Main.config.domain());
+		
+		Cookie cookie = new DefaultCookie(SESSION_HEADER, session);
+		cookie.setDomain(Main.config.domain());
+		cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365));
+		cookie.setHttpOnly(true);
+		cookie.setSecure(true);
+		response.headers().add("Set-Cookie", ServerCookieEncoder.STRICT.encode(cookie));
 	}
 	
 	/**

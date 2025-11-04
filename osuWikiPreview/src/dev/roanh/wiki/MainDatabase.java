@@ -24,9 +24,11 @@ import java.util.List;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.PullRequest;
 import dev.roanh.wiki.data.User;
+import dev.roanh.wiki.data.UserGroup;
 import dev.roanh.wiki.data.WebState;
 
 /**
@@ -102,12 +104,15 @@ public final class MainDatabase{
 		});
 	}
 	
-	public static void saveUserSession(int osuId, String sessionToken) throws DBException{
-		//TODO
+	public static void saveUserSession(UserExtended user, String sessionToken) throws DBException{
+		final int groups = UserGroup.encodeGroups(user.getUserGroups());
+		executor.insert(
+			"INSERT INTO users (osu, username, session, groups) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE session = ?, groups = ?",
+			user.getId(), user.getUsername(), sessionToken, groups, sessionToken, groups
+		);
 	}
 	
 	public static User getUserBySession(String session) throws DBException{
-		//TODO
-		return null;
+		return executor.selectFirst("SELECT * FROM users WHERE session = ?", User::new, session).orElse(null);
 	}
 }

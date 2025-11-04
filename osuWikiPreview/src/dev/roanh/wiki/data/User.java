@@ -19,13 +19,19 @@
  */
 package dev.roanh.wiki.data;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Set;
 
-import dev.roanh.osuapi.user.OsuGroup;
+public record User(String session, int osuId, String osuName, long discordId, Set<UserGroup> groups){//TODO periodically sync groups
 
-public record User(String session, int osuId, String osuName, long discordId, Set<OsuGroup> groups){//TODO groups TODO periodically sync groups
-
-//	public User(ResultSet rs) throws SQLException{
-//		this()
-//	}
+	public User(ResultSet rs) throws SQLException{
+		this(
+			rs.getString("session"),
+			rs.getInt("osu"),
+			rs.getString("username"),
+			rs.getLong("discord"),
+			UserGroup.decodeGroups(rs.getInt("groups"))
+		);
+	}
 }

@@ -92,6 +92,17 @@ public final class Pages{
 		}
 	}
 	
+	public static final String getLoginTimeoutPage(){
+		return makePage(
+			"Login Timeout",
+			"""
+			Your login session timed out, please try again.
+			<br><br>
+			<a class="button" href="https://preview.roanh.dev/login">Login</a>
+			"""
+		);
+	}
+	
 	private static final String makePage(String title, String content){
 		return makePage(title + " | osu! wiki preview", title, content);
 	}

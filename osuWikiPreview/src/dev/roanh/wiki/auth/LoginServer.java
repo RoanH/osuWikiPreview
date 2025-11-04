@@ -121,7 +121,7 @@ public class LoginServer{
 			return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
 		}else{
 			if(!loginSessions.contains(state)){
-				return RequestHandler.page("Your login session timed out, please try again: ");//TODO add link idk
+				return RequestHandler.page(Pages.getLoginTimeoutPage());
 			}
 			
 			//TODO get user with code and return a cookie with redirect if ok

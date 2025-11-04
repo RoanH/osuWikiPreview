@@ -71,7 +71,7 @@ public class SessionManager{
 	
 	protected static void updateUserSession(UserExtended user, FullHttpResponse response) throws DBException{
 		String session = generateToken();
-		MainDatabase.saveUserSession(user.getId(), session);
+		MainDatabase.saveUserSession(user, session);
 		
 		Cookie cookie = new DefaultCookie(SESSION_HEADER, session);
 		cookie.setDomain(Main.config.domain());

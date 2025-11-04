@@ -30,12 +30,11 @@ import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
 import dev.roanh.wiki.data.User;
 
 public class AuthServer{
-	
+	private static final String INSTANCE_HEADER = "Instance-Domain";
 	
 	
 	//TODO metrics
 	
-	//osu6.preview.roanh.dev as test I guess
 	
 	//401 on auth fail with redirect
 	//200 on OK
@@ -69,7 +68,11 @@ public class AuthServer{
 		});
 		
 		server.createContext("/auth", true, (request, path, data)->{
-			printAll(request, path, data);
+			printAll(request, path, data);//TODO remove
+//			Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
+//			if(!instance.isPrivateMode()){
+//				return RequestHandler.ok();
+//			}
 			
 			User user = SessionManager.getUserFromSession(request);
 			if(user == null){

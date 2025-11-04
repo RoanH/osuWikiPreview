@@ -48,6 +48,10 @@ public class InstanceManager{
 	 */
 	private static final Map<Long, OsuWeb> instancesByChannel = new HashMap<Long, OsuWeb>();
 	/**
+	 * Deployment instances by site domain.
+	 */
+	private static final Map<String, OsuWeb> instancesByDomain = new HashMap<String, OsuWeb>();
+	/**
 	 * The specific instance being managed by this manager.
 	 */
 	private final Instance instance;
@@ -252,6 +256,10 @@ public class InstanceManager{
 		return instancesByChannel.get(channel);
 	}
 	
+	public static OsuWeb getInstanceByDomain(String domain){
+		return instancesByDomain.get(domain);
+	}
+	
 	/**
 	 * Returns a collection of all registered instances.
 	 * @return A collection of all registered instances.
@@ -266,6 +274,8 @@ public class InstanceManager{
 	 * @param instance The instance to register.
 	 */
 	private static void registerInstance(Config config, Instance instance){
-		instancesByChannel.put(instance.getChannel(), new OsuWeb(config, instance));
+		OsuWeb web = new OsuWeb(config, instance);
+		instancesByChannel.put(instance.getChannel(), web);
+		instancesByDomain.put(instance.getDomain(), web);
 	}
 }

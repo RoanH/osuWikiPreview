@@ -42,6 +42,7 @@ public class Instance{
 	 * The osu! web docker image tag.
 	 */
 	private String tag;
+	//TODO ACL priv mode + member lists
 	
 	/**
 	 * Constructs a new instance.
@@ -55,6 +56,11 @@ public class Instance{
 		this.channel = channel;
 		this.port = port;
 		this.tag = tag;
+	}
+	
+	public boolean isPrivateMode(){
+		//TODO
+		return true;
 	}
 	
 	/**

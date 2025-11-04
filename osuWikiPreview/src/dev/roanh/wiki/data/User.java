@@ -23,7 +23,7 @@ import java.util.Set;
 
 import dev.roanh.osuapi.user.OsuGroup;
 
-public record User(String session, int osuId, long discordId, Set<OsuGroup> groups){//TODO groups TODO periodically sync groups
+public record User(String session, int osuId, String osuName, long discordId, Set<OsuGroup> groups){//TODO groups TODO periodically sync groups
 
 //	public User(ResultSet rs) throws SQLException{
 //		this()

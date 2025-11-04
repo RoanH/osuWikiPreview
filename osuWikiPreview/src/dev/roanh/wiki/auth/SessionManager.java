@@ -57,9 +57,12 @@ public class SessionManager{
 	
 	
 	protected static User getUserFromSession(FullHttpRequest request) throws DBException{
-		for(Cookie cookie : ServerCookieDecoder.STRICT.decode(request.headers().get("Cookie"))){
-			if(cookie.name().equals(SESSION_HEADER)){
-				return MainDatabase.getUserBySession(cookie.value());
+		String header = request.headers().get("Cookie");
+		if(header != null){
+			for(Cookie cookie : ServerCookieDecoder.STRICT.decode(header)){
+				if(cookie.name().equals(SESSION_HEADER)){
+					return MainDatabase.getUserBySession(cookie.value());
+				}
 			}
 		}
 		

@@ -65,8 +65,15 @@ public final class Pages{
 				"""
 			);
 		}else{
-			//TODO
-			return null;
+			return makePage(
+				"Private Mode",
+				"""
+				This preview instance is currently in private mode, you are logged in as <a href="https://osu.ppy.sh/users/%d">%s</a> but do not appear to have access.
+				If you joined a user group with access after last logging in your groups might not have been updated yet, in this case you could try logging in again below.
+				<br><br>
+				<a class="button" href="https://preview.roanh.dev/login">Login</a>
+				""".formatted(user.osuId(), user.osuName())
+			);
 		}
 	}
 	

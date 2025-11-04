@@ -28,7 +28,9 @@ import dev.roanh.infinity.util.Util;
 import dev.roanh.infinity.util.Version;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.data.User;
 
 public final class Pages{
@@ -38,20 +40,33 @@ public final class Pages{
 	}
 	
 	public static final String getRootPage(User user){
-		return makePage("Hello World", """
-		    Hi, there's nothing here really, you probably want to go to one of the preview subdomains:
-			<br>
-			<a href="https://roanh.dev/">This is a link</a>
-		    """);
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("Welcome to the osu! <a href=\"https://osu.ppy.sh/wiki/en/Main_page\">wiki</a> and <a href=\"https://osu.ppy.sh/home/news\">news</a> preview site.");
+		buffer.append("The available preview instances can be found at the following subdomains:");
 		
+		buffer.append("<ul>");
+		for(OsuWeb web : InstanceManager.getInstances()){
+			buffer.append("<li><a href=\"");
+			buffer.append(web.getInstance().getSiteUrl());
+			buffer.append("\">");
+			buffer.append(web.getInstance().getDomain());
+			buffer.append("</a></li>");
+		}
+		buffer.append("</ul>");
 		
+		if(user == null){
+			buffer.append("If you have been invited to view private preview instances you need to log in below.");
+			buffer.append("<br><br>");
+			buffer.append("<a class=\"button\" href=\"https://preview.roanh.dev/login\">Login</a>");
+		}else{
+			buffer.append("You are currently logged in as <a href=\"https://osu.ppy.sh/users/");
+			buffer.append(user.osuId());
+			buffer.append("\">");
+			buffer.append(user.osuName());
+			buffer.append("</a>.");
+		}
 		
-		
-		
-		//nullable user
-		//TODO
-		//TODO extract and stuff, maybe some login info, relog for group fix idk
-//		return "Hi, there's nothing here really, you probably want to go to one of the preview subdomains:";
+		return makePage("osu! wiki preview", "osu! wiki preview", buffer.toString());
 	}
 	
 	public static final String getPrivateModePage(User user){
@@ -78,7 +93,11 @@ public final class Pages{
 	}
 	
 	private static final String makePage(String title, String content){
-		return TEMPLATE.replace("TITLE", title).replace("CONTENT", content);
+		return makePage(title + " | osu! wiki preview", title, content);
+	}
+		
+	private static final String makePage(String title, String header, String content){
+		return TEMPLATE.replace("HEADER", header).replace("TITLE", title).replace("CONTENT", content);
 	}
 	
 	static{

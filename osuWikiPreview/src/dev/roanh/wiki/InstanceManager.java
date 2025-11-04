@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SequencedCollection;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import dev.roanh.infinity.config.Configuration;
@@ -50,7 +52,7 @@ public class InstanceManager{
 	/**
 	 * Deployment instances by site domain.
 	 */
-	private static final Map<String, OsuWeb> instancesByDomain = new HashMap<String, OsuWeb>();
+	private static final SortedMap<String, OsuWeb> instancesByDomain = new TreeMap<String, OsuWeb>();
 	/**
 	 * The specific instance being managed by this manager.
 	 */
@@ -243,6 +245,7 @@ public class InstanceManager{
 	 */
 	public static void init(Config config) throws DBException{
 		for(Instance instance : MainDatabase.getInstances()){
+			System.out.println("reg: " + instance.getDomain());
 			registerInstance(config, instance);
 		}
 	}
@@ -264,8 +267,9 @@ public class InstanceManager{
 	 * Returns a collection of all registered instances.
 	 * @return A collection of all registered instances.
 	 */
-	public static Collection<OsuWeb> getInstances(){
-		return instancesByChannel.values();
+	public static SequencedCollection<OsuWeb> getInstances(){
+		System.out.println(instancesByChannel.size() + "vvv");
+		return instancesByDomain.sequencedValues();
 	}
 	
 	/**

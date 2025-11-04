@@ -24,9 +24,13 @@ import java.io.IOException;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.io.netty.http.HttpParams;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.wiki.InstanceManager;
+import dev.roanh.wiki.Main;
+import dev.roanh.wiki.MainDatabase;
 import dev.roanh.wiki.data.User;
 
 public class AuthServer{
@@ -58,8 +62,11 @@ public class AuthServer{
 		});
 	}
 	
-	public static void main(String[] args) throws InterruptedException, IOException{
+	public static void main(String[] args) throws InterruptedException, IOException, DBException{
 		//TODO logging & error handler config for servers
+		
+		MainDatabase.init(Main.config);
+		InstanceManager.init(Main.config);
 		
 		WebServer server = new WebServer(1234);
 		

@@ -43,19 +43,6 @@ public class SessionManager{
 	 */
 	private static final SecureRandom random = new SecureRandom();
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	protected static User getUserFromSession(FullHttpRequest request) throws DBException{
 		String header = request.headers().get("Cookie");
 		if(header != null){

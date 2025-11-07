@@ -42,7 +42,7 @@ public class Instance{
 	 * The osu! web docker image tag.
 	 */
 	private String tag;
-	//TODO ACL priv mode + member lists
+	private AccessList acl;
 	
 	/**
 	 * Constructs a new instance.
@@ -50,17 +50,22 @@ public class Instance{
 	 * @param channel The discord channel for the instance.
 	 * @param port The port for the website.
 	 * @param tag The docker image tag.
+	 * @param acl The ACL for this instance if any.
 	 */
-	public Instance(int id, long channel, int port, String tag){
+	public Instance(int id, long channel, int port, String tag, byte[] acl){
 		this.id = id;
 		this.channel = channel;
 		this.port = port;
 		this.tag = tag;
+		this.acl = AccessList.decode(acl);
+	}
+	
+	public AccessList getAccessList(){
+		return acl;
 	}
 	
 	public boolean isPrivateMode(){
-		//TODO
-		return true;
+		return acl != null;
 	}
 	
 	/**

@@ -100,9 +100,13 @@ public class LoginServer{
 	
 	/**
 	 * Handles a visit to the root page potentially with login information.
+	 * @param request The login attempt request (or just a root page visit).
+	 * @param data The request data.
+	 * @return The response page.
 	 * @throws DBException When a database exception occurs.
+	 * @throws RequestException When an osu! API exception occurs.
 	 */
-	private final FullHttpResponse handleLoginAttempt(FullHttpRequest request, HttpParams data) throws DBException{
+	private final FullHttpResponse handleLoginAttempt(FullHttpRequest request, HttpParams data) throws DBException, RequestException{
 
 		//TODO handle state + token if present else generic page
 		
@@ -132,12 +136,15 @@ public class LoginServer{
 			UserExtended user = null;
 			try{
 				user = sessionBuilder.build(code).getCurrentUser();
+				
+				
+				
+				
+				
+				
 			}catch(InsufficientPermissionsException e){
 				//user changed the requested scopes
 				return RequestHandler.badRequest();
-			}catch(RequestException e){
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 			//TODO check result
 			

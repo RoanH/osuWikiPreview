@@ -21,9 +21,8 @@ package dev.roanh.wiki.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
 
-public record User(String session, int osuId, String osuName, long discordId, Set<UserGroup> groups){//TODO periodically sync groups
+public record User(String session, int osuId, String osuName, long discordId, GroupSet groups){//TODO periodically sync groups
 
 	public User(ResultSet rs) throws SQLException{
 		this(
@@ -31,7 +30,7 @@ public record User(String session, int osuId, String osuName, long discordId, Se
 			rs.getInt("osu"),
 			rs.getString("username"),
 			rs.getLong("discord"),
-			UserGroup.decodeGroups(rs.getInt("groups"))
+			new GroupSet(rs.getInt("groups"))
 		);
 	}
 }

@@ -25,10 +25,10 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.osuapi.user.UserExtended;
+import dev.roanh.wiki.data.GroupSet;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.PullRequest;
 import dev.roanh.wiki.data.User;
-import dev.roanh.wiki.data.UserGroup;
 import dev.roanh.wiki.data.WebState;
 
 /**
@@ -85,7 +85,11 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static void saveInstance(Instance instance) throws DBException{
-		executor.insert("REPLACE INTO instances (id, channel, port, tag) VALUES (?, ?, ?, ?)", instance.getId(), instance.getChannel(), instance.getPort(), instance.getTag());
+		byte[] acl = instance.getAccessList() == null ? null : instance.getAccessList().encode();
+		executor.insert(
+			"REPLACE INTO instances (id, channel, port, tag, acl) VALUES (?, ?, ?, ?, ?)",
+			instance.getId(), instance.getChannel(), instance.getPort(), instance.getTag(), acl
+		);
 	}
 	
 	/**
@@ -99,20 +103,21 @@ public final class MainDatabase{
 				rs.getInt("id"),
 				rs.getLong("channel"),
 				rs.getInt("port"),
-				rs.getString("tag")
+				rs.getString("tag"),
+				rs.getBytes("acl")
 			);
 		});
 	}
 	
 	public static void saveUserSession(UserExtended user, String sessionToken) throws DBException{
-		final int groups = UserGroup.encodeGroups(user.getUserGroups());
+		final int groups = GroupSet.encodeGroups(user.getUserGroups());
 		executor.insert(
-			"INSERT INTO users (osu, username, session, groups) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE session = ?, groups = ?",
+			"INSERT INTO users (osu, username, `session`, `groups`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `session` = ?, `groups` = ?",
 			user.getId(), user.getUsername(), sessionToken, groups, sessionToken, groups
 		);
 	}
 	
 	public static User getUserBySession(String session) throws DBException{
-		return executor.selectFirst("SELECT * FROM users WHERE session = ?", User::new, session).orElse(null);
+		return executor.selectFirst("SELECT * FROM users WHERE `session` = ?", User::new, session).orElse(null);
 	}
 }

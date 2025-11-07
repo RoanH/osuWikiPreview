@@ -21,46 +21,23 @@ package dev.roanh.wiki.auth;
 
 import java.io.IOException;
 
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.infinity.io.netty.http.HttpParams;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
 import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.MainDatabase;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.User;
 
 public class AuthServer{
 	private static final String INSTANCE_HEADER = "Instance-Domain";
 	
-	
 	//TODO metrics
 	
-	
-	//401 on auth fail with redirect
-	//200 on OK
-	
 	//TODO probably need a discord link too?
-	
-	
-	
-	
-	//TODO remove
-	private static void printAll(FullHttpRequest request, String path, HttpParams data){
-		System.out.println("p: " + path);
-		
-		System.out.println(data.getKeys());
-		for(String key : data.getKeys()){
-			System.out.println(key + " : " + data.get(key));
-		}
-		
-		request.headers().forEach(e->{
-			System.out.println(e.getKey() + " : " + e.getValue());
-		});
-	}
 	
 	public static void main(String[] args) throws InterruptedException, IOException, DBException{
 		//TODO logging & error handler config for servers
@@ -75,31 +52,23 @@ public class AuthServer{
 		});
 		
 		server.createContext("/auth", true, (request, path, data)->{
-			printAll(request, path, data);//TODO remove
-//			Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
-//			if(!instance.isPrivateMode()){
-//				return RequestHandler.ok();
-//			}
+			Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
+			if(!instance.isPrivateMode()){
+				return RequestHandler.ok();
+			}
 			
 			User user = SessionManager.getUserFromSession(request);
 			if(user == null){
 				return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
 			}
 			
-			//TODO check if user has access or not, now everyone has access
-			return RequestHandler.status(HttpResponseStatus.OK);
+			return RequestHandler.status(instance.getAccessList().contains(user) ? HttpResponseStatus.OK : HttpResponseStatus.UNAUTHORIZED);
 		});
 		
-		
-		//include either the oauth uri in the page or redirect idk yet -- link click would mean longer timeout, otherwise its from pagel oad
-		
 		server.runAsync();
-		
 		
 		//---
 		
 		LoginServer.main(null);
-		
-		
 	}
 }

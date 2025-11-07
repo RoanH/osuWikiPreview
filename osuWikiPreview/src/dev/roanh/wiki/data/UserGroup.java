@@ -19,11 +19,6 @@
  */
 package dev.roanh.wiki.data;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Objects;
-import java.util.Set;
-
 import dev.roanh.osuapi.user.Group;
 
 public enum UserGroup{
@@ -48,21 +43,6 @@ public enum UserGroup{
 	
 	public String getName(){
 		return name;
-	}
-	
-	public static Set<UserGroup> decodeGroups(int groups){
-		Set<UserGroup> userGroups = EnumSet.noneOf(UserGroup.class);
-		for(UserGroup group : values()){
-			if((group.id & groups) != 0){
-				userGroups.add(group);
-			}
-		}
-		
-		return userGroups;
-	}
-	
-	public static int encodeGroups(Collection<? extends Group> groups){
-		return groups.stream().map(UserGroup::from).filter(Objects::nonNull).mapToInt(UserGroup::getId).reduce(0, (a, b)->(a | b));
 	}
 	
 	public static UserGroup from(Group group){

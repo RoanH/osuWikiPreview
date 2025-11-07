@@ -173,7 +173,7 @@ public class InstanceCommand extends CommandGroup{
 		event.deferReply(deferred->{
 			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel("osu" + id).queue(chan->{
 				try{
-					Instance instance = new Instance(id, chan.getIdLong(), port, args.get("tag").getAsString());
+					Instance instance = new Instance(id, chan.getIdLong(), port, args.get("tag").getAsString(), null);
 					chan.getManager().setTopic("osu! web instance with preview site: " + instance.getSiteUrl()).queue();
 					
 					InstanceManager manager = new InstanceManager(instance);

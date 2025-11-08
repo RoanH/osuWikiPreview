@@ -36,6 +36,10 @@ public record Config(Configuration config, String domain){
 	public Config(Configuration config){
 		this(config, "preview.roanh.dev");
 	}
+	
+	public OsuAPI getOsuAPI(){
+		return OsuAPI.client(config.readInt("osu-client-id"), config.readString("osu-client-secret"));
+	}
 
 	public OAuthSessionBuilder getIdentitySessionBuilder(){
 		return OsuAPI.oauth(config.readInt("osu-client-id"), config.readString("osu-client-secret")).setCallback("https://" + domain() + "/").addScopes(Scope.IDENTIFY);

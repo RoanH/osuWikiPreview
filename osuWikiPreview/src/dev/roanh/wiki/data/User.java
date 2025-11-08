@@ -34,6 +34,10 @@ public record User(int osuId, String osuName, OptionalLong discordId, GroupSet g
 		);
 	}
 	
+	public boolean hasDiscord(){
+		return discordId.isPresent();
+	}
+	
 	private static OptionalLong readLong(ResultSet rs, String col) throws SQLException{
 		long value = rs.getLong(col);
 		return rs.wasNull() ? OptionalLong.empty() : OptionalLong.of(value);

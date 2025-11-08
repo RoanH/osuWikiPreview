@@ -28,12 +28,21 @@ import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.UserSnowflake;
+
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.util.Base64;
+import dev.roanh.isla.reporting.Detail;
+import dev.roanh.isla.reporting.Priority;
+import dev.roanh.isla.reporting.Severity;
 import dev.roanh.osuapi.user.UserExtended;
+import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.MainDatabase;
+import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.auth.LoginServer.LoginInfo;
+import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.User;
 
 public final class SessionManager{
@@ -73,6 +82,10 @@ public final class SessionManager{
 		String session = generateToken();
 		MainDatabase.saveUserSession(user, session, info);
 		
+		if(info.discordId().isPresent()){
+			syncDiscord(MainDatabase.getUserBySession(session));
+		}
+		
 		Cookie cookie = new DefaultCookie(SESSION_HEADER, session);
 		cookie.setDomain(Main.config.domain());
 		cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365));
@@ -81,7 +94,25 @@ public final class SessionManager{
 		return cookie;
 	}
 	
-//	protected static syncDiscord
+	protected static void syncDiscord(User user){
+		try{
+			for(OsuWeb web : InstanceManager.getInstances()){
+				Instance instance = web.getInstance();
+				if(instance.isPrivateMode()){
+					instance.getAccessList().add(user.osuId());
+					MainDatabase.saveInstance(instance);
+
+					JDA jda = Main.client.getJDA();
+					jda.getTextChannelById(instance.getChannel()).getGuild().addRoleToMember(
+						UserSnowflake.fromId(user.discordId().getAsLong()),
+						jda.getRoleById(instance.getRoleId())
+					).queue();
+				}
+			}
+		}catch(DBException e){
+			Main.client.logError(e, "[SessionManager] Failed to sync Discord access", Severity.MINOR, Priority.MEDIUM, Detail.of("User", user.osuName()));
+		}
+	}
 	
 	/**
 	 * Generates a new random token.

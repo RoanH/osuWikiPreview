@@ -48,6 +48,10 @@ public enum UserGroup{
 		return name;
 	}
 	
+	public GroupSet asGroupSet(){
+		return new GroupSet(id);
+	}
+	
 	public static List<String> getGroupNames(){
 		return Arrays.stream(values()).map(UserGroup::getName).toList();
 	}

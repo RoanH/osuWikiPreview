@@ -27,6 +27,30 @@ public class AccessList{
 		return groups.containsAny(user.groups()) || users.contains(user.osuId());
 	}
 	
+	public void add(int userId){
+		users.add(userId);
+	}
+	
+	public void remove(int userId){
+		users.remove(userId);
+	}
+	
+	public void add(UserGroup group){
+		groups.add(group);
+	}
+	
+	public void remove(UserGroup group){
+		groups.remove(group);
+	}
+	
+	public Set<UserGroup> getGroups(){
+		return groups.getGroups();
+	}
+	
+	public Set<Integer> getUsers(){
+		return users;
+	}
+	
 	public byte[] encode(){
 		ByteBuffer buf = ByteBuffer.allocate((users.size() + 2) * Integer.BYTES);
 		buf.putInt(groups.encode());

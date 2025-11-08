@@ -119,7 +119,7 @@ public class Main{
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new NewsPreviewCommand());
 		client.registerCommand(new InstanceCommand());
-		client.registerCommand(new PrivateModeCommand());
+		client.registerCommand(new PrivateModeCommand(config.getOsuAPI()));
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS);
 		client.login();

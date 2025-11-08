@@ -54,6 +54,10 @@ public class GroupSet implements Iterable<UserGroup>{
 		return groups;
 	}
 	
+	public Set<UserGroup> getGroups(){
+		return decodeGroups(groups);
+	}
+	
 	@Override
 	public Iterator<UserGroup> iterator(){
 		return decodeGroups(groups).iterator();

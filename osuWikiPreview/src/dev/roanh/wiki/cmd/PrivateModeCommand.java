@@ -66,18 +66,14 @@ public class PrivateModeCommand extends CommandGroup{
 	}
 	
 	private static WebCommand privateCommand(String name, String description, WebCommandRunnable handler){
-		return new WebCommand(name, description, Main.PERMISSION){
-			
-			@Override
-			public void executeWeb(OsuWeb web, CommandMap args, CommandEvent event){
-				if(!web.getInstance().isPrivateMode()){
-					event.reply("This instance is not currently in private mode.");
-					return;
-				}
-				
-				handler.execute(web, args, event);
+		return WebCommand.of(name, description, Main.PERMISSION, (web, args, event)->{
+			if(!web.getInstance().isPrivateMode()){
+				event.reply("This instance is not currently in private mode.");
+				return;
 			}
-		};
+
+			handler.execute(web, args, event);
+		});
 	}
 
 	private static class GroupsCommand extends CommandGroup{

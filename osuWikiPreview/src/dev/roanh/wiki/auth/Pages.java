@@ -38,6 +38,9 @@ import dev.roanh.wiki.data.User;
  * @author Roan
  */
 public final class Pages{
+	/**
+	 * Template HTML page with the general structure.
+	 */
 	private static final String TEMPLATE;
 
 	/**
@@ -46,6 +49,12 @@ public final class Pages{
 	private Pages(){
 	}
 	
+	/**
+	 * Gets the root page shown when the root of the domain is visited. This
+	 * page just lists the instances and some account information if present.
+	 * @param user The logged in user if any, else null.
+	 * @return The root page HTML.
+	 */
 	public static final String getRootPage(User user){
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("Welcome to the osu! <a href=\"https://osu.ppy.sh/wiki/en/Main_page\">wiki</a> and <a href=\"https://osu.ppy.sh/home/news\">news</a> preview site.");
@@ -76,6 +85,12 @@ public final class Pages{
 		return makePage("osu! wiki preview", "osu! wiki preview", buffer.toString());
 	}
 	
+	/**
+	 * Gets the page when a user without access tries to access a private mode instance.
+	 * This page just has some general information and a login button.
+	 * @param user The logged in user if any, else null.
+	 * @return The created private mode page HTML.
+	 */
 	public static final String getPrivateModePage(User user){
 		if(user == null){
 			return makePage(

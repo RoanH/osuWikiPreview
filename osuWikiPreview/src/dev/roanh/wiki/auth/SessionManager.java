@@ -23,11 +23,10 @@ import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.util.Base64;
@@ -36,19 +35,28 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.MainDatabase;
 import dev.roanh.wiki.data.User;
 
-public class SessionManager{
+public final class SessionManager{
+	/**
+	 * Name of the wiki preview session header cookie.
+	 */
 	private static final String SESSION_HEADER = "wiki_preview_session";
 	/**
 	 * Secure random generator for user session tokens.
 	 */
 	private static final SecureRandom random = new SecureRandom();
 	
+	/**
+	 * Prevent instantiation.
+	 */
+	private SessionManager(){
+	}
+	
 	protected static User getUserFromSession(FullHttpRequest request) throws DBException{
-		String header = request.headers().get("Cookie");
+		String header = request.headers().get(HttpHeaderNames.COOKIE);
 		if(header != null){
 			for(Cookie cookie : ServerCookieDecoder.STRICT.decode(header)){
 				if(cookie.name().equals(SESSION_HEADER)){
-					return MainDatabase.getUserBySession(cookie.value());
+					return getUserFromSession(cookie);
 				}
 			}
 		}
@@ -56,7 +64,11 @@ public class SessionManager{
 		return null;
 	}
 	
-	protected static void updateUserSession(UserExtended user, FullHttpResponse response) throws DBException{
+	protected static User getUserFromSession(Cookie sessionCookie) throws DBException{
+		return MainDatabase.getUserBySession(sessionCookie.value());
+	}
+	
+	protected static Cookie updateUserSession(UserExtended user) throws DBException{
 		String session = generateToken();
 		MainDatabase.saveUserSession(user, session);
 		
@@ -65,7 +77,7 @@ public class SessionManager{
 		cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365));
 		cookie.setHttpOnly(true);
 		cookie.setSecure(true);
-		response.headers().add("Set-Cookie", ServerCookieEncoder.STRICT.encode(cookie));
+		return cookie;
 	}
 	
 	/**

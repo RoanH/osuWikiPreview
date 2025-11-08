@@ -30,6 +30,8 @@ import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.auth.AuthServer;
+import dev.roanh.wiki.auth.LoginServer;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.NewsPreviewCommand;
@@ -78,6 +80,7 @@ public class Main{
 			OsuWiki.init();
 		}catch(IOException e){
 			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
+			return;
 		}
 		
 		try{
@@ -85,6 +88,7 @@ public class Main{
 			InstanceManager.init(config);
 		}catch(DBException e){
 			client.logError(e, "[Main] Failed to retrieve instances.", Severity.MINOR, Priority.MEDIUM);
+			return;
 		}
 		
 		for(OsuWeb site : InstanceManager.getInstances()){
@@ -95,6 +99,16 @@ public class Main{
 			}
 		}
 		
+		AuthServer authServer = new AuthServer(config.getAuthServerPort());
+		authServer.start();
+		
+		try{
+			LoginServer loginServer = new LoginServer(config);
+			loginServer.start();
+		}catch(IOException e){
+			client.logError(e, "[Main] Failed to start login server", Severity.MAJOR, Priority.HIGH);
+		}
+		
 		client.registerCommand(new SwitchCommand());
 		client.registerCommand(new SyncNewsCommand());
 		client.registerCommand(new RedateCommand());
@@ -102,6 +116,7 @@ public class Main{
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new NewsPreviewCommand());
 		client.registerCommand(new InstanceCommand());
+		//TODO pm command
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
 		client.login();

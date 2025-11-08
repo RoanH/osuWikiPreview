@@ -60,6 +60,10 @@ public class Instance{
 		this.acl = AccessList.decode(acl);
 	}
 	
+	public void setAccessList(AccessList acl){
+		this.acl = acl;
+	}
+	
 	public AccessList getAccessList(){
 		return acl;
 	}

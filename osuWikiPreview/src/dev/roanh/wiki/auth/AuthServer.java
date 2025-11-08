@@ -21,54 +21,69 @@ package dev.roanh.wiki.auth;
 
 import java.io.IOException;
 
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.infinity.io.netty.http.HttpParams;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.isla.reporting.Priority;
+import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.MainDatabase;
+import dev.roanh.wiki.data.AccessList;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.User;
 
 public class AuthServer{
 	private static final String INSTANCE_HEADER = "Instance-Domain";
-	
+	private final WebServer server;
 	//TODO metrics
+	
+	public AuthServer(int port){
+		server = new WebServer(port);
+		server.setExceptionHandler(t->Main.client.logError(t, "[AuthServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
+		server.createContext("/login", true, this::handleLoginErrorPage);
+		server.createContext("/auth", true, this::handleAuthRequest);
+	}
+	
+	public void start(){
+		server.runAsync();
+	}
+	
+	private FullHttpResponse handleLoginErrorPage(FullHttpRequest request, String path, HttpParams data) throws DBException{
+		return RequestHandler.page(Pages.getPrivateModePage(SessionManager.getUserFromSession(request)));
+	}
+	
+	private FullHttpResponse handleAuthRequest(FullHttpRequest request, String path, HttpParams data) throws DBException{
+		Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
+		if(!instance.isPrivateMode()){
+			return RequestHandler.ok();
+		}
+		
+		User user = SessionManager.getUserFromSession(request);
+		if(user == null){
+			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+		}
+		
+		return RequestHandler.status(instance.getAccessList().contains(user) ? HttpResponseStatus.OK : HttpResponseStatus.UNAUTHORIZED);
+	}
 	
 	//TODO probably need a discord link too?
 	
 	public static void main(String[] args) throws InterruptedException, IOException, DBException{
-		//TODO logging & error handler config for servers
-		
 		MainDatabase.init(Main.config);
 		InstanceManager.init(Main.config);
 		
-		WebServer server = new WebServer(1234);
+		AccessList acl = new AccessList();
+		Instance i = InstanceManager.getInstanceByDomain("osu5.preview.roanh.dev").getInstance();
+		i.setAccessList(acl);
+		MainDatabase.saveInstance(i);
 		
-		server.createContext("/login", true, (request, path, data)->{
-			return RequestHandler.page(Pages.getPrivateModePage(SessionManager.getUserFromSession(request)));
-		});
-		
-		server.createContext("/auth", true, (request, path, data)->{
-			Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
-			if(!instance.isPrivateMode()){
-				return RequestHandler.ok();
-			}
-			
-			User user = SessionManager.getUserFromSession(request);
-			if(user == null){
-				return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
-			}
-			
-			return RequestHandler.status(instance.getAccessList().contains(user) ? HttpResponseStatus.OK : HttpResponseStatus.UNAUTHORIZED);
-		});
-		
-		server.runAsync();
-		
-		//---
-		
-		LoginServer.main(null);
+		new AuthServer(1234).start();
+		new LoginServer(Main.config).start();
 	}
 }

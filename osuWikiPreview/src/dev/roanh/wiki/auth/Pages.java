@@ -33,9 +33,16 @@ import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.data.User;
 
+/**
+ * Set of HTTP pages shown to the user on the root domain and error pages.
+ * @author Roan
+ */
 public final class Pages{
 	private static final String TEMPLATE;
 
+	/**
+	 * Prevent instantiation.
+	 */
 	private Pages(){
 	}
 	

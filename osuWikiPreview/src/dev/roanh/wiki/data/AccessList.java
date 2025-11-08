@@ -28,7 +28,7 @@ public class AccessList{
 	}
 	
 	public byte[] encode(){
-		ByteBuffer buf = ByteBuffer.allocate((users.size() + 1) * Integer.BYTES);
+		ByteBuffer buf = ByteBuffer.allocate((users.size() + 2) * Integer.BYTES);
 		buf.putInt(groups.encode());
 		buf.putInt(users.size());
 		users.forEach(buf::putInt);

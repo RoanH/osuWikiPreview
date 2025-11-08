@@ -25,6 +25,7 @@ import java.io.IOException;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.isla.DebugMode;
 import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.permission.CommandPermission;
@@ -66,7 +67,7 @@ public class Main{
 	/**
 	 * Discord bot instance.
 	 */
-	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, CommandScope.GUILD);
+	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, DebugMode.DISABLE_ALL_HANDLING, CommandScope.GUILD);
 	/**
 	 * General application configuration.
 	 */

@@ -137,5 +137,9 @@ public class LoginServer{
 		public LoginInfo(){
 			this(OptionalLong.empty());
 		}
+		
+		public LoginInfo(long discordId){
+			this(OptionalLong.of(discordId));
+		}
 	}
 }

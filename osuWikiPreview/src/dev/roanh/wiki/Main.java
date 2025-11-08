@@ -35,6 +35,7 @@ import dev.roanh.wiki.auth.LoginServer;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.NewsPreviewCommand;
+import dev.roanh.wiki.cmd.PrivateModeCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
@@ -105,6 +106,7 @@ public class Main{
 		try{
 			LoginServer loginServer = new LoginServer(config);
 			loginServer.start();
+			AccountStatus.init(client, loginServer);
 		}catch(IOException e){
 			client.logError(e, "[Main] Failed to start login server", Severity.MAJOR, Priority.HIGH);
 		}
@@ -116,9 +118,9 @@ public class Main{
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new NewsPreviewCommand());
 		client.registerCommand(new InstanceCommand());
-		//TODO pm command
+		client.registerCommand(new PrivateModeCommand());
 		
-		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
+		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS);
 		client.login();
 	}
 	

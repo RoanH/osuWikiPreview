@@ -21,7 +21,8 @@ package dev.roanh.wiki.auth;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
+import java.util.Map;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import io.prometheus.client.Counter;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.io.netty.http.HttpParams;
@@ -47,9 +49,10 @@ import dev.roanh.wiki.Config;
 import dev.roanh.wiki.Main;
 
 public class LoginServer{
+	private static final Counter authAttempts = Counter.build("wikipreview_login_", "Number of OAuth callback auth attempts by result").labelNames("result").register();
 	private final WebServer server;
 	private final OAuthSessionBuilder sessionBuilder;
-	private final Set<String> loginSessions = ConcurrentHashMap.newKeySet();
+	private final Map<String, LoginInfo> loginSessions = new ConcurrentHashMap<String, LoginInfo>();
 	//TODO metrics
 	
 	public LoginServer(Config config) throws IOException{
@@ -77,6 +80,13 @@ public class LoginServer{
 		server.runAsync();
 	}
 	
+	public String createAuthUrl(LoginInfo info){
+		String state = UUID.randomUUID().toString();
+		loginSessions.put(state, info);
+		Scheduler.scheduleIn(15, TimeUnit.MINUTES, ()->loginSessions.remove(state));
+		return sessionBuilder.getAuthUrl(state);
+	}
+	
 	/**
 	 * handles a request to login and redirects to the osu! authorisation page.
 	 * @param request The incoming HTTP request.
@@ -85,12 +95,8 @@ public class LoginServer{
 	 * @return The HTTP response.
 	 */
 	private final FullHttpResponse handleLoginRequest(FullHttpRequest request, String path, HttpParams data){
-		String state = UUID.randomUUID().toString();
-		loginSessions.add(state);
-		Scheduler.scheduleIn(15, TimeUnit.MINUTES, ()->loginSessions.remove(state));
-		
 		FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
-		resp.headers().add("Location", sessionBuilder.getAuthUrl(state));
+		resp.headers().add("Location", createAuthUrl(new LoginInfo()));
 		return resp;
 	}
 	
@@ -109,12 +115,13 @@ public class LoginServer{
 		if(state == null || code == null){
 			return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
 		}else{
-			if(!loginSessions.contains(state)){
+			LoginInfo info = loginSessions.get(state);
+			if(info == null){
 				return RequestHandler.page(Pages.getLoginTimeoutPage());
 			}
 			
 			try{
-				Cookie session = SessionManager.updateUserSession(sessionBuilder.build(code).getCurrentUser());
+				Cookie session = SessionManager.updateUserSession(sessionBuilder.build(code).getCurrentUser(), info);
 				FullHttpResponse resp = RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(session)));
 				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
 				return resp;
@@ -122,6 +129,13 @@ public class LoginServer{
 				//user changed the requested scopes
 				return RequestHandler.badRequest();
 			}
+		}
+	}
+	
+	public static record LoginInfo(OptionalLong discordId){
+		
+		public LoginInfo(){
+			this(OptionalLong.empty());
 		}
 	}
 }

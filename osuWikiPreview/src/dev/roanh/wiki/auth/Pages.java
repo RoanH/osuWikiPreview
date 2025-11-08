@@ -114,6 +114,10 @@ public final class Pages{
 		}
 	}
 	
+	/**
+	 * Gets the page shown when a user wait too long when logging in.
+	 * @return The login timeout page HTML.
+	 */
 	public static final String getLoginTimeoutPage(){
 		return makePage(
 			"Login Timeout",
@@ -125,10 +129,23 @@ public final class Pages{
 		);
 	}
 	
+	/**
+	 * Creates a page with the given content and title.
+	 * @param title The page title and header.
+	 * @param content The HTML page content.
+	 * @return The page HTML source.
+	 */
 	private static final String makePage(String title, String content){
 		return makePage(title + " | osu! wiki preview", title, content);
 	}
 		
+	/**
+	 * Creates a page with the given content.
+	 * @param title The page title.
+	 * @param header The page header.
+	 * @param content The page HTML content.
+	 * @return The page HTML source.
+	 */
 	private static final String makePage(String title, String header, String content){
 		return TEMPLATE.replace("HEADER", header).replace("TITLE", title).replace("CONTENT", content);
 	}

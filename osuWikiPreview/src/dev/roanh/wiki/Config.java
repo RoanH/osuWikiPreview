@@ -33,30 +33,59 @@ import dev.roanh.osuapi.session.OAuthSessionBuilder;
  */
 public record Config(Configuration config, String domain){
 	
+	/**
+	 * Constructs a new config with the given configuration source.
+	 * @param config The configuration source.
+	 */
 	public Config(Configuration config){
 		this(config, "preview.roanh.dev");
 	}
 	
+	/**
+	 * Constructs a new osu! API connection.
+	 * @return The created osu! API instance.
+	 */
 	public OsuAPI getOsuAPI(){
 		return OsuAPI.client(config.readInt("osu-client-id"), config.readString("osu-client-secret"));
 	}
 
+	/**
+	 * Gets an OAuth session builder for use in authentication.
+	 * @return The created session builder.
+	 */
 	public OAuthSessionBuilder getIdentitySessionBuilder(){
 		return OsuAPI.oauth(config.readInt("osu-client-id"), config.readString("osu-client-secret")).setCallback("https://" + domain() + "/").addScopes(Scope.IDENTIFY);
 	}
 
+	/**
+	 * Gets the access information for the main database.
+	 * @return The database access information.
+	 */
 	public DBContext getMainDatabaseContext(){
 		return getDatabaseContext("wikipreview");
 	}
 	
+	/**
+	 * Gets the access information for a specific preview instance database.
+	 * @param schema The schema for the preview instance.
+	 * @return The database access information.
+	 */
 	public DBContext getDatabaseContext(String schema){
 		return new DBContext(config.readString("db-url") + schema, "osuweb", config.readString("db-pass"));
 	}
 	
+	/**
+	 * Gets the port the NGINX authentication server should run on.
+	 * @return The port for the authentication server.
+	 */
 	public int getAuthServerPort(){
 		return config.readInt("auth-port");
 	}
 	
+	/**
+	 * Gets the port the login/main server should run on.
+	 * @return The port for the login/main server.
+	 */
 	public int getLoginServerPort(){
 		return config.readInt("login-port");
 	}

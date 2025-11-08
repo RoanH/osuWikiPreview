@@ -38,6 +38,10 @@ import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.auth.LoginServer.LoginInfo;
 import dev.roanh.wiki.data.User;
 
+/**
+ * User session and cookie manager.
+ * @author Roan
+ */
 public final class SessionManager{
 	/**
 	 * Name of the wiki preview session header cookie.
@@ -54,6 +58,12 @@ public final class SessionManager{
 	private SessionManager(){
 	}
 	
+	/**
+	 * Gets the user associated with the given incoming request.
+	 * @param request The incoming web request.
+	 * @return The user for the given request if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
 	protected static User getUserFromSession(FullHttpRequest request) throws DBException{
 		String header = request.headers().get(HttpHeaderNames.COOKIE);
 		if(header != null){
@@ -67,10 +77,23 @@ public final class SessionManager{
 		return null;
 	}
 	
+	/**
+	 * Gets the user associated with the given session cookie.
+	 * @param sessionCookie The session cookie.
+	 * @return The user for the given cookie if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
 	protected static User getUserFromSession(Cookie sessionCookie) throws DBException{
 		return MainDatabase.getUserBySession(sessionCookie.value());
 	}
 	
+	/**
+	 * Updates the session token for the given user.
+	 * @param user The user to update the session for.
+	 * @param info Metadata associated with the login.
+	 * @return The updated user session cookie.
+	 * @throws DBException When a database exception occurs.
+	 */
 	protected static Cookie updateUserSession(UserExtended user, LoginInfo info) throws DBException{
 		String session = generateToken();
 		MainDatabase.saveUserSession(user, session, info);
@@ -87,6 +110,10 @@ public final class SessionManager{
 		return cookie;
 	}
 	
+	/**
+	 * Synchronises private mode instance access for the given user.
+	 * @param user The user to synchronise access for.
+	 */
 	protected static void syncDiscord(User user){
 		for(OsuWeb web : InstanceManager.getInstances()){
 			if(web.getInstance().isPrivateMode()){

@@ -23,9 +23,20 @@ import dev.roanh.wiki.cmd.WebCommand.WebCommandRunnable;
 import dev.roanh.wiki.data.AccessList;
 import dev.roanh.wiki.data.UserGroup;
 
+/**
+ * Management command for private mode instances.
+ * @author Roan
+ */
 public class PrivateModeCommand extends CommandGroup{
+	/**
+	 * The osu! API connection.
+	 */
 	private final OsuAPI api;
 
+	/**
+	 * Constructs a new private mode command.
+	 * @param api The osu! API connection to use.
+	 */
 	public PrivateModeCommand(OsuAPI api){
 		super("privatemode", "Manage private osu! wiki preview instances.");
 		this.api = api;
@@ -38,6 +49,12 @@ public class PrivateModeCommand extends CommandGroup{
 		registerSubgroup(new UsersCommand());
 	}
 	
+	/**
+	 * Handles turning on private mode for an instance.
+	 * @param web The osu! web instance.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void handleEnable(OsuWeb web, CommandMap args, CommandEvent event){
 		if(web.getInstance().isPrivateMode()){
 			event.reply("This instance is already in private mode.");
@@ -53,6 +70,12 @@ public class PrivateModeCommand extends CommandGroup{
 		}
 	}
 	
+	/**
+	 * Handles turning off private mode for an instance.
+	 * @param web The osu! web instance.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void handleDisable(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
 			web.getAccessManager().disablePrivateMode();
@@ -64,6 +87,12 @@ public class PrivateModeCommand extends CommandGroup{
 		}
 	}
 
+	/**
+	 * Returns a simple status report for a private mode instance.
+	 * @param web The osu! web instance.
+	 * @param args The command arguments.
+	 * @param event The command event.
+	 */
 	private void handleStatus(OsuWeb web, CommandMap args, CommandEvent event){
 		AccessList acl = web.getInstance().getAccessList();
 		
@@ -82,6 +111,13 @@ public class PrivateModeCommand extends CommandGroup{
 		event.replyEmbeds(embed.build());
 	}
 	
+	/**
+	 * Constructs a web command that first checks that an instance is actually in private mode.
+	 * @param name The name of the command.
+	 * @param description The description for the command.
+	 * @param handler The logic for the command.
+	 * @return The constructed command.
+	 */
 	private static WebCommand privateCommand(String name, String description, WebCommandRunnable handler){
 		return WebCommand.of(name, description, Main.PERMISSION, (web, args, event)->{
 			if(!web.getInstance().isPrivateMode()){
@@ -93,8 +129,15 @@ public class PrivateModeCommand extends CommandGroup{
 		});
 	}
 	
-	private class UsersCommand extends CommandGroup{
-
+	/**
+	 * User access management command.
+	 * @author Roan
+	 */
+	private final class UsersCommand extends CommandGroup{
+		
+		/**
+		 * Constructs a new users command.
+		 */
 		public UsersCommand(){
 			super("users", "Manage osu! users with access to this instance.");
 			
@@ -107,6 +150,12 @@ public class PrivateModeCommand extends CommandGroup{
 			registerCommand(remove);
 		}
 		
+		/**
+		 * Handles adding a new user to an instance.
+		 * @param web The osu! web instance.
+		 * @param args The command arguments.
+		 * @param event The command event.
+		 */
 		private void handleAdd(OsuWeb web, CommandMap args, CommandEvent event){
 			try{
 				UserExtended user = api.getUserByName(args.get("user").getAsString());
@@ -123,6 +172,12 @@ public class PrivateModeCommand extends CommandGroup{
 			}
 		}
 		
+		/**
+		 * Handles removing a user from an instance.
+		 * @param web The osu! web instance.
+		 * @param args The command arguments.
+		 * @param event The command event.
+		 */
 		private void handleRemove(OsuWeb web, CommandMap args, CommandEvent event){
 			try{
 				UserExtended user = api.getUserByName(args.get("user").getAsString());
@@ -134,14 +189,21 @@ public class PrivateModeCommand extends CommandGroup{
 				web.getAccessManager().removeUser(user.getId());
 				event.reply("User removed sucessfully.");
 			}catch(InsufficientPermissionsException | RequestException | DBException e){
-				event.logError(e, "[PrivateModeCommand] Failed to add user", Severity.MINOR, Priority.MEDIUM, args);
+				event.logError(e, "[PrivateModeCommand] Failed to remove user", Severity.MINOR, Priority.MEDIUM, args);
 				event.internalError();
 			}
 		}
 	}
 
-	private static class GroupsCommand extends CommandGroup{
+	/**
+	 * Group access management command.
+	 * @author Roan
+	 */
+	private static final class GroupsCommand extends CommandGroup{
 
+		/**
+		 * Constructs a new groups command.
+		 */
 		public GroupsCommand(){
 			super("groups", "Manage osu! user groups with access to this instance.");
 			
@@ -154,6 +216,12 @@ public class PrivateModeCommand extends CommandGroup{
 			registerCommand(remove);
 		}
 		
+		/**
+		 * Handles adding a user group to an instance.
+		 * @param web The osu! web instance.
+		 * @param args The command arguments.
+		 * @param event The command event.
+		 */
 		private void handleAdd(OsuWeb web, CommandMap args, CommandEvent event){
 			UserGroup group = UserGroup.from(args.get("group").getAsString());
 			if(group == null){
@@ -170,6 +238,12 @@ public class PrivateModeCommand extends CommandGroup{
 			}
 		}
 		
+		/**
+		 * Handles removing a user group from an instance.
+		 * @param web The osu! web instance.
+		 * @param args The command arguments.
+		 * @param event The command event.
+		 */
 		private void handleRemove(OsuWeb web, CommandMap args, CommandEvent event){
 			UserGroup group = UserGroup.from(args.get("group").getAsString());
 			if(group == null){

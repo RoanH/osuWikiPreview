@@ -3,11 +3,6 @@ package dev.roanh.wiki.cmd;
 import java.util.StringJoiner;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.UserSnowflake;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -23,12 +18,9 @@ import dev.roanh.osuapi.exception.RequestException;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.InstanceStatus;
 import dev.roanh.wiki.Main;
-import dev.roanh.wiki.MainDatabase;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.cmd.WebCommand.WebCommandRunnable;
 import dev.roanh.wiki.data.AccessList;
-import dev.roanh.wiki.data.Instance;
-import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.data.UserGroup;
 
 public class PrivateModeCommand extends CommandGroup{
@@ -36,7 +28,7 @@ public class PrivateModeCommand extends CommandGroup{
 
 	public PrivateModeCommand(OsuAPI api){
 		super("privatemode", "Manage private osu! wiki preview instances.");
-		this.api= api;
+		this.api = api;
 		
 		registerCommand(WebCommand.of("enable", "Enable private mode for this preview instance.", Main.PERMISSION, this::handleEnable));
 		registerCommand(privateCommand("disable", "Disables private mode for this preview instance.", this::handleDisable));
@@ -51,13 +43,7 @@ public class PrivateModeCommand extends CommandGroup{
 			event.reply("This instance is already in private mode.");
 		}else{
 			try{
-				Instance instance = web.getInstance();
-				instance.setAccessList(new AccessList());
-				MainDatabase.saveInstance(instance);
-
-				TextChannel chan = event.getJDA().getTextChannelById(instance.getChannel());
-				chan.upsertPermissionOverride(chan.getGuild().getPublicRole()).deny(Permission.VIEW_CHANNEL).queue();
-				
+				web.getAccessManager().enablePrivateMode();
 				event.reply("Private mode enabled successfully.");
 				InstanceStatus.updateOverview();
 			}catch(DBException e){
@@ -69,20 +55,7 @@ public class PrivateModeCommand extends CommandGroup{
 	
 	private void handleDisable(OsuWeb web, CommandMap args, CommandEvent event){
 		try{
-			Instance instance = web.getInstance();
-			instance.clearAccessList();
-			MainDatabase.saveInstance(instance);
-			
-			TextChannel chan = event.getJDA().getTextChannelById(instance.getChannel());
-			chan.upsertPermissionOverride(chan.getGuild().getPublicRole()).clear(Permission.VIEW_CHANNEL).queue();
-			
-			Role role = event.getJDA().getRoleById(instance.getRoleId());
-			event.getGuild().findMembersWithRoles(role).onSuccess(members->{
-				for(Member member : members){
-					event.getGuild().removeRoleFromMember(member, role).queue();
-				}
-			});
-			
+			web.getAccessManager().disablePrivateMode();
 			event.reply("Private mode disabled successfully.");
 			InstanceStatus.updateOverview();
 		}catch(DBException e){
@@ -136,24 +109,13 @@ public class PrivateModeCommand extends CommandGroup{
 		
 		private void handleAdd(OsuWeb web, CommandMap args, CommandEvent event){
 			try{
-				UserExtended osuUser = api.getUserByName(args.get("user").getAsString());
-				if(osuUser == null){
+				UserExtended user = api.getUserByName(args.get("user").getAsString());
+				if(user == null){
 					event.reply("Could not find the given user.");
 					return;
 				}
 				
-				Instance instance = web.getInstance();
-				instance.getAccessList().add(osuUser.getId());
-				MainDatabase.saveInstance(instance);
-				
-				User user = MainDatabase.getUserById(osuUser.getId());
-				if(user != null && user.hasDiscord()){
-					event.getGuild().addRoleToMember(
-						UserSnowflake.fromId(user.discordId().getAsLong()),
-						event.getJDA().getRoleById(instance.getRoleId())
-					).queue();
-				}
-				
+				web.getAccessManager().addUser(user.getId());
 				event.reply("User added sucessfully.");
 			}catch(InsufficientPermissionsException | RequestException | DBException e){
 				event.logError(e, "[PrivateModeCommand] Failed to add user", Severity.MINOR, Priority.MEDIUM, args);
@@ -163,24 +125,13 @@ public class PrivateModeCommand extends CommandGroup{
 		
 		private void handleRemove(OsuWeb web, CommandMap args, CommandEvent event){
 			try{
-				UserExtended osuUser = api.getUserByName(args.get("user").getAsString());
-				if(osuUser == null){
+				UserExtended user = api.getUserByName(args.get("user").getAsString());
+				if(user == null){
 					event.reply("Could not find the given user.");
 					return;
 				}
 				
-				Instance instance = web.getInstance();
-				instance.getAccessList().remove(osuUser.getId());
-				MainDatabase.saveInstance(instance);
-				
-				User user = MainDatabase.getUserById(osuUser.getId());
-				if(user != null && user.hasDiscord()){
-					event.getGuild().removeRoleFromMember(
-						UserSnowflake.fromId(user.discordId().getAsLong()),
-						event.getJDA().getRoleById(instance.getRoleId())
-					).queue();
-				}
-				
+				web.getAccessManager().removeUser(user.getId());
 				event.reply("User removed sucessfully.");
 			}catch(InsufficientPermissionsException | RequestException | DBException e){
 				event.logError(e, "[PrivateModeCommand] Failed to add user", Severity.MINOR, Priority.MEDIUM, args);
@@ -211,17 +162,7 @@ public class PrivateModeCommand extends CommandGroup{
 			}
 			
 			try{
-				Instance instance = web.getInstance();
-				instance.getAccessList().add(group);
-				MainDatabase.saveInstance(instance);
-				
-				Role role = event.getJDA().getRoleById(instance.getRoleId());
-				for(User user: MainDatabase.getUsersWithGroup(group.asGroupSet())){
-					if(user.hasDiscord()){
-						event.getGuild().addRoleToMember(UserSnowflake.fromId(user.discordId().getAsLong()), role).queue();
-					}
-				}
-				
+				web.getAccessManager().addGroup(group);
 				event.reply("Group added sucessfully.");
 			}catch(DBException e){
 				event.logError(e, "[PrivateModeCommand] Failed to add group", Severity.MINOR, Priority.MEDIUM, args, Detail.of("group", group));
@@ -237,17 +178,7 @@ public class PrivateModeCommand extends CommandGroup{
 			}
 			
 			try{
-				Instance instance = web.getInstance();
-				instance.getAccessList().remove(group);
-				MainDatabase.saveInstance(instance);
-				
-				Role role = event.getJDA().getRoleById(instance.getRoleId());
-				for(User user: MainDatabase.getUsersWithGroup(group.asGroupSet())){
-					if(user.hasDiscord()){
-						event.getGuild().removeRoleFromMember(UserSnowflake.fromId(user.discordId().getAsLong()), role).queue();
-					}
-				}
-				
+				web.getAccessManager().removeGroup(group);
 				event.reply("Group added sucessfully.");
 			}catch(DBException e){
 				event.logError(e, "[PrivateModeCommand] Failed to remove group", Severity.MINOR, Priority.MEDIUM, args, Detail.of("group", group));

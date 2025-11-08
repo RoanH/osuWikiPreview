@@ -268,7 +268,6 @@ public class InstanceManager{
 	 * @return A collection of all registered instances.
 	 */
 	public static SequencedCollection<OsuWeb> getInstances(){
-		System.out.println(instancesByChannel.size() + "vvv");
 		return instancesByDomain.sequencedValues();
 	}
 	

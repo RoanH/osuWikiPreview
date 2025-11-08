@@ -64,6 +64,16 @@ public class OsuWeb{
 	}
 	
 	/**
+	 * Checks if this instance currently has a state, this is
+	 * generally always the case except for new instances.
+	 * @return True if this instance has a state.
+	 * @see #getCurrentState()
+	 */
+	public boolean hasState(){
+		return currentState != null;
+	}
+	
+	/**
 	 * Gets the current state of this web instance.
 	 * @return The current state or null if nothing was
 	 *         changed on this web instance yet.

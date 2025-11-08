@@ -69,7 +69,11 @@ public class AuthServer{
 			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
 		}
 		
-		return RequestHandler.status(instance.getAccessList().contains(user) ? HttpResponseStatus.OK : HttpResponseStatus.UNAUTHORIZED);
+		if(instance.getAccessList().contains(user)){
+			return RequestHandler.ok();
+		}else{
+			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+		}
 	}
 	
 	//TODO probably need a discord link too?

@@ -68,9 +68,11 @@ public final class InstanceStatus{
 				instances.append(web.getInstance().getChannel());
 				instances.append(">\n");
 				
-				//TODO handle private -- also hide available for now any maybe reformat to be more mobile friendly (components V2?)
-				WebState state = web.getCurrentState();
-				if(state != null){
+				if(web.getInstance().isPrivateMode()){
+					refs.append("Private Mode\n");
+					available.append("N/A");
+				}else if(web.hasState()){
+					WebState state = web.getCurrentState();
 					refs.append("[");
 					refs.append(state.getNamespaceWithRef());
 					refs.append("](");

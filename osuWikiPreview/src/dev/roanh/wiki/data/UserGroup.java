@@ -19,6 +19,9 @@
  */
 package dev.roanh.wiki.data;
 
+import java.util.Arrays;
+import java.util.List;
+
 import dev.roanh.osuapi.user.Group;
 
 public enum UserGroup{
@@ -43,6 +46,20 @@ public enum UserGroup{
 	
 	public String getName(){
 		return name;
+	}
+	
+	public static List<String> getGroupNames(){
+		return Arrays.stream(values()).map(UserGroup::getName).toList();
+	}
+	
+	public static UserGroup from(String name){
+		for(UserGroup group : values()){
+			if(group.name().equalsIgnoreCase(name) || group.name.equalsIgnoreCase(name)){
+				return group;
+			}
+		}
+		
+		return null;
 	}
 	
 	public static UserGroup from(Group group){

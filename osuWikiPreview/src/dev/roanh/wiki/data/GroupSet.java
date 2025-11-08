@@ -50,7 +50,7 @@ public class GroupSet implements Iterable<UserGroup>{
 		return (groups & other.groups) != 0;
 	}
 	
-	protected int encode(){
+	public int encode(){
 		return groups;
 	}
 	

@@ -21,16 +21,21 @@ package dev.roanh.wiki.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.OptionalLong;
 
-public record User(String session, int osuId, String osuName, long discordId, GroupSet groups){//TODO periodically sync groups
+public record User(int osuId, String osuName, OptionalLong discordId, GroupSet groups){//TODO periodically sync groups
 
 	public User(ResultSet rs) throws SQLException{
 		this(
-			rs.getString("session"),
 			rs.getInt("osu"),
 			rs.getString("username"),
-			rs.getLong("discord"),
+			readLong(rs, "discord"),
 			new GroupSet(rs.getInt("groups"))
 		);
+	}
+	
+	private static OptionalLong readLong(ResultSet rs, String col) throws SQLException{
+		long value = rs.getLong(col);
+		return rs.wasNull() ? OptionalLong.empty() : OptionalLong.of(value);
 	}
 }

@@ -33,6 +33,7 @@ import dev.roanh.infinity.util.Base64;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.MainDatabase;
+import dev.roanh.wiki.auth.LoginServer.LoginInfo;
 import dev.roanh.wiki.data.User;
 
 public final class SessionManager{
@@ -68,9 +69,9 @@ public final class SessionManager{
 		return MainDatabase.getUserBySession(sessionCookie.value());
 	}
 	
-	protected static Cookie updateUserSession(UserExtended user) throws DBException{
+	protected static Cookie updateUserSession(UserExtended user, LoginInfo info) throws DBException{
 		String session = generateToken();
-		MainDatabase.saveUserSession(user, session);
+		MainDatabase.saveUserSession(user, session, info);
 		
 		Cookie cookie = new DefaultCookie(SESSION_HEADER, session);
 		cookie.setDomain(Main.config.domain());
@@ -79,6 +80,8 @@ public final class SessionManager{
 		cookie.setSecure(true);
 		return cookie;
 	}
+	
+//	protected static syncDiscord
 	
 	/**
 	 * Generates a new random token.

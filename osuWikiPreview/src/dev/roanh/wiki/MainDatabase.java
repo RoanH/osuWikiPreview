@@ -88,8 +88,8 @@ public final class MainDatabase{
 	public static void saveInstance(Instance instance) throws DBException{
 		byte[] acl = instance.getAccessList() == null ? null : instance.getAccessList().encode();
 		executor.insert(
-			"REPLACE INTO instances (id, channel, port, tag, acl) VALUES (?, ?, ?, ?, ?)",
-			instance.getId(), instance.getChannel(), instance.getPort(), instance.getTag(), acl
+			"REPLACE INTO instances (id, channel, port, `role`, tag, acl) VALUES (?, ?, ?, ?, ?, ?)",
+			instance.getId(), instance.getChannel(), instance.getPort(), instance.getRoleId(), instance.getTag(), acl
 		);
 	}
 	
@@ -104,6 +104,7 @@ public final class MainDatabase{
 				rs.getInt("id"),
 				rs.getLong("channel"),
 				rs.getInt("port"),
+				rs.getLong("role"),
 				rs.getString("tag"),
 				rs.getBytes("acl")
 			);
@@ -128,5 +129,19 @@ public final class MainDatabase{
 	
 	public static User getUserBySession(String session) throws DBException{
 		return executor.selectFirst("SELECT * FROM users WHERE `session` = ?", User::new, session).orElse(null);
+	}
+	
+	/**
+	 * Retrieves the users that have at least one from in the given set.
+	 * @param groups The groups to check for.
+	 * @return Users with one of the given groups.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static List<User> getUsersWithGroup(GroupSet groups) throws DBException{
+		return executor.selectAll("SELECT * FROM users WHERE (`groups` & ?) != 0", User::new, groups.encode());
+	}
+	
+	public static User getUserById(int osuId) throws DBException{
+		return executor.selectFirst("SELECT * FROM users WHERE `osu` = ?", User::new, osuId).orElse(null);
 	}
 }

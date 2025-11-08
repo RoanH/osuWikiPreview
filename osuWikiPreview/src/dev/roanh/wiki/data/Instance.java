@@ -39,6 +39,10 @@ public class Instance{
 	 */
 	private final int port;
 	/**
+	 * The discord role associated with this instance.
+	 */
+	private final long role;
+	/**
 	 * The osu! web docker image tag.
 	 */
 	private String tag;
@@ -49,15 +53,25 @@ public class Instance{
 	 * @param id The ID of the instance.
 	 * @param channel The discord channel for the instance.
 	 * @param port The port for the website.
+	 * @param role The discord role for this instance.
 	 * @param tag The docker image tag.
 	 * @param acl The ACL for this instance if any.
 	 */
-	public Instance(int id, long channel, int port, String tag, byte[] acl){
+	public Instance(int id, long channel, int port, long role, String tag, byte[] acl){
 		this.id = id;
 		this.channel = channel;
 		this.port = port;
+		this.role = role;
 		this.tag = tag;
 		this.acl = AccessList.decode(acl);
+	}
+	
+	public long getRoleId(){
+		return role;
+	}
+	
+	public void clearAccessList(){
+		acl = null;
 	}
 	
 	public void setAccessList(AccessList acl){

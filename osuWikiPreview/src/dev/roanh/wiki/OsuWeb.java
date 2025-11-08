@@ -27,6 +27,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.wiki.data.AccessList;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.WebException;
@@ -137,6 +138,12 @@ public class OsuWeb{
 		return new InstanceManager(instance);
 	}
 	
+	/**
+	 * Constructs a manager for the access list of this instance.
+	 * @return The access manager for this instance.
+	 * @see Instance#isPrivateMode()
+	 * @see AccessList
+	 */
 	public AccessManager getAccessManager(){
 		return new AccessManager(instance);
 	}

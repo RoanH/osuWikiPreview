@@ -49,12 +49,32 @@ import dev.roanh.wiki.Config;
 import dev.roanh.wiki.Main;
 
 public class LoginServer{
-	private static final Counter authAttempts = Counter.build("wikipreview_login_", "Number of OAuth callback auth attempts by result").labelNames("result").register();
+	/**
+	 * Number of login session started.
+	 */
+	private static final Counter loginStarted = Counter.build("wikipreview_login_started", "Number of login URLs created").register();
+	/**
+	 * Result of login attempts.
+	 */
+	private static final Counter loginAttempts = Counter.build("wikipreview_login_result", "Login activity by result").labelNames("result").register();
+	/**
+	 * The server used to handle web requests.
+	 */
 	private final WebServer server;
+	/**
+	 * Builder for OAuth sessions.
+	 */
 	private final OAuthSessionBuilder sessionBuilder;
+	/**
+	 * Map of active login sessions.
+	 */
 	private final Map<String, LoginInfo> loginSessions = new ConcurrentHashMap<String, LoginInfo>();
-	//TODO metrics
 	
+	/**
+	 * Constructs a new login server with the given config.
+	 * @param config The server configuration.
+	 * @throws IOException When an IOException occurs creating the server.
+	 */
 	public LoginServer(Config config) throws IOException{
 		sessionBuilder = config.getIdentitySessionBuilder();
 		
@@ -76,14 +96,23 @@ public class LoginServer{
 		}
 	}
 	
+	/**
+	 * Starts this server.
+	 */
 	public void start(){
 		server.runAsync();
 	}
 	
+	/**
+	 * Creates a new authentication URL with the given metadata.
+	 * @param info The login metadata.
+	 * @return The created osu! OAuth authentication URL.
+	 */
 	public String createAuthUrl(LoginInfo info){
 		String state = UUID.randomUUID().toString();
 		loginSessions.put(state, info);
 		Scheduler.scheduleIn(15, TimeUnit.MINUTES, ()->loginSessions.remove(state));
+		loginStarted.inc();
 		return sessionBuilder.getAuthUrl(state);
 	}
 	
@@ -117,6 +146,7 @@ public class LoginServer{
 		}else{
 			LoginInfo info = loginSessions.get(state);
 			if(info == null){
+				loginAttempts.labels("timeout").inc();
 				return RequestHandler.page(Pages.getLoginTimeoutPage());
 			}
 			
@@ -124,20 +154,34 @@ public class LoginServer{
 				Cookie session = SessionManager.updateUserSession(sessionBuilder.build(code).getCurrentUser(), info);
 				FullHttpResponse resp = RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(session)));
 				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
+				loginAttempts.labels("success").inc();
 				return resp;
 			}catch(InsufficientPermissionsException e){
 				//user changed the requested scopes
+				loginAttempts.labels("invalid").inc();
 				return RequestHandler.badRequest();
 			}
 		}
 	}
 	
+	/**
+	 * Record with metadata about a login session.
+	 * @author Roan
+	 * @param discordId The discord ID of the user that initiated the login.
+	 */
 	public static record LoginInfo(OptionalLong discordId){
 		
+		/**
+		 * Constructs new empty login metadata.
+		 */
 		public LoginInfo(){
 			this(OptionalLong.empty());
 		}
 		
+		/**
+		 * Constructs login metadata for the given Discord user.
+		 * @param discordId The ID of the Discord user.
+		 */
 		public LoginInfo(long discordId){
 			this(OptionalLong.of(discordId));
 		}

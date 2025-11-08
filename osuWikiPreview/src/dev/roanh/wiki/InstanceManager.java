@@ -245,7 +245,6 @@ public class InstanceManager{
 	 */
 	public static void init(Config config) throws DBException{
 		for(Instance instance : MainDatabase.getInstances()){
-			System.out.println("reg: " + instance.getDomain());
 			registerInstance(config, instance);
 		}
 	}
@@ -259,6 +258,11 @@ public class InstanceManager{
 		return instancesByChannel.get(channel);
 	}
 	
+	/**
+	 * Gets an instance by the domain it runs at.
+	 * @param domain The (full) domain of the instance.
+	 * @return The instance for the given domain if any, else null.
+	 */
 	public static OsuWeb getInstanceByDomain(String domain){
 		return instancesByDomain.get(domain);
 	}

@@ -24,38 +24,92 @@ import java.util.List;
 
 import dev.roanh.osuapi.user.Group;
 
+/**
+ * Simplified user group definitions.
+ * @author Roan
+ */
 public enum UserGroup{
-	GMT(1, "Global Moderation Team"),
-	NAT(2, "Nomination Assessment Team"),
-	BN(4, "Beatmap Nominators (incl. probationary)"),
-	TC(8, "Tournament Committee"),
-	LVD(16, "Project Loved"),
-	BSC(32, "Beatmap Spotlight Curators");
+	/**
+	 * Global moderation team.
+	 */
+	GMT(1 << 0, "Global Moderation Team"),
+	/**
+	 * Nomination assessment team.
+	 */
+	NAT(1 << 1, "Nomination Assessment Team"),
+	/**
+	 * Beatmap nominators including probationary members.
+	 */
+	BN(1 << 2, "Beatmap Nominators (incl. probationary)"),
+	/**
+	 * Tournament committee.
+	 */
+	TC(1 << 3, "Tournament Committee"),
+	/**
+	 * Project loved members.
+	 */
+	LVD(1 << 4, "Project Loved"),
+	/**
+	 * Beatmap spotlight curators.
+	 */
+	BSC(1 << 5, "Beatmap Spotlight Curators");
 	
+	/**
+	 * The numerical ID of this group.
+	 */
 	private final int id;
+	/**
+	 * The display name of this grup.
+	 */
 	private final String name;
 	
+	/**
+	 * Constructs a new user group.
+	 * @param id The numerical ID.
+	 * @param name The display name.
+	 */
 	private UserGroup(int id, String name){
 		this.id = id;
 		this.name = name;
 	}
 	
+	/**
+	 * Gets the numerical ID of this group.
+	 * @return The ID of this group.
+	 */
 	public int getId(){
 		return id;
 	}
 	
+	/**
+	 * Gets the display name of this group.
+	 * @return The display name of this group.
+	 */
 	public String getName(){
 		return name;
 	}
 	
+	/**
+	 * Gets this group as a set containing just this group.
+	 * @return This group as a set.
+	 */
 	public GroupSet asGroupSet(){
 		return new GroupSet(id);
 	}
 	
+	/**
+	 * Gets the names of all groups.
+	 * @return The display names of all groups.
+	 */
 	public static List<String> getGroupNames(){
 		return Arrays.stream(values()).map(UserGroup::getName).toList();
 	}
 	
+	/**
+	 * Resolves a group by is display name or acronym.
+	 * @param name The display name (or acronym) to find, case insensitive.
+	 * @return The resolved user group if found, else null.
+	 */
 	public static UserGroup from(String name){
 		for(UserGroup group : values()){
 			if(group.name().equalsIgnoreCase(name) || group.name.equalsIgnoreCase(name)){
@@ -66,6 +120,13 @@ public enum UserGroup{
 		return null;
 	}
 	
+	/**
+	 * Translates osu! API groups into user groups. This mapping is mostly
+	 * one to one, but some groups are combined and a number of groups are
+	 * left out to reduce noise.
+	 * @param group The group to map.
+	 * @return The mapped group or null if there is no corresponding group.
+	 */
 	public static UserGroup from(Group group){
 		switch(group.asOsuGroup()){
 		case GMT:
@@ -83,7 +144,7 @@ public enum UserGroup{
 			return BSC;
 		case SPT:
 		case DEV:
-		case PPY://already part of the default set
+		case PPY:
 		case FA:
 		case DEFAULT:
 		case BOT:

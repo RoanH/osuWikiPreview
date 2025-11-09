@@ -138,7 +138,7 @@ public class Main{
 				for(User user : MainDatabase.getUsers()){
 					UserExtended osuUser = api.getUserById(user.osuId());
 					if(osuUser != null){
-						MainDatabase.updateUserNameAndGroups(user.osuId(), osuUser.getUsername(), GroupSet.encodeGroups(osuUser.getUserGroups()));
+						MainDatabase.updateUserNameAndGroups(user.osuId(), osuUser.getUsername(), GroupSet.from(osuUser.getUserGroups()));
 					}else{
 						//this would imply the user is restricted... maybe just delete the entry completely
 						MainDatabase.updateUserNameAndGroups(user.osuId(), user.osuName(), new GroupSet());

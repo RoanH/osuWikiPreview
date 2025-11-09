@@ -111,7 +111,7 @@ public final class MainDatabase{
 	}
 	
 	public static void saveUserSession(UserExtended user, String sessionToken) throws DBException{
-		final int groups = GroupSet.encodeGroups(user.getUserGroups()).encode();
+		final int groups = GroupSet.from(user.getUserGroups()).encode();
 		executor.insert(
 			"INSERT INTO users (osu, username, `session`, `groups`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username = ?, `session` = ?, `groups` = ?",
 			user.getId(), user.getUsername(), sessionToken, user.getUsername(), groups, sessionToken, groups

@@ -28,12 +28,16 @@ import java.util.OptionalLong;
  * @author Roan
  * @param osuId The osu! ID of the user.
  * @param osuName The osu! name of the user.
- * @param discordId
- * @param groups
- *
+ * @param discordId If known the Discord ID of the user.
+ * @param groups The osu! user groups for the user.
  */
 public record User(int osuId, String osuName, OptionalLong discordId, GroupSet groups){
 
+	/**
+	 * Constructs a new user from the given result set.
+	 * @param rs The result set to read from.
+	 * @throws SQLException when an SQL exception occurs.
+	 */
 	public User(ResultSet rs) throws SQLException{
 		this(
 			rs.getInt("osu"),
@@ -43,10 +47,21 @@ public record User(int osuId, String osuName, OptionalLong discordId, GroupSet g
 		);
 	}
 	
+	/**
+	 * Checks if the Discord ID for this user is known.
+	 * @return True if the Discord ID for this user is known.
+	 */
 	public boolean hasDiscord(){
 		return discordId.isPresent();
 	}
 	
+	/**
+	 * Parses the given long column into an optional.
+	 * @param rs The result set to read from.
+	 * @param col The column to read.
+	 * @return The long value if present, else an empty optional.
+	 * @throws SQLException When an SQL exception occurs.
+	 */
 	private static OptionalLong readLong(ResultSet rs, String col) throws SQLException{
 		long value = rs.getLong(col);
 		return rs.wasNull() ? OptionalLong.empty() : OptionalLong.of(value);

@@ -48,6 +48,10 @@ import dev.roanh.osuapi.session.OAuthSessionBuilder;
 import dev.roanh.wiki.Config;
 import dev.roanh.wiki.Main;
 
+/**
+ * Web server used to handle login requests and the root index page.
+ * @author Roan
+ */
 public class LoginServer{
 	/**
 	 * Number of login session started.
@@ -156,7 +160,7 @@ public class LoginServer{
 				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
 				loginAttempts.labels("success").inc();
 				return resp;
-			}catch(InsufficientPermissionsException e){
+			}catch(InsufficientPermissionsException ignore){
 				//user changed the requested scopes
 				loginAttempts.labels("invalid").inc();
 				return RequestHandler.badRequest();

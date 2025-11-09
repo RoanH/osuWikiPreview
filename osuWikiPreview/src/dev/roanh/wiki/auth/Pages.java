@@ -154,8 +154,8 @@ public final class Pages{
 		String version = Optional.ofNullable(Util.returnOrNull(Version::readVersion)).map(a->"v" + a.getVersion()).orElse("unknown");
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("html/index.html")){
 			TEMPLATE = new String(in.readAllBytes(), StandardCharsets.UTF_8).replace("VERSION", version);
-		}catch(IOException e){
-			IllegalStateException cause = new IllegalStateException("Failed to load web resources.", e);
+		}catch(IOException ignore){
+			IllegalStateException cause = new IllegalStateException("Failed to load web resources.", ignore);
 			Main.client.logError(cause, "[Pages] Failed to load web resources", Severity.MAJOR, Priority.HIGH);
 			throw cause;
 		}

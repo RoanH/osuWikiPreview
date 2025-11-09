@@ -23,7 +23,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.OptionalLong;
 
-public record User(int osuId, String osuName, OptionalLong discordId, GroupSet groups){//TODO periodically sync groups
+/**
+ * User account record.
+ * @author Roan
+ * @param osuId The osu! ID of the user.
+ * @param osuName The osu! name of the user.
+ * @param discordId
+ * @param groups
+ *
+ */
+public record User(int osuId, String osuName, OptionalLong discordId, GroupSet groups){
 
 	public User(ResultSet rs) throws SQLException{
 		this(

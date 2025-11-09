@@ -35,6 +35,10 @@ import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.data.UserGroup;
 
+/**
+ * Manager for the access list of a private instance.
+ * @author Roan
+ */
 public class AccessManager{
 	private final Instance instance;
 	

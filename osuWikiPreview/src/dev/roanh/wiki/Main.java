@@ -21,16 +21,21 @@ package dev.roanh.wiki;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.isla.DebugMode;
 import dev.roanh.isla.DiscordBot;
 import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.osuapi.OsuAPI;
+import dev.roanh.osuapi.exception.InsufficientPermissionsException;
+import dev.roanh.osuapi.exception.RequestException;
+import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.auth.AuthServer;
 import dev.roanh.wiki.auth.LoginServer;
 import dev.roanh.wiki.cmd.InstanceCommand;
@@ -41,6 +46,8 @@ import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
 import dev.roanh.wiki.cmd.SyncNewsCommand;
+import dev.roanh.wiki.data.GroupSet;
+import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -67,7 +74,7 @@ public class Main{
 	/**
 	 * Discord bot instance.
 	 */
-	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, DebugMode.DISABLE_ALL_HANDLING, CommandScope.GUILD);
+	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, CommandScope.GUILD);
 	/**
 	 * General application configuration.
 	 */
@@ -112,6 +119,8 @@ public class Main{
 			client.logError(e, "[Main] Failed to start login server", Severity.MAJOR, Priority.HIGH);
 		}
 		
+		OsuAPI api = config.getOsuAPI();
+		
 		client.registerCommand(new SwitchCommand());
 		client.registerCommand(new SyncNewsCommand());
 		client.registerCommand(new RedateCommand());
@@ -119,10 +128,26 @@ public class Main{
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new NewsPreviewCommand());
 		client.registerCommand(new InstanceCommand());
-		client.registerCommand(new PrivateModeCommand(config.getOsuAPI()));
+		client.registerCommand(new PrivateModeCommand(api));
 		
 		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS);
 		client.login();
+		
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(()->{
+			try{
+				for(User user : MainDatabase.getUsers()){
+					UserExtended osuUser = api.getUserById(user.osuId());
+					if(osuUser != null){
+						MainDatabase.updateUserNameAndGroups(user.osuId(), osuUser.getUsername(), GroupSet.encodeGroups(osuUser.getUserGroups()));
+					}else{
+						//this would imply the user is restricted... maybe just delete the entry completely
+						MainDatabase.updateUserNameAndGroups(user.osuId(), user.osuName(), new GroupSet());
+					}
+				}
+			}catch(InsufficientPermissionsException | DBException | RequestException e){
+				client.logError(e, "[Main] Failed to sync user groups", Severity.MINOR, Priority.LOW);
+			}
+		}, 1, 1, TimeUnit.DAYS);
 	}
 	
 	/**

@@ -96,9 +96,10 @@ public final class SessionManager{
 	 */
 	protected static Cookie updateUserSession(UserExtended user, LoginInfo info) throws DBException{
 		String session = generateToken();
-		MainDatabase.saveUserSession(user, session, info);
+		MainDatabase.saveUserSession(user, session);
 		
 		if(info.discordId().isPresent()){
+			MainDatabase.updateUserDiscord(user.getId(), info.discordId().getAsLong());
 			syncDiscord(MainDatabase.getUserBySession(session));
 		}
 		

@@ -74,9 +74,9 @@ public class GroupSet implements Iterable<UserGroup>{
 		return userGroups;
 	}
 	
-	public static int encodeGroups(Collection<? extends Group> groups){
+	public static GroupSet encodeGroups(Collection<? extends Group> groups){
 		GroupSet set = new GroupSet();
 		groups.stream().map(UserGroup::from).filter(Objects::nonNull).forEach(set::add);
-		return set.encode();
+		return set;
 	}
 }

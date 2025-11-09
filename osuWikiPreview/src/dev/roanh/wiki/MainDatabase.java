@@ -25,7 +25,6 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
 import dev.roanh.osuapi.user.UserExtended;
-import dev.roanh.wiki.auth.LoginServer.LoginInfo;
 import dev.roanh.wiki.data.GroupSet;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.PullRequest;
@@ -111,20 +110,20 @@ public final class MainDatabase{
 		});
 	}
 	
-	public static void saveUserSession(UserExtended user, String sessionToken, LoginInfo info) throws DBException{
-		final int groups = GroupSet.encodeGroups(user.getUserGroups());
-		if(info.discordId().isPresent()){
-			final long discord = info.discordId().getAsLong();
-			executor.insert(
-				"INSERT INTO users (osu, username, `session`, `groups`, discord) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `session` = ?, `groups` = ?, discord =?",
-				user.getId(), user.getUsername(), sessionToken, groups, discord, sessionToken, groups, discord
-			);
-		}else{
-			executor.insert(
-				"INSERT INTO users (osu, username, `session`, `groups`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `session` = ?, `groups` = ?",
-				user.getId(), user.getUsername(), sessionToken, groups, sessionToken, groups
-			);
-		}
+	public static void saveUserSession(UserExtended user, String sessionToken) throws DBException{
+		final int groups = GroupSet.encodeGroups(user.getUserGroups()).encode();
+		executor.insert(
+			"INSERT INTO users (osu, username, `session`, `groups`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username = ?, `session` = ?, `groups` = ?",
+			user.getId(), user.getUsername(), sessionToken, user.getUsername(), groups, sessionToken, groups
+		);
+	}
+	
+	public static void updateUserDiscord(int user, long discord) throws DBException{
+		executor.update("UPDATE users SET `discord` = ? WHERE osu = ?", discord, user);
+	}
+	
+	public static void updateUserNameAndGroups(int user, String username, GroupSet groups) throws DBException{
+		executor.update("UPDATE users SET username = ?, `groups` = ? WHERE osu = ?", username, groups.encode(), user);
 	}
 	
 	public static User getUserBySession(String session) throws DBException{
@@ -143,5 +142,9 @@ public final class MainDatabase{
 	
 	public static User getUserById(int osuId) throws DBException{
 		return executor.selectFirst("SELECT * FROM users WHERE `osu` = ?", User::new, osuId).orElse(null);
+	}
+	
+	public static List<User> getUsers() throws DBException{
+		return executor.selectAll("SELECT * FROM users", User::new);
 	}
 }

@@ -110,6 +110,12 @@ public final class MainDatabase{
 		});
 	}
 	
+	/**
+	 * Saves or updates the session for the given user.
+	 * @param user The user to save the session for.
+	 * @param sessionToken The new session token for the user.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static void saveUserSession(UserExtended user, String sessionToken) throws DBException{
 		final int groups = GroupSet.from(user.getUserGroups()).encode();
 		executor.insert(
@@ -118,14 +124,33 @@ public final class MainDatabase{
 		);
 	}
 	
+	/**
+	 * Updates the Discord account for a user.
+	 * @param user The osu! ID of the user.
+	 * @param discord The Discord ID for the user.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static void updateUserDiscord(int user, long discord) throws DBException{
 		executor.update("UPDATE users SET `discord` = ? WHERE osu = ?", discord, user);
 	}
 	
+	/**
+	 * Updates osu! account information for a user.
+	 * @param user The osu! ID of the user.
+	 * @param username The new username for the user.
+	 * @param groups The new user groups for the user.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static void updateUserNameAndGroups(int user, String username, GroupSet groups) throws DBException{
 		executor.update("UPDATE users SET username = ?, `groups` = ? WHERE osu = ?", username, groups.encode(), user);
 	}
 	
+	/**
+	 * Gets a user by their session token.
+	 * @param session The user session token.
+	 * @return The user with the given session if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static User getUserBySession(String session) throws DBException{
 		return executor.selectFirst("SELECT * FROM users WHERE `session` = ?", User::new, session).orElse(null);
 	}
@@ -140,10 +165,21 @@ public final class MainDatabase{
 		return executor.selectAll("SELECT * FROM users WHERE (`groups` & ?) != 0", User::new, groups.encode());
 	}
 	
+	/**
+	 * Gets a user by their osu! account ID.
+	 * @param osuId The osu! account ID of the user.
+	 * @return The user with the given account ID if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static User getUserById(int osuId) throws DBException{
 		return executor.selectFirst("SELECT * FROM users WHERE `osu` = ?", User::new, osuId).orElse(null);
 	}
 	
+	/**
+	 * Gets a list of all users.
+	 * @return All users.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public static List<User> getUsers() throws DBException{
 		return executor.selectAll("SELECT * FROM users", User::new);
 	}

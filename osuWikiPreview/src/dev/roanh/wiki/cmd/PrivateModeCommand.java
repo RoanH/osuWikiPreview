@@ -18,9 +18,11 @@ import dev.roanh.osuapi.exception.RequestException;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.InstanceStatus;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.MainDatabase;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.cmd.WebCommand.WebCommandRunnable;
 import dev.roanh.wiki.data.AccessList;
+import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.data.UserGroup;
 
 /**
@@ -60,7 +62,13 @@ public class PrivateModeCommand extends CommandGroup{
 			event.reply("This instance is already in private mode.");
 		}else{
 			try{
-				web.getAccessManager().enablePrivateMode();
+				User user = MainDatabase.getUserByDiscordId(event.getUserId());
+				if(user == null){
+					event.reply("Please link your discord account in <#1436733000195899482> before enabling private mode.");
+					return;
+				}
+				
+				web.getAccessManager().enablePrivateMode(user);
 				event.reply("Private mode enabled successfully.");
 				InstanceStatus.updateOverview();
 			}catch(DBException e){
@@ -106,7 +114,7 @@ public class PrivateModeCommand extends CommandGroup{
 		embed.addField("Groups", groups.toString(), false);
 		
 		StringJoiner users = new StringJoiner(", ");
-		acl.getUsers().forEach(user->users.add(String.valueOf(user)));
+		acl.getUsers().forEach(user->users.add(String.valueOf(user)));//TODO resolve known users at least?
 		embed.addField("Users", users.toString(), false);
 		
 		event.replyEmbeds(embed.build());

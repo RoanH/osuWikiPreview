@@ -21,13 +21,14 @@ package dev.roanh.wiki;
 
 import java.util.List;
 
-import dev.roanh.infinity.config.Configuration;
-import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.osuapi.user.UserExtended;
+import dev.roanh.wiki.data.GroupSet;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.PullRequest;
+import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.data.WebState;
 
 /**
@@ -50,8 +51,8 @@ public final class MainDatabase{
 	 * Initialises the connection with the database.
 	 * @param config The application configuration.
 	 */
-	public static void init(Configuration config){
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + "wikipreview", "osuweb", config.readString("db-pass")), "wiki");
+	public static void init(Config config){
+		executor = DBExecutors.newSingleThreadExecutor(config.getMainDatabaseContext(), "wiki");
 	}
 	
 	/**
@@ -84,7 +85,11 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static void saveInstance(Instance instance) throws DBException{
-		executor.insert("REPLACE INTO instances (id, channel, port, tag) VALUES (?, ?, ?, ?)", instance.getId(), instance.getChannel(), instance.getPort(), instance.getTag());
+		byte[] acl = instance.getAccessList() == null ? null : instance.getAccessList().encode();
+		executor.insert(
+			"REPLACE INTO instances (id, channel, port, `role`, tag, acl) VALUES (?, ?, ?, ?, ?, ?)",
+			instance.getId(), instance.getChannel(), instance.getPort(), instance.getRoleId(), instance.getTag(), acl
+		);
 	}
 	
 	/**
@@ -98,8 +103,84 @@ public final class MainDatabase{
 				rs.getInt("id"),
 				rs.getLong("channel"),
 				rs.getInt("port"),
-				rs.getString("tag")
+				rs.getLong("role"),
+				rs.getString("tag"),
+				rs.getBytes("acl")
 			);
 		});
+	}
+	
+	/**
+	 * Saves or updates the session for the given user.
+	 * @param user The user to save the session for.
+	 * @param sessionToken The new session token for the user.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static void saveUserSession(UserExtended user, String sessionToken) throws DBException{
+		final int groups = GroupSet.from(user.getUserGroups()).encode();
+		executor.insert(
+			"INSERT INTO users (osu, username, `session`, `groups`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username = ?, `session` = ?, `groups` = ?",
+			user.getId(), user.getUsername(), sessionToken, groups, user.getUsername(), sessionToken, groups
+		);
+	}
+	
+	/**
+	 * Updates the Discord account for a user.
+	 * @param user The osu! ID of the user.
+	 * @param discord The Discord ID for the user.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static void updateUserDiscord(int user, long discord) throws DBException{
+		executor.update("UPDATE users SET `discord` = ? WHERE osu = ?", discord, user);
+	}
+	
+	/**
+	 * Updates osu! account information for a user.
+	 * @param user The osu! ID of the user.
+	 * @param username The new username for the user.
+	 * @param groups The new user groups for the user.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static void updateUserNameAndGroups(int user, String username, GroupSet groups) throws DBException{
+		executor.update("UPDATE users SET username = ?, `groups` = ? WHERE osu = ?", username, groups.encode(), user);
+	}
+	
+	/**
+	 * Gets a user by their session token.
+	 * @param session The user session token.
+	 * @return The user with the given session if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static User getUserBySession(String session) throws DBException{
+		return executor.selectFirst("SELECT * FROM users WHERE `session` = ?", User::new, session).orElse(null);
+	}
+	
+	/**
+	 * Retrieves the users that have at least one from in the given set.
+	 * @param groups The groups to check for.
+	 * @return Users with one of the given groups.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static List<User> getUsersWithGroup(GroupSet groups) throws DBException{
+		return executor.selectAll("SELECT * FROM users WHERE (`groups` & ?) != 0", User::new, groups.encode());
+	}
+	
+	/**
+	 * Gets a user by their osu! account ID.
+	 * @param osuId The osu! account ID of the user.
+	 * @return The user with the given account ID if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static User getUserById(int osuId) throws DBException{
+		return executor.selectFirst("SELECT * FROM users WHERE `osu` = ?", User::new, osuId).orElse(null);
+	}
+	
+	/**
+	 * Gets a list of all users.
+	 * @return All users.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static List<User> getUsers() throws DBException{
+		return executor.selectAll("SELECT * FROM users", User::new);
 	}
 }

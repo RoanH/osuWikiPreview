@@ -68,8 +68,11 @@ public final class InstanceStatus{
 				instances.append(web.getInstance().getChannel());
 				instances.append(">\n");
 				
-				WebState state = web.getCurrentState();
-				if(state != null){
+				if(web.getInstance().isPrivateMode()){
+					refs.append("Private Mode\n");
+					available.append("N/A");
+				}else if(web.hasState()){
+					WebState state = web.getCurrentState();
 					refs.append("[");
 					refs.append(state.getNamespaceWithRef());
 					refs.append("](");
@@ -89,7 +92,7 @@ public final class InstanceStatus{
 					available.append(TimeFormat.RELATIVE.format(state.getAvailableAt()));
 				}else{
 					refs.append("None\n");
-					available.append(Instant.now());
+					available.append(TimeFormat.RELATIVE.format(Instant.now()));
 				}
 				
 				available.append("\n");

@@ -21,6 +21,8 @@ package dev.roanh.wiki;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
@@ -30,13 +32,22 @@ import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.permission.CommandPermission;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.osuapi.OsuAPI;
+import dev.roanh.osuapi.exception.InsufficientPermissionsException;
+import dev.roanh.osuapi.exception.RequestException;
+import dev.roanh.osuapi.user.UserExtended;
+import dev.roanh.wiki.auth.AuthServer;
+import dev.roanh.wiki.auth.LoginServer;
 import dev.roanh.wiki.cmd.InstanceCommand;
 import dev.roanh.wiki.cmd.MergeMasterCommand;
 import dev.roanh.wiki.cmd.NewsPreviewCommand;
+import dev.roanh.wiki.cmd.PrivateModeCommand;
 import dev.roanh.wiki.cmd.RedateCommand;
 import dev.roanh.wiki.cmd.RefreshCommand;
 import dev.roanh.wiki.cmd.SwitchCommand;
 import dev.roanh.wiki.cmd.SyncNewsCommand;
+import dev.roanh.wiki.data.GroupSet;
+import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.exception.WebException;
 
 /**
@@ -57,10 +68,6 @@ public class Main{
 	 */
 	public static final File DEPLOY_PATH = new File("deploy").getAbsoluteFile();
 	/**
-	 * Root domain for all instances.
-	 */
-	public static final String DOMAIN = "roanh.dev";
-	/**
 	 * The permission required to run wiki commands.
 	 */
 	public static final CommandPermission PERMISSION = CommandPermission.forRole(1109514462794358815L).alwaysVisible();//wiki role
@@ -68,6 +75,10 @@ public class Main{
 	 * Discord bot instance.
 	 */
 	public static final DiscordBot client = new DiscordBot("/help", "!w", true, 569, 8999, CommandScope.GUILD);
+	/**
+	 * General application configuration.
+	 */
+	public static final Config config = new Config(client.getConfig());
 	
 	/**
 	 * Starts the Discord bot.
@@ -78,13 +89,15 @@ public class Main{
 			OsuWiki.init();
 		}catch(IOException e){
 			client.logError(e, "[Main] Failed to initialise osu! wiki system.", Severity.MINOR, Priority.MEDIUM);
+			return;
 		}
 		
 		try{
-			MainDatabase.init(client.getConfig());
-			InstanceManager.init(client.getConfig());
+			MainDatabase.init(config);
+			InstanceManager.init(config);
 		}catch(DBException e){
 			client.logError(e, "[Main] Failed to retrieve instances.", Severity.MINOR, Priority.MEDIUM);
+			return;
 		}
 		
 		for(OsuWeb site : InstanceManager.getInstances()){
@@ -95,6 +108,19 @@ public class Main{
 			}
 		}
 		
+		AuthServer authServer = new AuthServer(config.getAuthServerPort());
+		authServer.start();
+		
+		try{
+			LoginServer loginServer = new LoginServer(config);
+			loginServer.start();
+			AccountStatus.init(client, loginServer);
+		}catch(IOException e){
+			client.logError(e, "[Main] Failed to start login server", Severity.MAJOR, Priority.HIGH);
+		}
+		
+		OsuAPI api = config.getOsuAPI();
+		
 		client.registerCommand(new SwitchCommand());
 		client.registerCommand(new SyncNewsCommand());
 		client.registerCommand(new RedateCommand());
@@ -102,9 +128,26 @@ public class Main{
 		client.registerCommand(new MergeMasterCommand());
 		client.registerCommand(new NewsPreviewCommand());
 		client.registerCommand(new InstanceCommand());
+		client.registerCommand(new PrivateModeCommand(api));
 		
-		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT);
+		client.addRequiredIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS);
 		client.login();
+		
+		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(()->{
+			try{
+				for(User user : MainDatabase.getUsers()){
+					UserExtended osuUser = api.getUserById(user.osuId());
+					if(osuUser != null){
+						MainDatabase.updateUserNameAndGroups(user.osuId(), osuUser.getUsername(), GroupSet.from(osuUser.getUserGroups()));
+					}else{
+						//this would imply the user is restricted... maybe just delete the entry completely
+						MainDatabase.updateUserNameAndGroups(user.osuId(), user.osuName(), new GroupSet());
+					}
+				}
+			}catch(InsufficientPermissionsException | DBException | RequestException e){
+				client.logError(e, "[Main] Failed to sync user groups", Severity.MINOR, Priority.LOW);
+			}
+		}, 1, 1, TimeUnit.DAYS);
 	}
 	
 	/**

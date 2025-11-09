@@ -1,177 +1,120 @@
+/*
+ * osu! wiki preview site
+ * Copyright (C) 2023  Roan Hofland (roan@roanh.dev) and contributors.
+ * GitHub Repository: https://github.com/RoanH/osuWikiPreview
+ * GitLab Repository: https://git.roanh.dev/roan/osuwikipreview
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package dev.roanh.wiki.auth;
-
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.prometheus.client.Counter;
 
+import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.io.netty.http.HttpParams;
 import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
-import dev.roanh.infinity.util.Scheduler;
-import dev.roanh.osuapi.OsuAPI;
-import dev.roanh.osuapi.Scope;
-import dev.roanh.osuapi.session.OAuthSessionBuilder;
-import dev.roanh.osuapi.user.Group;
-import dev.roanh.osuapi.user.UserExtended;
+import dev.roanh.isla.reporting.Priority;
+import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.data.Instance;
+import dev.roanh.wiki.data.User;
 
+/**
+ * NGINX authentication server.
+ * @author Roan
+ * @see LoginServer
+ */
 public class AuthServer{
-	private static final OAuthSessionBuilder sessionBuilder = OsuAPI.oauth(Main.CLIENT_ID, Main.CLIENT_SECRET).setCallback("https://preview.roanh.dev/").addScopes(Scope.IDENTIFY);
+	/**
+	 * Metric for authentication request statuses.
+	 */
+	private static final Counter authRequests = Counter.build("wikipreview_auth_request", "Number auth requests by result").labelNames("result").register();
+	/**
+	 * The header used to pass the instance that was attempted to be accessed.
+	 */
+	private static final String INSTANCE_HEADER = "Instance-Domain";
+	/**
+	 * The HTTP server used to communicate with NGINX.
+	 */
+	private final WebServer server;
 	
-	//TODO not static?
-	private static final Set<String> loginSessions = ConcurrentHashMap.newKeySet();
-	
-	
-	//TODO metrics
-	
-	//osu6.preview.roanh.dev as test I guess
-	
-	//401 on auth fail with redirect
-	//200 on OK
-	
-	//TODO probably need a discord link too?
-	
-	
-	
-	
-	//TODO remove
-	private static void printAll(FullHttpRequest request, String path, HttpParams data){
-		System.out.println("p: " + path);
-		
-		System.out.println(data.getKeys());
-		for(String key : data.getKeys()){
-			System.out.println(key + " : " + data.get(key));
-		}
-		
-		request.headers().forEach(e->{
-			System.out.println(e.getKey() + " : " + e.getValue());
-		});
+	/**
+	 * Creates a new authentication server running on the given port.
+	 * @param port The port the server should run on.
+	 */
+	public AuthServer(int port){
+		server = new WebServer(port);
+		server.setExceptionHandler(t->Main.client.logError(t, "[AuthServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
+		server.createContext("/login", true, this::handleLoginErrorPage);
+		server.createContext("/auth", true, this::handleAuthRequest);
 	}
 	
-	public static void main(String[] args){
-		WebServer server = new WebServer(1234);
-		
-		server.createContext("/", false, (request, path, data)->{
-			printAll(request, path, data);
-			return RequestHandler.notFound();
-		});
-	
-		server.createContext("/login", true, (request, path, data)->{
-			printAll(request, path, data);
-			return RequestHandler.page("Please login!, go here: https://preview.roanh.dev/login");
-		});
-		
-		server.createContext("/auth", true, (request, path, data)->{
-			printAll(request, path, data);
-			
-			//TODO do better
-			if(request.headers().get("Cookie").contains("wiki_preview_session=test")){
-				return RequestHandler.status(HttpResponseStatus.OK);
-			}else{
-				return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
-			}
-		});
-		
-		
-		//include either the oauth uri in the page or redirect idk yet -- link click would mean longer timeout, otherwise its from pagel oad
-		
+	/**
+	 * Starts the authentication server.
+	 */
+	public void start(){
 		server.runAsync();
+	}
+	
+	/**
+	 * Handles the error page request generated when a user does not have access to an instance.
+	 * <p>
+	 * This gives the user some basic information and tells them to login or request access.
+	 * @param request The error page request.
+	 * @param path The path, always /login.
+	 * @param data The request data.
+	 * @return The response page.
+	 * @throws DBException When a database exception occurs.
+	 * @see #handleAuthRequest(FullHttpRequest, String, HttpParams)
+	 */
+	private FullHttpResponse handleLoginErrorPage(FullHttpRequest request, String path, HttpParams data) throws DBException{
+		return RequestHandler.page(Pages.getPrivateModePage(SessionManager.getUserFromSession(request)));
+	}
+	
+	/**
+	 * Handles a request from NGINX to check if a user has access to a specific instance.
+	 * @param request The authentication request.
+	 * @param path The request path, always /auth.
+	 * @param data The request data.
+	 * @return The response page, either OK if the user has access or UNAUTHORIZED if they do not.
+	 * @throws DBException When a database exception occurs.
+	 * @see #handleLoginErrorPage(FullHttpRequest, String, HttpParams)
+	 */
+	private FullHttpResponse handleAuthRequest(FullHttpRequest request, String path, HttpParams data) throws DBException{
+		Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
+		if(!instance.isPrivateMode()){
+			authRequests.labels("public").inc();
+			return RequestHandler.ok();
+		}
 		
+		User user = SessionManager.getUserFromSession(request);
+		if(user == null){
+			authRequests.labels("private_not_logged_in").inc();
+			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+		}
 		
-		//---
-		
-		
-		WebServer authServer = new WebServer(1235);
-//		authServer.createContext("/", false, (request, path, data) -> {
-//			System.out.println("ap: " + path);
-//
-//			System.out.println(data.getKeys());
-//			for(String key : data.getKeys()){
-//				System.out.println(key + " a: " + data.get(key));
-//			}
-//
-//			request.headers().forEach(e->{
-//				System.out.println(e.getKey() + " a: " + e.getValue());
-//			});
-//
-//			return RequestHandler.status(HttpResponseStatus.OK);
-//		});
-		
-		
-		authServer.createContext("/login", true, (request, path, data)->{
-			printAll(request, path, data);
-			
-			String state = UUID.randomUUID().toString();
-			loginSessions.add(state);
-			Scheduler.scheduleIn(15, TimeUnit.MINUTES, ()->loginSessions.remove(state));
-			
-			FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
-			resp.headers().add("Location", sessionBuilder.getAuthUrl(state));
-			return resp;
-		});
-		
-		
-		authServer.createContext("/", true, (request, path, data)->{
-			//TODO handle state + token if present else generic page
-			
-			//keep state codes + redirect until consumed
-			//need to schedule cleanup or something
-			
-			
-			//TODO validate
-			//if failure / timeout say try again
-			//else
-			//redirect to original page
-			
-			
-			
-			
-			
-			String state = data.getFirst("state");
-			String code = data.getFirst("code");
-			if(state == null || code == null){
-				return RequestHandler.page("Hi, there's nothing here really, you probably want to go to one of the preview subdomains:");//TODO extract and stuff, maybe some login info, relog for group fix idk
-			}else{
-				if(!loginSessions.contains(state)){
-					return RequestHandler.page("Your login session timed out, please try again: ");//TODO add link idk
-				}
-				
-				//TODO get user with code and return a cookie with redirect if ok
-				
-				
-				
-				
-				//---
-				
-				
-				
-				//diff thread
-				UserExtended user = sessionBuilder.build(code).getCurrentUser();
-				//TODO check result
-				
-				//---
-				
-				
-				
-				System.out.println(user.getUsername());
-				
-				
-				
-				FullHttpResponse resp = RequestHandler.page(user.getUsername() + ": " + user.getUserGroups().stream().map(Group::getShortName).toList());
-				String session = "test";//TODO 300-400 chars or so
-				resp.headers().add("Set-Cookie", "wiki_preview_session=" + session + "; Secure; HttpOnly; Max-Age=31536000; Domain=preview.roanh.dev");
-				return resp;
-				
-				
-				
-			}
-		});
-
-		authServer.run();
+		if(instance.getAccessList().contains(user)){
+			authRequests.labels("private_on_acl").inc();
+			return RequestHandler.ok();
+		}else{
+			authRequests.labels("private_not_on_acl").inc();
+			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+		}
 	}
 }

@@ -24,11 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
-import dev.roanh.infinity.config.Configuration;
-import dev.roanh.infinity.db.DBContext;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.wiki.data.AccessList;
 import dev.roanh.wiki.data.Instance;
 import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.WebException;
@@ -60,9 +59,19 @@ public class OsuWeb{
 	 * @param config The general configuration file.
 	 * @param instance The instance for this osu! web instance.
 	 */
-	public OsuWeb(Configuration config, Instance instance){
+	public OsuWeb(Config config, Instance instance){
 		this.instance = instance;
-		executor = DBExecutors.newSingleThreadExecutor(new DBContext(config.readString("db-url") + instance.getDatabaseSchemaPrefix(), "osuweb", config.readString("db-pass")), "wiki" + instance.getId());
+		executor = DBExecutors.newSingleThreadExecutor(config.getDatabaseContext(instance.getDatabaseSchemaPrefix()), "wiki" + instance.getId());
+	}
+	
+	/**
+	 * Checks if this instance currently has a state, this is
+	 * generally always the case except for new instances.
+	 * @return True if this instance has a state.
+	 * @see #getCurrentState()
+	 */
+	public boolean hasState(){
+		return currentState != null;
 	}
 	
 	/**
@@ -127,6 +136,16 @@ public class OsuWeb{
 	 */
 	public InstanceManager getManager(){
 		return new InstanceManager(instance);
+	}
+	
+	/**
+	 * Constructs a manager for the access list of this instance.
+	 * @return The access manager for this instance.
+	 * @see Instance#isPrivateMode()
+	 * @see AccessList
+	 */
+	public AccessManager getAccessManager(){
+		return new AccessManager(instance);
 	}
 	
 	/**

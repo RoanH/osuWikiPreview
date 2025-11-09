@@ -99,6 +99,7 @@ public class PrivateModeCommand extends CommandGroup{
 		EmbedBuilder embed = new EmbedBuilder();
 		embed.setColor(WebCommand.THEME_COLOR);
 		embed.setTitle("Private Mode Status");
+		embed.setDescription("Groups and users (ID) with access.");
 		
 		StringJoiner groups = new StringJoiner(", ");
 		acl.getGroups().forEach(group->groups.add(group.name()));
@@ -145,7 +146,7 @@ public class PrivateModeCommand extends CommandGroup{
 			add.addOptionString("user", "The osu! user to add (username).", new SimpleAutoCompleteHandler(UserGroup.getGroupNames()));
 			registerCommand(add);
 			
-			WebCommand remove = privateCommand("add", "Remove an osu! user's access to this instance.", this::handleRemove);
+			WebCommand remove = privateCommand("remove", "Remove an osu! user's access to this instance.", this::handleRemove);
 			remove.addOptionString("user", "The osu! user to remove (username).", new SimpleAutoCompleteHandler(UserGroup.getGroupNames()));
 			registerCommand(remove);
 		}
@@ -211,7 +212,7 @@ public class PrivateModeCommand extends CommandGroup{
 			add.addOptionString("group", "The osu! user group to add.", new SimpleAutoCompleteHandler(UserGroup.getGroupNames()));
 			registerCommand(add);
 			
-			WebCommand remove = privateCommand("add", "Remove an osu! user group's access to this instance.", this::handleRemove);
+			WebCommand remove = privateCommand("remove", "Remove an osu! user group's access to this instance.", this::handleRemove);
 			remove.addOptionString("group", "The osu! user group to remove.", new SimpleAutoCompleteHandler(UserGroup.getGroupNames()));
 			registerCommand(remove);
 		}

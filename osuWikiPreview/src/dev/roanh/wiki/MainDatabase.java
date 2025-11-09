@@ -114,7 +114,7 @@ public final class MainDatabase{
 		final int groups = GroupSet.from(user.getUserGroups()).encode();
 		executor.insert(
 			"INSERT INTO users (osu, username, `session`, `groups`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username = ?, `session` = ?, `groups` = ?",
-			user.getId(), user.getUsername(), sessionToken, user.getUsername(), groups, sessionToken, groups
+			user.getId(), user.getUsername(), sessionToken, groups, user.getUsername(), sessionToken, groups
 		);
 	}
 	

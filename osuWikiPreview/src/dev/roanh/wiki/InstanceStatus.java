@@ -92,7 +92,7 @@ public final class InstanceStatus{
 					available.append(TimeFormat.RELATIVE.format(state.getAvailableAt()));
 				}else{
 					refs.append("None\n");
-					available.append(Instant.now());
+					available.append(TimeFormat.RELATIVE.format(Instant.now()));
 				}
 				
 				available.append("\n");

@@ -98,11 +98,12 @@ public class AccessManager{
 	public void removeUser(int osuId) throws DBException, IllegalStateException{
 		checkPrivate();
 		
-		instance.getAccessList().remove(osuId);
+		AccessList acl = instance.getAccessList();
+		acl.remove(osuId);
 		MainDatabase.saveInstance(instance);
 		
 		User user = MainDatabase.getUserById(osuId);
-		if(user != null && user.hasDiscord()){
+		if(user != null && user.hasDiscord() && !acl.contains(user)){
 			removeRoleFromUsers(List.of(user.discordId().getAsLong()));
 		}
 	}
@@ -121,10 +122,11 @@ public class AccessManager{
 	public void removeGroup(UserGroup group) throws DBException, IllegalStateException{
 		checkPrivate();
 		
-		instance.getAccessList().remove(group);
+		AccessList acl = instance.getAccessList();
+		acl.remove(group);
 		MainDatabase.saveInstance(instance);
 		
-		removeRoleFromUsers(MainDatabase.getUsersWithGroup(group.asGroupSet()).stream().filter(User::hasDiscord).map(user->{
+		removeRoleFromUsers(MainDatabase.getUsersWithGroup(group.asGroupSet()).stream().filter(User::hasDiscord).filter(user->!acl.contains(user)).map(user->{
 			return user.discordId().getAsLong();
 		}).toList());
 	}

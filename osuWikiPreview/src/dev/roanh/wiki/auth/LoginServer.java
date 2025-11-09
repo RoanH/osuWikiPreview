@@ -129,7 +129,7 @@ public class LoginServer{
 	 */
 	private final FullHttpResponse handleLoginRequest(FullHttpRequest request, String path, HttpParams data){
 		FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
-		resp.headers().add("Location", createAuthUrl(new LoginInfo()));
+		resp.headers().add(HttpHeaderNames.LOCATION, createAuthUrl(new LoginInfo()));
 		return resp;
 	}
 	

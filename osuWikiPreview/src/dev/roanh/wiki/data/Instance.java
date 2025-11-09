@@ -39,22 +39,73 @@ public class Instance{
 	 */
 	private final int port;
 	/**
+	 * The discord role associated with this instance.
+	 */
+	private final long role;
+	/**
 	 * The osu! web docker image tag.
 	 */
 	private String tag;
+	/**
+	 * Only present when in private mode, contains who has access to this instance.
+	 */
+	private AccessList acl;
 	
 	/**
 	 * Constructs a new instance.
 	 * @param id The ID of the instance.
 	 * @param channel The discord channel for the instance.
 	 * @param port The port for the website.
+	 * @param role The discord role for this instance.
 	 * @param tag The docker image tag.
+	 * @param acl The ACL for this instance if any.
 	 */
-	public Instance(int id, long channel, int port, String tag){
+	public Instance(int id, long channel, int port, long role, String tag, byte[] acl){
 		this.id = id;
 		this.channel = channel;
 		this.port = port;
+		this.role = role;
 		this.tag = tag;
+		this.acl = AccessList.decode(acl);
+	}
+	
+	/**
+	 * Gets the ID of the discord channel access role for this instance.
+	 * @return The access role ID.
+	 */
+	public long getRoleId(){
+		return role;
+	}
+	
+	/**
+	 * Clears the access list for this instance and disables private mode.
+	 */
+	public void clearAccessList(){
+		acl = null;
+	}
+	
+	/**
+	 * Replaces the access list for this instance and enables private mode.
+	 * @param acl The new access list.
+	 */
+	public void setAccessList(AccessList acl){
+		this.acl = acl;
+	}
+	
+	/**
+	 * Gets the access list for this instance.
+	 * @return The access list for this instance, or null if this instance is not in private mode.
+	 */
+	public AccessList getAccessList(){
+		return acl;
+	}
+	
+	/**
+	 * Checks if this instance is in private mode.
+	 * @return True if this instance is in private mode.
+	 */
+	public boolean isPrivateMode(){
+		return acl != null;
 	}
 	
 	/**
@@ -118,7 +169,7 @@ public class Instance{
 	 * @return The website domain.
 	 */
 	public String getDomain(){
-		return "osu" + id + "." + Main.DOMAIN;
+		return "osu" + id + "." + Main.config.domain();
 	}
 	
 	/**

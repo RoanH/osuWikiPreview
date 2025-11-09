@@ -29,6 +29,7 @@ import org.eclipse.jgit.errors.NoRemoteRepositoryException;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -194,7 +195,7 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 			if(path != null){
 				int len = desc.length();
 				desc.append("- [");
-				desc.append(item.getNewPath());
+				desc.append(MarkdownSanitizer.escape(item.getNewPath()));
 				desc.append("](");
 				desc.append(path);
 				desc.append(")\n");

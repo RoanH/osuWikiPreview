@@ -21,6 +21,8 @@ package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
 
+import net.dv8tion.jda.api.Permission;
+
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.CommandScope;
 import dev.roanh.isla.command.slash.Command;
@@ -171,19 +173,24 @@ public class InstanceCommand extends CommandGroup{
 		}
 
 		event.deferReply(deferred->{
-			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel("osu" + id).queue(chan->{
-				try{
-					Instance instance = new Instance(id, chan.getIdLong(), port, args.get("tag").getAsString());
-					chan.getManager().setTopic("osu! web instance with preview site: " + instance.getSiteUrl()).queue();
+			String name = "osu" + id;
+			deferred.getJDA().getCategoryById(INSTANCES_CATEGORY).createTextChannel(name).queue(chan->{
+				chan.getGuild().createRole().setName(name).queue(role->{
+					chan.upsertPermissionOverride(role).setAllowed(Permission.VIEW_CHANNEL).queue();
 					
-					InstanceManager manager = new InstanceManager(instance);
-					manager.createInstance();
-					manager.runInstance();
-					deferred.reply("Instance created succesfully (network configuration and branch remain).");
-				}catch(DBException | IOException | WebException e){
-					deferred.logError(e, "[InstanceCommand] Failed to create instance", Severity.MINOR, Priority.MEDIUM, args);
-					deferred.internalError();
-				}
+					try{
+						Instance instance = new Instance(id, chan.getIdLong(), port, role.getIdLong(), args.get("tag").getAsString(), null);
+						chan.getManager().setTopic("osu! web instance with preview site: " + instance.getSiteUrl()).queue();
+						
+						InstanceManager manager = new InstanceManager(instance);
+						manager.createInstance();
+						manager.runInstance();
+						deferred.reply("Instance created succesfully (network configuration and branch remain).");
+					}catch(DBException | IOException | WebException e){
+						deferred.logError(e, "[InstanceCommand] Failed to create instance", Severity.MINOR, Priority.MEDIUM, args);
+						deferred.internalError();
+					}
+				});
 			});
 		});
 	}

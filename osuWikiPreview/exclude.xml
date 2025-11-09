@@ -37,7 +37,7 @@
   
   <Match>
     <!-- Should be HTML compliant not platform specific -->
-    <Class name="In class dev.roanh.wiki.auth.Pages"/>
+    <Class name="dev.roanh.wiki.auth.Pages"/>
     <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
   </Match>
   

@@ -3,6 +3,7 @@ package dev.roanh.wiki.cmd;
 import java.util.StringJoiner;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -113,9 +114,24 @@ public class PrivateModeCommand extends CommandGroup{
 		acl.getGroups().forEach(group->groups.add(group.name()));
 		embed.addField("Groups", groups.toString(), false);
 		
-		StringJoiner users = new StringJoiner(", ");
-		acl.getUsers().forEach(user->users.add(String.valueOf(user)));//TODO resolve known users at least?
-		embed.addField("Users", users.toString(), false);
+		try{
+			StringJoiner users = new StringJoiner(", ");
+			for(int id : acl.getUsers()){
+				String url = "](https://osu.ppy.sh/users/" + id + ")";
+				User user = MainDatabase.getUserByOsuId(id);
+				if(user != null){
+					users.add("[" + MarkdownSanitizer.escape(user.osuName()) + url);
+				}else{
+					users.add("[" + id + url);
+				}
+			}
+
+			embed.addField("Users", users.toString(), false);
+		}catch(DBException e){
+			event.logError(e, "[PrivateModeCommand] Failed to generate instance status", Severity.MINOR, Priority.LOW, args);
+			event.internalError();
+			return;
+		}
 		
 		event.replyEmbeds(embed.build());
 	}

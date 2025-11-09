@@ -57,7 +57,7 @@ public final class Pages{
 	 */
 	public static final String getRootPage(User user){
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("Welcome to the osu! <a href=\"https://osu.ppy.sh/wiki/en/Main_page\">wiki</a> and <a href=\"https://osu.ppy.sh/home/news\">news</a> preview site.");
+		buffer.append("Welcome to the osu! <a href=\"https://osu.ppy.sh/wiki/en/Main_page\">wiki</a> and <a href=\"https://osu.ppy.sh/home/news\">news</a> preview site. ");
 		buffer.append("The available preview instances can be found at the following subdomains:");
 		
 		buffer.append("<ul>");

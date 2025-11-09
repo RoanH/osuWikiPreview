@@ -28,8 +28,17 @@
   </Match>
   
   <Match>
-    <Class name="dev.roanh.wiki.github.WebhookHandler"/>
+    <Or>
+      <Class name="dev.roanh.wiki.github.WebhookHandler"/>
+      <Class name="dev.roanh.wiki.cmd.InstanceCommand"/>
+    </Or>
     <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
+  </Match>
+  
+  <Match>
+    <!-- Should be HTML compliant not platform specific -->
+    <Class name="dev.roanh.wiki.auth.Pages"/>
+    <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
   </Match>
   
 </FindBugsFilter>

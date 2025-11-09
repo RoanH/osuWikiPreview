@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SequencedCollection;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import dev.roanh.infinity.config.Configuration;
@@ -47,6 +49,10 @@ public class InstanceManager{
 	 * Deployment instances by Discord channel.
 	 */
 	private static final Map<Long, OsuWeb> instancesByChannel = new HashMap<Long, OsuWeb>();
+	/**
+	 * Deployment instances by site domain.
+	 */
+	private static final SortedMap<String, OsuWeb> instancesByDomain = new TreeMap<String, OsuWeb>();
 	/**
 	 * The specific instance being managed by this manager.
 	 */
@@ -73,7 +79,7 @@ public class InstanceManager{
 		prepareInstance();
 		//technically should also push a new GitHub branch but I just made 9 in advance for now
 		
-		registerInstance(Main.client.getConfig(), instance);
+		registerInstance(Main.config, instance);
 	}
 	
 	/**
@@ -237,7 +243,7 @@ public class InstanceManager{
 	 * @param config The application configuration file
 	 * @throws DBException When a database exception occurs.
 	 */
-	public static void init(Configuration config) throws DBException{
+	public static void init(Config config) throws DBException{
 		for(Instance instance : MainDatabase.getInstances()){
 			registerInstance(config, instance);
 		}
@@ -253,11 +259,20 @@ public class InstanceManager{
 	}
 	
 	/**
+	 * Gets an instance by the domain it runs at.
+	 * @param domain The (full) domain of the instance.
+	 * @return The instance for the given domain if any, else null.
+	 */
+	public static OsuWeb getInstanceByDomain(String domain){
+		return instancesByDomain.get(domain);
+	}
+	
+	/**
 	 * Returns a collection of all registered instances.
 	 * @return A collection of all registered instances.
 	 */
-	public static Collection<OsuWeb> getInstances(){
-		return instancesByChannel.values();
+	public static SequencedCollection<OsuWeb> getInstances(){
+		return instancesByDomain.sequencedValues();
 	}
 	
 	/**
@@ -265,7 +280,9 @@ public class InstanceManager{
 	 * @param config The application configuration.
 	 * @param instance The instance to register.
 	 */
-	private static void registerInstance(Configuration config, Instance instance){
-		instancesByChannel.put(instance.getChannel(), new OsuWeb(config, instance));
+	private static void registerInstance(Config config, Instance instance){
+		OsuWeb web = new OsuWeb(config, instance);
+		instancesByChannel.put(instance.getChannel(), web);
+		instancesByDomain.put(instance.getDomain(), web);
 	}
 }

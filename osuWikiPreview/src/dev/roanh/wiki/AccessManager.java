@@ -40,12 +40,23 @@ import dev.roanh.wiki.data.UserGroup;
  * @author Roan
  */
 public class AccessManager{
+	/**
+	 * The instance access is being managed for.
+	 */
 	private final Instance instance;
 	
-	public AccessManager(Instance instance){
+	/**
+	 * Constructs a new access manager.
+	 * @param instance The instance to manage access for.
+	 */
+	protected AccessManager(Instance instance){
 		this.instance = instance;
 	}
 	
+	/**
+	 * Enables private mode for the instance.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public void enablePrivateMode() throws DBException{
 		instance.setAccessList(new AccessList());
 		MainDatabase.saveInstance(instance);
@@ -61,6 +72,10 @@ public class AccessManager{
 		chan.upsertPermissionOverride(chan.getGuild().getPublicRole()).deny(Permission.VIEW_CHANNEL).queue();
 	}
 	
+	/**
+	 * Disables private mode for the instance.
+	 * @throws DBException When a database exception occurs.
+	 */
 	public void disablePrivateMode() throws DBException{
 		instance.clearAccessList();
 		MainDatabase.saveInstance(instance);
@@ -75,6 +90,12 @@ public class AccessManager{
 		});
 	}
 	
+	/**
+	 * Checks if the given user is on the access for this instance
+	 * and grants the relevant Discord permissions if so.
+	 * @param user The user to sync access for.
+	 * @throws IllegalStateException When the instance is not in private mode.
+	 */
 	public void syncAccess(User user) throws IllegalStateException{
 		checkPrivate();
 		
@@ -83,6 +104,12 @@ public class AccessManager{
 		}
 	}
 	
+	/**
+	 * Adds a user to the instance.
+	 * @param osuId The osu! ID of the user to add.
+	 * @throws DBException When a database exception occurs.
+	 * @throws IllegalStateException When the instance is not in private mode.
+	 */
 	public void addUser(int osuId) throws DBException, IllegalStateException{
 		checkPrivate();
 		
@@ -95,6 +122,12 @@ public class AccessManager{
 		}
 	}
 	
+	/**
+	 * Removes a user from the instance.
+	 * @param osuId The osu! ID of the user to remove.
+	 * @throws DBException When a database exception occurs.
+	 * @throws IllegalStateException When the instance is not in private mode.
+	 */
 	public void removeUser(int osuId) throws DBException, IllegalStateException{
 		checkPrivate();
 		
@@ -108,6 +141,12 @@ public class AccessManager{
 		}
 	}
 	
+	/**
+	 * Adds a user group to the instance.
+	 * @param group The group to add.
+	 * @throws DBException When a database exception occurs.
+	 * @throws IllegalStateException When the instance is not in private mode.
+	 */
 	public void addGroup(UserGroup group) throws DBException, IllegalStateException{
 		checkPrivate();
 		
@@ -119,6 +158,12 @@ public class AccessManager{
 		}).toList());
 	}
 	
+	/**
+	 * Removes a user group from the instance.
+	 * @param group The group to remove.
+	 * @throws DBException When a database exception occurs.
+	 * @throws IllegalStateException When the instance is not in private mode.
+	 */
 	public void removeGroup(UserGroup group) throws DBException, IllegalStateException{
 		checkPrivate();
 		
@@ -131,18 +176,34 @@ public class AccessManager{
 		}).toList());
 	}
 	
+	/**
+	 * Gets the Discord management channel for the instance.
+	 * @return The Discord management channel for the instance.
+	 */
 	public TextChannel getChannel(){
 		return Main.client.getJDA().getTextChannelById(instance.getChannel());
 	}
 	
+	/**
+	 * Gets the Discord access role for the management channel for the instance.
+	 * @return The Discord access role for the instance.
+	 */
 	public Role getRole(){
 		return Main.client.getJDA().getRoleById(instance.getRoleId());
 	}
 	
+	/**
+	 * Gets the management Discord guild.
+	 * @return The management server.
+	 */
 	private Guild getGuild(){
 		return getChannel().getGuild();
 	}
 	
+	/**
+	 * Adds the access role for the instance to the Discord users with the given IDs.
+	 * @param users The discord users to add the role to.
+	 */
 	private void addRoleToUsers(Collection<Long> users){
 		Guild guild = getGuild();
 		Role role = getRole();
@@ -151,6 +212,10 @@ public class AccessManager{
 		}
 	}
 	
+	/**
+	 * Removes the access role for the instance from the Discord users with the given IDs.
+	 * @param users The discord users to remove the role from.
+	 */
 	private void removeRoleFromUsers(Collection<Long> users){
 		Guild guild = getGuild();
 		Role role = getRole();
@@ -159,6 +224,10 @@ public class AccessManager{
 		}
 	}
 	
+	/**
+	 * Validates that the instance is currently in private mode.
+	 * @throws IllegalStateException Thrown when the instance is not in private mode.
+	 */
 	private void checkPrivate() throws IllegalStateException{
 		if(!instance.isPrivateMode()){
 			throw new IllegalStateException("This instance is not currently in private mode.");

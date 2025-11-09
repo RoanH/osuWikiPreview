@@ -55,14 +55,17 @@ public class AccessManager{
 	
 	/**
 	 * Enables private mode for the instance.
+	 * @param enabler The user that enabled private mode.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public void enablePrivateMode() throws DBException{
-		instance.setAccessList(new AccessList());
+	public void enablePrivateMode(User enabler) throws DBException{
+		AccessList acl = new AccessList();
+		acl.add(enabler.osuId());
+		instance.setAccessList(acl);
 		MainDatabase.saveInstance(instance);
 		
 		for(int id : instance.getAccessList().getUsers()){
-			User user = MainDatabase.getUserById(id);
+			User user = MainDatabase.getUserByOsuId(id);
 			if(user != null && user.hasDiscord()){
 				addRoleToUsers(List.of(user.discordId().getAsLong()));
 			}
@@ -116,7 +119,7 @@ public class AccessManager{
 		instance.getAccessList().add(osuId);
 		MainDatabase.saveInstance(instance);
 		
-		User user = MainDatabase.getUserById(osuId);
+		User user = MainDatabase.getUserByOsuId(osuId);
 		if(user != null && user.hasDiscord()){
 			addRoleToUsers(List.of(user.discordId().getAsLong()));
 		}
@@ -135,7 +138,7 @@ public class AccessManager{
 		acl.remove(osuId);
 		MainDatabase.saveInstance(instance);
 		
-		User user = MainDatabase.getUserById(osuId);
+		User user = MainDatabase.getUserByOsuId(osuId);
 		if(user != null && user.hasDiscord() && !acl.contains(user)){
 			removeRoleFromUsers(List.of(user.discordId().getAsLong()));
 		}

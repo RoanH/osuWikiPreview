@@ -3,6 +3,7 @@ package dev.roanh.wiki.cmd;
 import java.util.StringJoiner;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
@@ -18,9 +19,11 @@ import dev.roanh.osuapi.exception.RequestException;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.InstanceStatus;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.MainDatabase;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.cmd.WebCommand.WebCommandRunnable;
 import dev.roanh.wiki.data.AccessList;
+import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.data.UserGroup;
 
 /**
@@ -60,7 +63,13 @@ public class PrivateModeCommand extends CommandGroup{
 			event.reply("This instance is already in private mode.");
 		}else{
 			try{
-				web.getAccessManager().enablePrivateMode();
+				User user = MainDatabase.getUserByDiscordId(event.getUserId());
+				if(user == null){
+					event.reply("Please link your discord account in <#1436733000195899482> before enabling private mode.");
+					return;
+				}
+				
+				web.getAccessManager().enablePrivateMode(user);
 				event.reply("Private mode enabled successfully.");
 				InstanceStatus.updateOverview();
 			}catch(DBException e){
@@ -105,9 +114,24 @@ public class PrivateModeCommand extends CommandGroup{
 		acl.getGroups().forEach(group->groups.add(group.name()));
 		embed.addField("Groups", groups.toString(), false);
 		
-		StringJoiner users = new StringJoiner(", ");
-		acl.getUsers().forEach(user->users.add(String.valueOf(user)));
-		embed.addField("Users", users.toString(), false);
+		try{
+			StringJoiner users = new StringJoiner(", ");
+			for(int id : acl.getUsers()){
+				String url = "](https://osu.ppy.sh/users/" + id + ")";
+				User user = MainDatabase.getUserByOsuId(id);
+				if(user != null){
+					users.add("[" + MarkdownSanitizer.escape(user.osuName()) + url);
+				}else{
+					users.add("[" + id + url);
+				}
+			}
+
+			embed.addField("Users", users.toString(), false);
+		}catch(DBException e){
+			event.logError(e, "[PrivateModeCommand] Failed to generate instance status", Severity.MINOR, Priority.LOW, args);
+			event.internalError();
+			return;
+		}
 		
 		event.replyEmbeds(embed.build());
 	}

@@ -171,8 +171,18 @@ public final class MainDatabase{
 	 * @return The user with the given account ID if any, else null.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public static User getUserById(int osuId) throws DBException{
+	public static User getUserByOsuId(int osuId) throws DBException{
 		return executor.selectFirst("SELECT * FROM users WHERE `osu` = ?", User::new, osuId).orElse(null);
+	}
+	
+	/**
+	 * Gets a user by their discord account ID.
+	 * @param discordId The discord account ID of the user.
+	 * @return The user with the given account ID if any, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static User getUserByDiscordId(long discordId) throws DBException{
+		return executor.selectFirst("SELECT * FROM users WHERE `discord` = ?", User::new, discordId).orElse(null);
 	}
 	
 	/**

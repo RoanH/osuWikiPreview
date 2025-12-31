@@ -44,6 +44,8 @@ public final class Pages{
 	 * Template HTML page with the general structure.
 	 */
 	private static final String TEMPLATE;
+	public static final String REDIRECT_INSTANCE_PARAM = "instance";
+	public static final String REDIRECT_URI_PARAM = "uri";
 
 	/**
 	 * Prevent instantiation.
@@ -97,8 +99,8 @@ public final class Pages{
 	 */
 	public static final String getPrivateModePage(User user, String domain, String uri){
 		QueryStringEncoder login = new QueryStringEncoder("https://preview.roanh.dev/login");
-		login.addParam("instance", domain);
-		login.addParam("uri", uri);
+		login.addParam(REDIRECT_INSTANCE_PARAM, domain);
+		login.addParam(REDIRECT_URI_PARAM, uri);
 		if(user == null){
 			return makePage(
 				"Private Mode",

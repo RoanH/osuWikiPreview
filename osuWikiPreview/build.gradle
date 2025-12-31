@@ -144,7 +144,7 @@ publishing{
 shadowJar{
 	mergeServiceFiles()
 	duplicatesStrategy = DuplicatesStrategy.FAIL
-	filesMatching("META-INF/**"){
+	filesMatching(["META-INF/**", "OSGI-INF/**", "*.html"]){
 		duplicatesStrategy = DuplicatesStrategy.INCLUDE
 	}
 

@@ -50,7 +50,7 @@ public class AccessList{
 	 * @see #DEFAULT_USERS
 	 */
 	public AccessList(){
-		this(new HashSet<>(DEFAULT_USERS), new GroupSet());
+		this(new HashSet<Integer>(DEFAULT_USERS), new GroupSet());
 	}
 	
 	/**

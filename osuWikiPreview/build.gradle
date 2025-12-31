@@ -34,8 +34,8 @@ dependencies{
 	implementation "dev.roanh.osuapi:osuapi:3.9"
 	
 	//JGit
-	implementation "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r"
-	implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r"
+	implementation "org.eclipse.jgit:org.eclipse.jgit:7.5.0.202512021534-r"
+	implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:7.5.0.202512021534-r"
 
 	//Testing
 	testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")

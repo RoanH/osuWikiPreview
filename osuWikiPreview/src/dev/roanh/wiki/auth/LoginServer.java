@@ -133,6 +133,7 @@ public class LoginServer{
 		return resp;
 	}
 	
+	//TODO move code handling to /auth
 	/**
 	 * Handles a visit to the root page potentially with login information.
 	 * @param request The login attempt request (or just a root page visit).
@@ -173,7 +174,7 @@ public class LoginServer{
 	 * @author Roan
 	 * @param discordId The discord ID of the user that initiated the login.
 	 */
-	public static record LoginInfo(OptionalLong discordId){
+	public static record LoginInfo(OptionalLong discordId){//TODO from page
 		
 		/**
 		 * Constructs new empty login metadata.

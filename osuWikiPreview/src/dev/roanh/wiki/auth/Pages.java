@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+import io.netty.handler.codec.http.QueryStringEncoder;
+
 import dev.roanh.infinity.util.Util;
 import dev.roanh.infinity.util.Version;
 import dev.roanh.isla.reporting.Priority;
@@ -89,17 +91,22 @@ public final class Pages{
 	 * Gets the page when a user without access tries to access a private mode instance.
 	 * This page just has some general information and a login button.
 	 * @param user The logged in user if any, else null.
+	 * @param domain The instance domain that was accessed.
+	 * @param uri The instance path that was accessed.
 	 * @return The created private mode page HTML.
 	 */
-	public static final String getPrivateModePage(User user){
+	public static final String getPrivateModePage(User user, String domain, String uri){
+		QueryStringEncoder login = new QueryStringEncoder("https://preview.roanh.dev/login");
+		login.addParam("instance", domain);
+		login.addParam("uri", uri);
 		if(user == null){
 			return makePage(
 				"Private Mode",
 				"""
 				This preview instance is currently in private mode, if you have access please log in with your osu! account to view pages.
 				<br><br>
-				<a class="button" href="https://preview.roanh.dev/login">Login</a>
-				"""
+				<a class="button" href="%s">Login</a>
+				""".formatted(login.toString())
 			);
 		}else{
 			return makePage(
@@ -108,8 +115,8 @@ public final class Pages{
 				This preview instance is currently in private mode, you are logged in as <a href="https://osu.ppy.sh/users/%d">%s</a> but do not appear to have access.
 				If you joined a user group with access after last logging in your groups might not have been updated yet, in this case you could try logging in again below.
 				<br><br>
-				<a class="button" href="https://preview.roanh.dev/login">Login</a>
-				""".formatted(user.osuId(), user.osuName())
+				<a class="button" href="%s">Login</a>
+				""".formatted(user.osuId(), user.osuName(), login.toString())
 			);
 		}
 	}

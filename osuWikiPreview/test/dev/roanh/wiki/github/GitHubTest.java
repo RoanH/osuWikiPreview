@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
@@ -46,12 +47,20 @@ import dev.roanh.wiki.github.obj.UserType;
 
 @WireMockTest(httpPort = 12345)
 public class GitHubTest{
-	private static final GitHub github = new GitHub("http://localhost:12345/");
+	private static final GitHub github = new GitHub("http://localhost:12345/", "testtoken");
 	
 	@BeforeEach
 	public void setup() throws IOException{
 		WireMock.stubFor(WireMock.any(WireMock.anyUrl()).atPriority(10).willReturn(WireMock.serverError()));
 		WireMock.stubFor(WireMock.get("/repos/itsmehoaq/osu-wiki/commits/1ea83f97f8fa13a679417e9687b1305215199005/pulls").willReturn(readJson("pr_for_commit")));
+		WireMock.stubFor(WireMock.post("/graphql").withHeader("Authorization", WireMock.equalTo("bearer testtoken")).withRequestBody(WireMock.containing("RoanH")).willReturn(readJson("forks_for_user")));
+	}
+	
+	@Test
+	public void getWikiFork() throws IOException, InterruptedException, URISyntaxException{
+		Optional<String> fork = github.getWikiFork("RoanH");
+		assertTrue(fork.isPresent());
+		assertEquals("osu-wiki-edit", fork.get());
 	}
 	
 	@Test

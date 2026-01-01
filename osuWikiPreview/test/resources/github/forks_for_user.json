@@ -3,14 +3,14 @@
         "user": {
             "repositories": {
                 "nodes": [{
-                        "name": "osu-wiki",
-                        "parent": {
-                            "nameWithOwner": "ppy/osu-wiki"
-                        }
-                    }, {
                         "name": "pircbotx",
                         "parent": {
                             "nameWithOwner": "pircbotx/pircbotx"
+                        }
+                    }, {
+                        "name": "osu-wiki-edit",
+                        "parent": {
+                            "nameWithOwner": "ppy/osu-wiki"
                         }
                     }, {
                         "name": "jgit",

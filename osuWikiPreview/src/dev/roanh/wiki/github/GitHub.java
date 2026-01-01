@@ -110,31 +110,31 @@ public final class GitHub{
 	
 	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException{
 		
-		
-		String val = instance().executeGraphQL("""
-		    query {
-  user(login: "%s") {
-    repositories(first: 100, isFork: true,
-      ownerAffiliations: OWNER,
-      orderBy: { field: PUSHED_AT, direction: DESC }) {
-      nodes{
-        name,
-        parent {
-          nameWithOwner
-        }
-      }
-    }
-  }
-}
-
-		    """.formatted("RoanH")
-			);
-		
-		System.out.println(val);
+//
+//		String val = instance().executeGraphQL("""
+//		    query {
+//  user(login: "%s") {
+//    repositories(first: 100, isFork: true,
+//      ownerAffiliations: OWNER,
+//      orderBy: { field: PUSHED_AT, direction: DESC }) {
+//      nodes{
+//        name,
+//        parent {
+//          nameWithOwner
+//        }
+//      }
+//    }
+//  }
+//}
+//
+//		    """.formatted("RoanH")
+//			);
+//
+//		System.out.println(val);
 		
 		//{"data":{"user":{"repositories":{"nodes":[{"name":"osu-wiki","parent":{"nameWithOwner":"ppy/osu-wiki"}},{"name":"pircbotx","parent":{"nameWithOwner":"pircbotx/pircbotx"}},{"name":"jgit","parent":{"nameWithOwner":"eclipse-jgit/jgit"}},{"name":"immutable-xjc","parent":{"nameWithOwner":"sabomichal/immutable-xjc"}},{"name":"JDA","parent":{"nameWithOwner":"discord-jda/JDA"}},{"name":"NGLTree","parent":{"nameWithOwner":"bartwesselink/dbl-visualization"}},{"name":"osu-web","parent":{"nameWithOwner":"ppy/osu-web"}}]}}}}
 
-		
+		System.out.println(instance.getWikiFork("RoanH"));
 	}
 	
 	
@@ -172,7 +172,7 @@ public final class GitHub{
 			JsonObject.class
 		);
 		
-		for(JsonElement item : response.getAsJsonObject("user").getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
+		for(JsonElement item : response.getAsJsonObject("data").getAsJsonObject("user").getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
 			JsonObject obj = item.getAsJsonObject();
 			if(obj.getAsJsonObject("parent").get("nameWithOwner").getAsString().equals("ppy/osu-wiki")){
 				return Optional.of(obj.get("name").getAsString());

@@ -50,6 +50,10 @@ public class AuthServer{
 	 */
 	private static final String INSTANCE_HEADER = "Instance-Domain";
 	/**
+	 * The header used to pass the original URI that was attempted to be accessed.
+	 */
+	private static final String ORIGINAL_URI_HEADER = "X-Original-URI";
+	/**
 	 * The HTTP server used to communicate with NGINX.
 	 */
 	private final WebServer server;
@@ -84,7 +88,11 @@ public class AuthServer{
 	 * @see #handleAuthRequest(FullHttpRequest, String, HttpParams)
 	 */
 	private FullHttpResponse handleLoginErrorPage(FullHttpRequest request, String path, HttpParams data) throws DBException{
-		return RequestHandler.page(Pages.getPrivateModePage(SessionManager.getUserFromSession(request)));
+		return RequestHandler.page(Pages.getPrivateModePage(
+			SessionManager.getUserFromSession(request),
+			request.headers().get(INSTANCE_HEADER),
+			request.headers().get(ORIGINAL_URI_HEADER)
+		));
 	}
 	
 	/**
@@ -102,13 +110,13 @@ public class AuthServer{
 			authRequests.labels("public").inc();
 			return RequestHandler.ok();
 		}
-		
+
 		User user = SessionManager.getUserFromSession(request);
 		if(user == null){
 			authRequests.labels("private_not_logged_in").inc();
 			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
 		}
-		
+
 		if(instance.getAccessList().contains(user)){
 			authRequests.labels("private_on_acl").inc();
 			return RequestHandler.ok();

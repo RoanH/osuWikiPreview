@@ -46,7 +46,9 @@ import dev.roanh.osuapi.exception.InsufficientPermissionsException;
 import dev.roanh.osuapi.exception.RequestException;
 import dev.roanh.osuapi.session.OAuthSessionBuilder;
 import dev.roanh.wiki.Config;
+import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.OsuWeb;
 
 /**
  * Web server used to handle login requests and the root index page.
@@ -85,7 +87,8 @@ public class LoginServer{
 		server = new WebServer(config.getLoginServerPort());
 		server.setExceptionHandler(t->Main.client.logError(t, "[LoginServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
 		server.createContext("/login", true, this::handleLoginRequest);
-		server.createContext("/", true, this::handleLoginAttempt);
+		server.createContext("/auth", true, this::handleAuthAttempt);
+		server.createContext("/", true, this::handleRootVisit);
 		
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("css/style.css")){
 			server.createContext("/style.css", true, RequestHandler.sendPage(in));
@@ -128,35 +131,44 @@ public class LoginServer{
 	 * @return The HTTP response.
 	 */
 	private final FullHttpResponse handleLoginRequest(FullHttpRequest request, String path, HttpParams data){
+		OsuWeb instance = InstanceManager.getInstanceByDomain(data.getFirst(Pages.REDIRECT_INSTANCE_PARAM));
+		String uri = data.getFirst(Pages.REDIRECT_URI_PARAM);
+		
 		FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
-		resp.headers().add(HttpHeaderNames.LOCATION, createAuthUrl(new LoginInfo()));
+		if(instance != null && uri != null && uri.startsWith("/")){
+			resp.headers().add(HttpHeaderNames.LOCATION, createAuthUrl(new LoginInfo(instance.getInstance().getDomain(), uri)));
+		}else{
+			resp.headers().add(HttpHeaderNames.LOCATION, createAuthUrl(new LoginInfo()));
+		}
+		
 		return resp;
 	}
 	
 	/**
-	 * Handles a visit to the root page potentially with login information.
-	 * @param request The login attempt request (or just a root page visit).
-	 * @param path The request path (always the root /).
+	 * Handles a visit to the authentication page with login information.
+	 * @param request The login attempt request.
+	 * @param path The request path (always /auth).
 	 * @param data The request data.
 	 * @return The response page.
 	 * @throws DBException When a database exception occurs.
 	 * @throws RequestException When an osu! API exception occurs.
 	 */
-	private final FullHttpResponse handleLoginAttempt(FullHttpRequest request, String path, HttpParams data) throws DBException, RequestException{
+	private final FullHttpResponse handleAuthAttempt(FullHttpRequest request, String path, HttpParams data) throws DBException, RequestException{
 		String state = data.getFirst("state");
 		String code = data.getFirst("code");
 		if(state == null || code == null){
-			return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
+			return RequestHandler.badRequest();
 		}else{
-			LoginInfo info = loginSessions.get(state);
+			LoginInfo info = loginSessions.remove(state);
 			if(info == null){
 				loginAttempts.labels("timeout").inc();
 				return RequestHandler.page(Pages.getLoginTimeoutPage());
 			}
-			
+
 			try{
 				Cookie session = SessionManager.updateUserSession(sessionBuilder.build(code).getCurrentUser(), info);
-				FullHttpResponse resp = RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(session)));
+				FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
+				resp.headers().add(HttpHeaderNames.LOCATION, info.redirect());
 				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
 				loginAttempts.labels("success").inc();
 				return resp;
@@ -167,19 +179,45 @@ public class LoginServer{
 			}
 		}
 	}
+
+	/**
+	 * Handles a visit to the root page.
+	 * @param request The login attempt request (or just a root page visit).
+	 * @param path The request path (always the root /).
+	 * @param data The request data.
+	 * @return The response page.
+	 * @throws DBException When a database exception occurs.
+	 */
+	private final FullHttpResponse handleRootVisit(FullHttpRequest request, String path, HttpParams data) throws DBException{
+		return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
+	}
 	
 	/**
 	 * Record with metadata about a login session.
 	 * @author Roan
 	 * @param discordId The discord ID of the user that initiated the login.
+	 * @param redirect The page to redirect to after logging in.
 	 */
-	public static record LoginInfo(OptionalLong discordId){
+	public static record LoginInfo(OptionalLong discordId, String redirect){
+		/**
+		 * The default page to redirect to after successful login.
+		 */
+		private static final String DEFAULT_REDIRECT = "https://preview.roanh.dev/";
 		
 		/**
-		 * Constructs new empty login metadata.
+		 * Default login metadata.
 		 */
 		public LoginInfo(){
-			this(OptionalLong.empty());
+			this(OptionalLong.empty(), DEFAULT_REDIRECT);
+		}
+		
+		/**
+		 * Login metadata with a redirect to a specific page.
+		 * @param domain The instance domain to redirect to.
+		 * @param uri The URI on the instance to redirect to (starting with a /).
+		 */
+		public LoginInfo(String domain, String uri){
+			this(OptionalLong.empty(), "https://" + domain + uri);
 		}
 		
 		/**
@@ -187,7 +225,7 @@ public class LoginServer{
 		 * @param discordId The ID of the Discord user.
 		 */
 		public LoginInfo(long discordId){
-			this(OptionalLong.of(discordId));
+			this(OptionalLong.of(discordId), DEFAULT_REDIRECT);
 		}
 	}
 }

@@ -95,7 +95,11 @@ public final class SessionManager{
 	 * @throws DBException When a database exception occurs.
 	 */
 	protected static Cookie updateUserSession(UserExtended user, LoginInfo info) throws DBException{
-		String session = generateToken();
+		String session = MainDatabase.getUserSession(user.getId());
+		if(session == null){
+			session = generateToken();
+		}
+		
 		MainDatabase.saveUserSession(user, session);
 		
 		if(info.discordId().isPresent()){

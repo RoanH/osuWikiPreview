@@ -151,6 +151,7 @@ public class OsuWiki{
 	/**
 	 * Switches the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
+	 * @param repo The osu! wiki repository name.
 	 * @param ref The reference to switch to.
 	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
@@ -161,7 +162,7 @@ public class OsuWiki{
 	 * @throws WebException When a web exception occurs.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
+	public synchronized static SwitchResult switchBranch(String name, String repo, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
 		try(Timer timer = switchTime.startTimer()){
 			refs.add(ref);
 			
@@ -169,7 +170,7 @@ public class OsuWiki{
 			ObjectId from = updateMaster();
 
 			//reset to the new branch
-			findRemote(name);
+			findRemote(name, repo);
 			forceFetch(name);
 			reset(name, ref);
 			
@@ -329,13 +330,14 @@ public class OsuWiki{
 	/**
 	 * Finds the remote with the given name or creates it.
 	 * @param name The name of the remote.
+	 * @param repo The osu! wiki repository name.
 	 * @throws GitAPIException When a git exception occurs.
 	 */
-	private static void findRemote(String name) throws GitAPIException{
+	private static void findRemote(String name, String repo) throws GitAPIException{
 		try{
 			if(!remotes.contains(name)){
 				if(git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().isEmpty()){
-					git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/osu-wiki.git")).call();
+					git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/" + repo + ".git")).call();
 				}
 				
 				remotes.add(name);

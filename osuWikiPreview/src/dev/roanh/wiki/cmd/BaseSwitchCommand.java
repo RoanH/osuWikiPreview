@@ -77,7 +77,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 		try{
 			handleSwitch(web, args, event);
 		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
-			event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
+			event.reply("Could not find the wiki repository for the given namespace.");
 			ignore.printStackTrace();
 		}catch(JGitInternalException ignore){
 			if(ignore.getMessage().startsWith("Invalid ref name")){
@@ -104,8 +104,9 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws DBException When a database exception occurs.
 	 * @throws WebException When a web exception occurs.
 	 * @throws MergeConflictException When a merge is requested which results in a conflict.
+	 * @throws GitHubException When a GitHub exception occurs.
 	 */
-	protected abstract void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException;
+	protected abstract void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException, GitHubException;
 	
 	/**
 	 * Switches the active preview branch by pushing a file newspost file to ppy/master.
@@ -137,7 +138,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 * @throws MergeConflictException When a merge is requested which results in a conflict.
 	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRef(), state.hasMaster(), web));
+		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRepository(), state.getRef(), state.hasMaster(), web));
 	}
 
 	/**

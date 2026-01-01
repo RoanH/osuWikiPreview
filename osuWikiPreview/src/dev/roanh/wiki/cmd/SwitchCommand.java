@@ -20,6 +20,7 @@
 package dev.roanh.wiki.cmd;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 
@@ -30,8 +31,11 @@ import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.data.WebState;
+import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.exception.GitHubUserNotFoundException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
+import dev.roanh.wiki.github.GitHub;
 
 /**
  * Command to switch the active preview branch.
@@ -45,13 +49,13 @@ public class SwitchCommand extends BaseSwitchCommand{
 	public SwitchCommand(){
 		super("switch", "Switch the preview site to a different branch.");
 		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
-		addOptionOptionalString("namespace", "The user or organisation the osu-wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
+		addOptionOptionalString("user", "The GitHub user the osu! wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 		addOptionOptionalBoolean("redate", "Redate future news to the current date (defaults to true).");
 		addOptionOptionalBoolean("master", "If true ppy/master will be merged into the given target ref (defaults to false).");
 	}
 	
 	@Override
-	public void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
+	public void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException, GitHubException{
 		String ref = args.get("ref").getAsString();
 		String name = null;
 		if(args.has("namespace")){
@@ -66,6 +70,27 @@ public class SwitchCommand extends BaseSwitchCommand{
 			}
 		}
 
-		switchBranch(event, WebState.forRef(name, ref, args.mapToBoolean("redate").orElse(true), args.mapToBoolean("master").orElse(false)), web, args);
+		try{
+			Optional<String> repo = GitHub.instance().getWikiFork(name);
+			if(repo.isEmpty()){
+				event.reply("Could not find an osu! wiki fork for the given GitHub user.");
+				return;
+			}
+
+			switchBranch(
+				event,
+				WebState.forRef(
+					name,
+					repo.get(),
+					ref,
+					args.mapToBoolean("redate").orElse(true),
+					args.mapToBoolean("master").orElse(false)
+				),
+				web,
+				args
+			);
+		}catch (GitHubUserNotFoundException ignore) {
+			event.reply("Could not find a GitHub user with the given name.");
+		}
 	}
 }

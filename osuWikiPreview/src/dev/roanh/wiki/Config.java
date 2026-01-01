@@ -74,6 +74,10 @@ public record Config(Configuration config, String domain){
 		return new DBContext(config.readString("db-url") + schema, "osuweb", config.readString("db-pass"));
 	}
 	
+	/**
+	 * Gets the GitHub API access token.
+	 * @return The GitHub API access token.
+	 */
 	public String getGitHubToken(){
 		return config.readString("github-token");
 	}

@@ -48,6 +48,7 @@ import com.google.gson.JsonSyntaxException;
 
 import dev.roanh.wiki.Main;
 import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.exception.GitHubUserNotFoundException;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 import dev.roanh.wiki.github.obj.IssueState;
 import dev.roanh.wiki.github.obj.UserType;
@@ -107,14 +108,19 @@ public final class GitHub{
 	public static final GitHub instance(){
 		return instance;
 	}
+	
+	public static void main(String[] args) throws GitHubException{
+		System.out.println(instance.getWikiFork("ppy"));
+	}
 
 	/**
 	 * Attempts to find the name of the osu! wiki fork for the given GitHub user.
 	 * @param user The GitHub user to find the osu! wiki fork for.
 	 * @return The name of the osu! wiki fork for the given user if found.
 	 * @throws GitHubException When some GitHub API exception occurs.
+	 * @throws GitHubUserNotFoundException When the given user does not exist (or is an organisation).
 	 */
-	public final Optional<String> getWikiFork(String user) throws GitHubException{
+	public final Optional<String> getWikiFork(String user) throws GitHubException, GitHubUserNotFoundException{
 		try{
 			JsonObject response = gson.fromJson(
 				executeGraphQL(
@@ -139,12 +145,17 @@ public final class GitHub{
 					    }
 					  }
 					}
-					""".formatted(user)
+					""".formatted(user.replace("\"", "\\\""))
 				),
 				JsonObject.class
 			);
-
-			for(JsonElement item : response.getAsJsonObject("data").getAsJsonObject("user").getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
+			
+			JsonElement userData = response.getAsJsonObject("data").get("user");
+			if(userData.isJsonNull()){
+				throw new GitHubUserNotFoundException(user);
+			}
+			
+			for(JsonElement item : userData.getAsJsonObject().getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
 				JsonObject obj = item.getAsJsonObject();
 				if(obj.getAsJsonObject("parent").get("nameWithOwner").getAsString().equals("ppy/osu-wiki")){
 					return Optional.of(obj.get("name").getAsString());

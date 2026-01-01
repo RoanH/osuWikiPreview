@@ -199,12 +199,23 @@ public class LoginServer{
 	 * @param redirect The page to redirect to after logging in.
 	 */
 	public static record LoginInfo(OptionalLong discordId, String redirect){
+		/**
+		 * The default page to redirect to after successful login.
+		 */
 		private static final String DEFAULT_REDIRECT = "https://preview.roanh.dev/";
 		
+		/**
+		 * Default login metadata.
+		 */
 		public LoginInfo(){
 			this(OptionalLong.empty(), DEFAULT_REDIRECT);
 		}
 		
+		/**
+		 * Login metadata with a redirect to a specific page.
+		 * @param domain The instance domain to redirect to.
+		 * @param uri The URI on the instance to redirect to (starting with a /).
+		 */
 		public LoginInfo(String domain, String uri){
 			this(OptionalLong.empty(), "https://" + domain + uri);
 		}

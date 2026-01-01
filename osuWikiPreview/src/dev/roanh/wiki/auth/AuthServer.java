@@ -30,7 +30,10 @@ import dev.roanh.infinity.io.netty.http.WebServer;
 import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
+import dev.roanh.wiki.InstanceManager;
 import dev.roanh.wiki.Main;
+import dev.roanh.wiki.data.Instance;
+import dev.roanh.wiki.data.User;
 
 /**
  * NGINX authentication server.
@@ -87,9 +90,8 @@ public class AuthServer{
 	 * @see #handleAuthRequest(FullHttpRequest, String, HttpParams)
 	 */
 	private FullHttpResponse handleLoginErrorPage(FullHttpRequest request, String path, HttpParams data) throws DBException{
-		System.out.println("handle login page: " + request);
 		return RequestHandler.page(Pages.getPrivateModePage(
-			null,//SessionManager.getUserFromSession(request),
+			SessionManager.getUserFromSession(request),
 			request.headers().get(INSTANCE_HEADER),
 			request.headers().get(ORIGINAL_URI_HEADER)
 		));
@@ -105,28 +107,24 @@ public class AuthServer{
 	 * @see #handleLoginErrorPage(FullHttpRequest, String, HttpParams)
 	 */
 	private FullHttpResponse handleAuthRequest(FullHttpRequest request, String path, HttpParams data) throws DBException{
-		
-		return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
-		
-		
-//		Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
-//		if(!instance.isPrivateMode()){
-//			authRequests.labels("public").inc();
-//			return RequestHandler.ok();
-//		}
-//
-//		User user = SessionManager.getUserFromSession(request);
-//		if(user == null){
-//			authRequests.labels("private_not_logged_in").inc();
-//			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
-//		}
-//
-//		if(instance.getAccessList().contains(user)){
-//			authRequests.labels("private_on_acl").inc();
-//			return RequestHandler.ok();
-//		}else{
-//			authRequests.labels("private_not_on_acl").inc();
-//			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
-//		}
+		Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
+		if(!instance.isPrivateMode()){
+			authRequests.labels("public").inc();
+			return RequestHandler.ok();
+		}
+
+		User user = SessionManager.getUserFromSession(request);
+		if(user == null){
+			authRequests.labels("private_not_logged_in").inc();
+			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+		}
+
+		if(instance.getAccessList().contains(user)){
+			authRequests.labels("private_on_acl").inc();
+			return RequestHandler.ok();
+		}else{
+			authRequests.labels("private_not_on_acl").inc();
+			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+		}
 	}
 }

@@ -87,7 +87,8 @@ public class LoginServer{
 		server = new WebServer(config.getLoginServerPort());
 		server.setExceptionHandler(t->Main.client.logError(t, "[LoginServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
 		server.createContext("/login", true, this::handleLoginRequest);
-		server.createContext("/", true, this::handleLoginAttempt);
+		server.createContext("/auth", true, this::handleAuthAttempt);
+		server.createContext("/", true, this::handleRootVisit);
 		
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("css/style.css")){
 			server.createContext("/style.css", true, RequestHandler.sendPage(in));
@@ -143,7 +144,6 @@ public class LoginServer{
 		return resp;
 	}
 	
-	//TODO move code handling to /auth
 	/**
 	 * Handles a visit to the authentication page with login information.
 	 * @param request The login attempt request.
@@ -167,7 +167,8 @@ public class LoginServer{
 
 			try{
 				Cookie session = SessionManager.updateUserSession(sessionBuilder.build(code).getCurrentUser(), info);
-				FullHttpResponse resp = RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(session)));//TODO redirect
+				FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
+				resp.headers().add(HttpHeaderNames.LOCATION, info.redirect());
 				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
 				loginAttempts.labels("success").inc();
 				return resp;
@@ -179,40 +180,16 @@ public class LoginServer{
 		}
 	}
 
-	//TODO move code handling to /auth
 	/**
-	 * Handles a visit to the root page potentially with login information.
+	 * Handles a visit to the root page.
 	 * @param request The login attempt request (or just a root page visit).
 	 * @param path The request path (always the root /).
 	 * @param data The request data.
 	 * @return The response page.
 	 * @throws DBException When a database exception occurs.
-	 * @throws RequestException When an osu! API exception occurs.
 	 */
-	private final FullHttpResponse handleLoginAttempt(FullHttpRequest request, String path, HttpParams data) throws DBException, RequestException{
-		String state = data.getFirst("state");
-		String code = data.getFirst("code");
-		if(state == null || code == null){
-			return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
-		}else{
-			LoginInfo info = loginSessions.get(state);
-			if(info == null){
-				loginAttempts.labels("timeout").inc();
-				return RequestHandler.page(Pages.getLoginTimeoutPage());
-			}
-			
-			try{
-				Cookie session = SessionManager.updateUserSession(sessionBuilder.build(code).getCurrentUser(), info);
-				FullHttpResponse resp = RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(session)));
-				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
-				loginAttempts.labels("success").inc();
-				return resp;
-			}catch(InsufficientPermissionsException ignore){
-				//user changed the requested scopes
-				loginAttempts.labels("invalid").inc();
-				return RequestHandler.badRequest();
-			}
-		}
+	private final FullHttpResponse handleRootVisit(FullHttpRequest request, String path, HttpParams data) throws DBException{
+		return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
 	}
 	
 	/**

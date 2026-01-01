@@ -24,6 +24,7 @@ import java.util.List;
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.db.concurrent.DBExecutorService;
 import dev.roanh.infinity.db.concurrent.DBExecutors;
+import dev.roanh.infinity.db.concurrent.Result;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.data.GroupSet;
 import dev.roanh.wiki.data.Instance;
@@ -108,6 +109,16 @@ public final class MainDatabase{
 				rs.getBytes("acl")
 			);
 		});
+	}
+	
+	/**
+	 * Gets the session of the given user.
+	 * @param user The user to get the session of.
+	 * @return The session for the given user if found, else null.
+	 * @throws DBException When a database exception occurs.
+	 */
+	public static String getUserSession(int user) throws DBException{
+		return executor.selectFirst("SELECT `session` FROM users WHERE osu = ?", Result.STRING, user).orElse(null);
 	}
 	
 	/**

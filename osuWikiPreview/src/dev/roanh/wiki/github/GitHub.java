@@ -107,84 +107,58 @@ public final class GitHub{
 	public static final GitHub instance(){
 		return instance;
 	}
-	
-	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException{
-		
-//
-//		String val = instance().executeGraphQL("""
-//		    query {
-//  user(login: "%s") {
-//    repositories(first: 100, isFork: true,
-//      ownerAffiliations: OWNER,
-//      orderBy: { field: PUSHED_AT, direction: DESC }) {
-//      nodes{
-//        name,
-//        parent {
-//          nameWithOwner
-//        }
-//      }
-//    }
-//  }
-//}
-//
-//		    """.formatted("RoanH")
-//			);
-//
-//		System.out.println(val);
-		
-		//{"data":{"user":{"repositories":{"nodes":[{"name":"osu-wiki","parent":{"nameWithOwner":"ppy/osu-wiki"}},{"name":"pircbotx","parent":{"nameWithOwner":"pircbotx/pircbotx"}},{"name":"jgit","parent":{"nameWithOwner":"eclipse-jgit/jgit"}},{"name":"immutable-xjc","parent":{"nameWithOwner":"sabomichal/immutable-xjc"}},{"name":"JDA","parent":{"nameWithOwner":"discord-jda/JDA"}},{"name":"NGLTree","parent":{"nameWithOwner":"bartwesselink/dbl-visualization"}},{"name":"osu-web","parent":{"nameWithOwner":"ppy/osu-web"}}]}}}}
 
-		System.out.println(instance.getWikiFork("RoanH"));
-	}
-	
-	
-	
-	
-	
-	//TODO private with PR warning?
-	
-	public final Optional<String> getWikiFork(String user) throws IOException, InterruptedException, URISyntaxException{
-		JsonObject response = gson.fromJson(
-			executeGraphQL(
-				"""
-				query{
-				  user(login: "%s"){
-				    repositories(
-				      first: 100,
-				      isFork: true,
-				      ownerAffiliations: OWNER,
-				      orderBy: {
-				        field: PUSHED_AT,
-				        direction: DESC
-				      }
-				    ){
-				      nodes{
-				        name,
-				        parent{
-				          nameWithOwner
-				        }
-				      }
-				    }
-				  }
+	/**
+	 * Attempts to find the name of the osu! wiki fork for the given GitHub user.
+	 * @param user The GitHub user to find the osu! wiki fork for.
+	 * @return The name of the osu! wiki fork for the given user if found.
+	 * @throws GitHubException When some GitHub API exception occurs.
+	 */
+	public final Optional<String> getWikiFork(String user) throws GitHubException{
+		try{
+			JsonObject response = gson.fromJson(
+				executeGraphQL(
+					"""
+					query{
+					  user(login: "%s"){
+					    repositories(
+					      first: 100,
+					      isFork: true,
+					      ownerAffiliations: OWNER,
+					      orderBy: {
+					        field: PUSHED_AT,
+					        direction: DESC
+					      }
+					    ){
+					      nodes{
+					        name,
+					        parent{
+					          nameWithOwner
+					        }
+					      }
+					    }
+					  }
+					}
+					""".formatted(user)
+				),
+				JsonObject.class
+			);
+
+			for(JsonElement item : response.getAsJsonObject("data").getAsJsonObject("user").getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
+				JsonObject obj = item.getAsJsonObject();
+				if(obj.getAsJsonObject("parent").get("nameWithOwner").getAsString().equals("ppy/osu-wiki")){
+					return Optional.of(obj.get("name").getAsString());
 				}
-				""".formatted(user)
-			),
-			JsonObject.class
-		);
-		
-		for(JsonElement item : response.getAsJsonObject("data").getAsJsonObject("user").getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
-			JsonObject obj = item.getAsJsonObject();
-			if(obj.getAsJsonObject("parent").get("nameWithOwner").getAsString().equals("ppy/osu-wiki")){
-				return Optional.of(obj.get("name").getAsString());
 			}
-		}
 
-		return Optional.empty();
+			return Optional.empty();
+		}catch(InterruptedException ignore){
+			Thread.currentThread().interrupt();
+			throw new GitHubException(ignore);
+		}catch(JsonSyntaxException | URISyntaxException | IOException ignore){
+			throw new GitHubException(ignore);
+		}
 	}
-	
-	
-	
-	
 
 	/**
 	 * Attempts to find an open PR for the given commit.
@@ -206,18 +180,34 @@ public final class GitHub{
 		}
 	}
 	
-	private String executeGraphQL(String query) throws IOException, InterruptedException, URISyntaxException{
+	/**
+	 * Executes a GitHub GraphQL API query.
+	 * @param query The GraphQL query to execute.
+	 * @return The JSON result of the query.
+	 * @throws URISyntaxException When the given URL is invalid.
+	 * @throws IOException When an IOException occurs.
+	 * @throws InterruptedException When the current thread is interrupted.
+	 */
+	private final String executeGraphQL(String query) throws IOException, InterruptedException, URISyntaxException{
 		JsonObject obj = new JsonObject();
 		obj.addProperty("query", query);
 		return executePost("graphql", obj.toString());
 	}
 	
-	private String executePost(String path, String body) throws IOException, InterruptedException, URISyntaxException{
+	/**
+	 * Executes a HTTP POST request against the given endpoint.
+	 * @param path The endpoint to request.
+	 * @param body The JSON payload.
+	 * @return The JSON response payload.
+	 * @throws URISyntaxException When the given URL is invalid.
+	 * @throws IOException When an IOException occurs.
+	 * @throws InterruptedException When the current thread is interrupted.
+	 */
+	private final String executePost(String path, String body) throws IOException, InterruptedException, URISyntaxException{
 		Builder request = HttpRequest.newBuilder(new URI(baseUrl + path));
 		request.POST(BodyPublishers.ofString(body));
 		request.header("Accept", "application/vnd.github.v3+json");
 		request.header("Authorization", "bearer " + token);
-		
 		
 		HttpResponse<String> response = client.send(
 			request.build(),

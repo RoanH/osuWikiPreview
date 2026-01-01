@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
@@ -57,7 +56,7 @@ public class GitHubTest{
 	}
 	
 	@Test
-	public void getWikiFork() throws IOException, InterruptedException, URISyntaxException{
+	public void getWikiFork() throws GitHubException{
 		Optional<String> fork = github.getWikiFork("RoanH");
 		assertTrue(fork.isPresent());
 		assertEquals("osu-wiki-edit", fork.get());

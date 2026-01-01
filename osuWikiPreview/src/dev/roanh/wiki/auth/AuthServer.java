@@ -49,16 +49,14 @@ public class AuthServer{
 	 * The header used to pass the instance that was attempted to be accessed.
 	 */
 	private static final String INSTANCE_HEADER = "Instance-Domain";
+	/**
+	 * The header used to pass the original URI that was attempted to be accessed.
+	 */
 	private static final String ORIGINAL_URI_HEADER = "X-Original-URI";
 	/**
 	 * The HTTP server used to communicate with NGINX.
 	 */
 	private final WebServer server;
-	
-	public static void main(String[] args){
-		AuthServer server = new AuthServer(1234);
-		server.start();
-	}
 	
 	/**
 	 * Creates a new authentication server running on the given port.

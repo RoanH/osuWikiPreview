@@ -44,7 +44,13 @@ public final class Pages{
 	 * Template HTML page with the general structure.
 	 */
 	private static final String TEMPLATE;
+	/**
+	 * Name of the parameter used to pass the instance identity (login redirect).
+	 */
 	public static final String REDIRECT_INSTANCE_PARAM = "instance";
+	/**
+	 * Name of the parameter used to pass the original URI (login redirect).
+	 */
 	public static final String REDIRECT_URI_PARAM = "uri";
 
 	/**

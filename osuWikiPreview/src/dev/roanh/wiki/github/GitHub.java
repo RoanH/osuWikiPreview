@@ -24,6 +24,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
@@ -40,8 +42,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
+import dev.roanh.wiki.Main;
 import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 import dev.roanh.wiki.github.obj.IssueState;
@@ -67,25 +72,32 @@ public final class GitHub{
 	/**
 	 * The instance of the GitHub API.
 	 */
-	private static final GitHub instance = new GitHub();
+	private static final GitHub instance = new GitHub(Main.config.getGitHubToken());
 	/**
 	 * The base url for the GitHub API.
 	 */
 	private final String baseUrl;
+	/**
+	 * The GitHub API access token.
+	 */
+	private final String token;
 	
 	/**
 	 * Constructs a new GitHub API instance.
+	 * @param token The GitHub API token.
 	 */
-	private GitHub(){
-		this("https://api.github.com/");
+	private GitHub(String token){
+		this("https://api.github.com/", token);
 	}
 	
 	/**
 	 * Constructs a new GitHub API instance.
 	 * @param baseUrl The GitHub API base endpoint.
+	 * @param token The GitHub API token.
 	 */
-	public GitHub(String baseUrl){
+	public GitHub(String baseUrl, String token){
 		this.baseUrl = baseUrl;
+		this.token = token;
 	}
 	
 	/**
@@ -95,6 +107,84 @@ public final class GitHub{
 	public static final GitHub instance(){
 		return instance;
 	}
+	
+	public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException{
+		
+		
+		String val = instance().executeGraphQL("""
+		    query {
+  user(login: "%s") {
+    repositories(first: 100, isFork: true,
+      ownerAffiliations: OWNER,
+      orderBy: { field: PUSHED_AT, direction: DESC }) {
+      nodes{
+        name,
+        parent {
+          nameWithOwner
+        }
+      }
+    }
+  }
+}
+
+		    """.formatted("RoanH")
+			);
+		
+		System.out.println(val);
+		
+		//{"data":{"user":{"repositories":{"nodes":[{"name":"osu-wiki","parent":{"nameWithOwner":"ppy/osu-wiki"}},{"name":"pircbotx","parent":{"nameWithOwner":"pircbotx/pircbotx"}},{"name":"jgit","parent":{"nameWithOwner":"eclipse-jgit/jgit"}},{"name":"immutable-xjc","parent":{"nameWithOwner":"sabomichal/immutable-xjc"}},{"name":"JDA","parent":{"nameWithOwner":"discord-jda/JDA"}},{"name":"NGLTree","parent":{"nameWithOwner":"bartwesselink/dbl-visualization"}},{"name":"osu-web","parent":{"nameWithOwner":"ppy/osu-web"}}]}}}}
+
+		
+	}
+	
+	
+	
+	
+	
+	//TODO private with PR warning?
+	
+	public final Optional<String> getWikiFork(String user) throws IOException, InterruptedException, URISyntaxException{
+		JsonObject response = gson.fromJson(
+			executeGraphQL(
+				"""
+				query{
+				  user(login: "%s"){
+				    repositories(
+				      first: 100,
+				      isFork: true,
+				      ownerAffiliations: OWNER,
+				      orderBy: {
+				        field: PUSHED_AT,
+				        direction: DESC
+				      }
+				    ){
+				      nodes{
+				        name,
+				        parent{
+				          nameWithOwner
+				        }
+				      }
+				    }
+				  }
+				}
+				""".formatted(user)
+			),
+			JsonObject.class
+		);
+		
+		for(JsonElement item : response.getAsJsonObject("user").getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
+			JsonObject obj = item.getAsJsonObject();
+			if(obj.getAsJsonObject("parent").get("nameWithOwner").getAsString().equals("ppy/osu-wiki")){
+				return Optional.of(obj.get("name").getAsString());
+			}
+		}
+
+		return Optional.empty();
+	}
+	
+	
+	
+	
 
 	/**
 	 * Attempts to find an open PR for the given commit.
@@ -114,6 +204,31 @@ public final class GitHub{
 		}catch(JsonSyntaxException | URISyntaxException | IOException ignore){
 			throw new GitHubException(ignore);
 		}
+	}
+	
+	private String executeGraphQL(String query) throws IOException, InterruptedException, URISyntaxException{
+		JsonObject obj = new JsonObject();
+		obj.addProperty("query", query);
+		return executePost("graphql", obj.toString());
+	}
+	
+	private String executePost(String path, String body) throws IOException, InterruptedException, URISyntaxException{
+		Builder request = HttpRequest.newBuilder(new URI(baseUrl + path));
+		request.POST(BodyPublishers.ofString(body));
+		request.header("Accept", "application/vnd.github.v3+json");
+		request.header("Authorization", "bearer " + token);
+		
+		
+		HttpResponse<String> response = client.send(
+			request.build(),
+			BodyHandlers.ofString()
+		);
+		
+		if(response.statusCode() != 200){
+			throw new IOException("Received status " + response.statusCode() + " from GitHub.");
+		}
+		
+		return response.body();
 	}
 	
 	/**

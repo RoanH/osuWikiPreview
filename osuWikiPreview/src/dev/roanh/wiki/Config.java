@@ -74,6 +74,10 @@ public record Config(Configuration config, String domain){
 		return new DBContext(config.readString("db-url") + schema, "osuweb", config.readString("db-pass"));
 	}
 	
+	public String getGitHubToken(){
+		return config.readString("github-token");
+	}
+	
 	/**
 	 * Gets the port the NGINX authentication server should run on.
 	 * @return The port for the authentication server.

@@ -202,7 +202,7 @@ public class LoginServer{
 		/**
 		 * The default page to redirect to after successful login.
 		 */
-		private static final String DEFAULT_REDIRECT = "https://preview.roanh.dev/";
+		private static final String DEFAULT_REDIRECT = "https://" + Main.config.domain() + "/";
 		
 		/**
 		 * Default login metadata.

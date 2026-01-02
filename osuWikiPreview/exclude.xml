@@ -17,11 +17,6 @@
   </Match>
   
   <Match>
-    <Class name="dev.roanh.wiki.Main"/>
-    <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
-  </Match>
-  
-  <Match>
     <Or>
       <Class name="dev.roanh.wiki.github.WebhookHandler"/>
       <Class name="dev.roanh.wiki.cmd.InstanceCommand"/>

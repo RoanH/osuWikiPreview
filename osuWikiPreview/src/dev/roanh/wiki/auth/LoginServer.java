@@ -131,7 +131,8 @@ public class LoginServer{
 	 * @return The HTTP response.
 	 */
 	private final FullHttpResponse handleLoginRequest(FullHttpRequest request, String path, HttpParams data){
-		OsuWeb instance = InstanceManager.getInstanceByDomain(data.getFirst(Pages.REDIRECT_INSTANCE_PARAM));
+		String domain = data.getFirst(Pages.REDIRECT_INSTANCE_PARAM);
+		OsuWeb instance = domain == null ? null : InstanceManager.getInstanceByDomain(domain);
 		String uri = data.getFirst(Pages.REDIRECT_URI_PARAM);
 		
 		FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);

@@ -17,17 +17,6 @@
   </Match>
   
   <Match>
-    <Class name="dev.roanh.wiki.Main"/>
-    <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
-  </Match>
-  
-  <Match>
-    <!-- For testing and this is not a true singleton -->
-    <Class name="dev.roanh.wiki.github.GitHub"/>
-    <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
-  </Match>
-  
-  <Match>
     <Or>
       <Class name="dev.roanh.wiki.github.WebhookHandler"/>
       <Class name="dev.roanh.wiki.cmd.InstanceCommand"/>
@@ -38,6 +27,13 @@
   <Match>
     <!-- Should be HTML compliant not platform specific -->
     <Class name="dev.roanh.wiki.auth.Pages"/>
+    <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+  </Match>
+  
+  <Match>
+    <!-- Should be JSON compliant not platform specific -->
+    <Class name="dev.roanh.wiki.github.GitHub"/>
+    <Method name="getWikiFork"/>
     <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
   </Match>
   

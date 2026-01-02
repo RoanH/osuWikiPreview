@@ -75,6 +75,14 @@ public record Config(Configuration config, String domain){
 	}
 	
 	/**
+	 * Gets the GitHub API access token.
+	 * @return The GitHub API access token.
+	 */
+	public String getGitHubToken(){
+		return config.readString("github-token");
+	}
+	
+	/**
 	 * Gets the port the NGINX authentication server should run on.
 	 * @return The port for the authentication server.
 	 */

@@ -1,0 +1,45 @@
+{
+    "data": {
+        "user": {
+            "repositories": {
+                "nodes": [{
+                        "name": "pircbotx",
+                        "parent": {
+                            "nameWithOwner": "pircbotx/pircbotx"
+                        }
+                    }, {
+                        "name": "osu-wiki-edit",
+                        "parent": {
+                            "nameWithOwner": "ppy/osu-wiki"
+                        }
+                    }, {
+                        "name": "jgit",
+                        "parent": {
+                            "nameWithOwner": "eclipse-jgit/jgit"
+                        }
+                    }, {
+                        "name": "immutable-xjc",
+                        "parent": {
+                            "nameWithOwner": "sabomichal/immutable-xjc"
+                        }
+                    }, {
+                        "name": "JDA",
+                        "parent": {
+                            "nameWithOwner": "discord-jda/JDA"
+                        }
+                    }, {
+                        "name": "NGLTree",
+                        "parent": {
+                            "nameWithOwner": "bartwesselink/dbl-visualization"
+                        }
+                    }, {
+                        "name": "osu-web",
+                        "parent": {
+                            "nameWithOwner": "ppy/osu-web"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

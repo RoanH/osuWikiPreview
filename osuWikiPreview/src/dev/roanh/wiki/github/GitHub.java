@@ -24,6 +24,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
@@ -40,9 +42,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.exception.GitHubUserNotFoundException;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 import dev.roanh.wiki.github.obj.IssueState;
 import dev.roanh.wiki.github.obj.UserType;
@@ -65,35 +70,88 @@ public final class GitHub{
 	 */
 	private static final Gson gson;
 	/**
-	 * The instance of the GitHub API.
-	 */
-	private static final GitHub instance = new GitHub();
-	/**
 	 * The base url for the GitHub API.
 	 */
 	private final String baseUrl;
+	/**
+	 * The GitHub API access token.
+	 */
+	private final String token;
 	
 	/**
 	 * Constructs a new GitHub API instance.
+	 * @param token The GitHub API token.
 	 */
-	private GitHub(){
-		this("https://api.github.com/");
+	public GitHub(String token){
+		this("https://api.github.com/", token);
 	}
 	
 	/**
 	 * Constructs a new GitHub API instance.
 	 * @param baseUrl The GitHub API base endpoint.
+	 * @param token The GitHub API token.
 	 */
-	public GitHub(String baseUrl){
+	public GitHub(String baseUrl, String token){
 		this.baseUrl = baseUrl;
+		this.token = token;
 	}
 	
 	/**
-	 * Gets the instance of the GitHub API.
-	 * @return The GitHub API instance.
+	 * Attempts to find the name of the osu! wiki fork for the given GitHub user.
+	 * @param user The GitHub user to find the osu! wiki fork for.
+	 * @return The name of the osu! wiki fork for the given user if found.
+	 * @throws GitHubException When some GitHub API exception occurs.
+	 * @throws GitHubUserNotFoundException When the given user does not exist (or is an organisation).
 	 */
-	public static final GitHub instance(){
-		return instance;
+	public final Optional<String> getWikiFork(String user) throws GitHubException, GitHubUserNotFoundException{
+		try{
+			JsonObject response = gson.fromJson(
+				executeGraphQL(
+					"""
+					query{
+					  user(login: "%s"){
+					    repositories(
+					      first: 100,
+					      isFork: true,
+					      ownerAffiliations: OWNER,
+					      orderBy: {
+					        field: PUSHED_AT,
+					        direction: DESC
+					      }
+					    ){
+					      nodes{
+					        name,
+					        parent{
+					          nameWithOwner
+					        }
+					      }
+					    }
+					  }
+					}
+					""".formatted(user.replace("\"", "\\\""))
+				),
+				JsonObject.class
+			);
+			
+			JsonElement userData = response.getAsJsonObject("data").get("user");
+			if(userData.isJsonNull()){
+				throw new GitHubUserNotFoundException(user);
+			}
+			
+			for(JsonElement item : userData.getAsJsonObject().getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){
+				JsonObject obj = item.getAsJsonObject();
+				if(obj.getAsJsonObject("parent").get("nameWithOwner").getAsString().equals("ppy/osu-wiki")){
+					return Optional.of(obj.get("name").getAsString());
+				}
+			}
+
+			return Optional.empty();
+		}catch(InterruptedException ignore){
+			Thread.currentThread().interrupt();
+			throw new GitHubException(ignore);
+		}catch(JsonSyntaxException | URISyntaxException | IOException ignore){
+			throw new GitHubException(ignore);
+		}
 	}
 
 	/**
@@ -114,6 +172,47 @@ public final class GitHub{
 		}catch(JsonSyntaxException | URISyntaxException | IOException ignore){
 			throw new GitHubException(ignore);
 		}
+	}
+	
+	/**
+	 * Executes a GitHub GraphQL API query.
+	 * @param query The GraphQL query to execute.
+	 * @return The JSON result of the query.
+	 * @throws URISyntaxException When the given URL is invalid.
+	 * @throws IOException When an IOException occurs.
+	 * @throws InterruptedException When the current thread is interrupted.
+	 */
+	private final String executeGraphQL(String query) throws IOException, InterruptedException, URISyntaxException{
+		JsonObject obj = new JsonObject();
+		obj.addProperty("query", query);
+		return executePost("graphql", obj.toString());
+	}
+	
+	/**
+	 * Executes a HTTP POST request against the given endpoint.
+	 * @param path The endpoint to request.
+	 * @param body The JSON payload.
+	 * @return The JSON response payload.
+	 * @throws URISyntaxException When the given URL is invalid.
+	 * @throws IOException When an IOException occurs.
+	 * @throws InterruptedException When the current thread is interrupted.
+	 */
+	private final String executePost(String path, String body) throws IOException, InterruptedException, URISyntaxException{
+		Builder request = HttpRequest.newBuilder(new URI(baseUrl + path));
+		request.POST(BodyPublishers.ofString(body));
+		request.header("Accept", "application/vnd.github.v3+json");
+		request.header("Authorization", "bearer " + token);
+		
+		HttpResponse<String> response = client.send(
+			request.build(),
+			BodyHandlers.ofString()
+		);
+		
+		if(response.statusCode() != 200){
+			throw new IOException("Received status " + response.statusCode() + " from GitHub.");
+		}
+		
+		return response.body();
 	}
 	
 	/**

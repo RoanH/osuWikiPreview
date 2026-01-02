@@ -58,8 +58,8 @@ public class SwitchCommand extends BaseSwitchCommand{
 	public void handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws MergeConflictException, GitAPIException, IOException, DBException, WebException, GitHubException{
 		String ref = args.get("ref").getAsString();
 		String name = null;
-		if(args.has("namespace")){
-			name = args.get("namespace").getAsString();
+		if(args.has("user")){
+			name = args.get("user").getAsString();
 		}else{
 			int idx = ref.indexOf(':');
 			if(idx <= 0 || idx == ref.length() - 1){

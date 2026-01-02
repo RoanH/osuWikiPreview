@@ -104,7 +104,7 @@ public class WebState{
 	 * @return The GitHub page for the namespace and reference.
 	 */
 	public String getGitHubTree(){
-		return "https://github.com/" + namespace + "/osu-wiki/tree/" + ref;
+		return "https://github.com/" + namespace + "/" + repo + "/tree/" + ref;
 	}
 	
 	/**

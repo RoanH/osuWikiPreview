@@ -73,7 +73,7 @@ public class GitHubTest{
 	
 	@Test
 	public void getPullRequestForCommit() throws GitHubException{
-		Optional<GitHubPullRequest> found = github.getPullRequestForCommit("itsmehoaq", "1ea83f97f8fa13a679417e9687b1305215199005");
+		Optional<GitHubPullRequest> found = github.getPullRequestForCommit("itsmehoaq", "osu-wiki", "1ea83f97f8fa13a679417e9687b1305215199005");
 		assertTrue(found.isPresent());
 		
 		GitHubPullRequest pr = found.get();

@@ -150,7 +150,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 */
 	private void switchBranch(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
 		if(!state.isInternalBranch()){
-			retrievePullRequest(state.getNamespace(), diff.head()).ifPresent(state::setPullRequest);
+			retrievePullRequest(state.getNamespace(), state.getRepository(), diff.head()).ifPresent(state::setPullRequest);
 		}
 		
 		state.refreshClaim(DEFAULT_CLAIM_TIME);
@@ -218,12 +218,13 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	/**
 	 * Attempts to retrieve pull request information for the given commit.
 	 * @param namespace The namespace to look under.
+	 * @param repo The name of the repository.
 	 * @param sha The commit hash to find.
 	 * @return If found information about the pull requested associated with the commit.
 	 */
-	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String sha){
+	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String repo, String sha){
 		try{
-			return Main.githubAPI.getPullRequestForCommit(namespace, sha);
+			return Main.githubAPI.getPullRequestForCommit(namespace, repo, sha);
 		}catch(GitHubException e){
 			Main.client.logError(e, "[BaseSwitchCommand] Failed to retrieve PR status from GitHub", Severity.MINOR, Priority.LOW, Detail.of("Namespace", namespace), Detail.of("Commit", sha));
 			//missing PR info should not hold back an embed (for now)

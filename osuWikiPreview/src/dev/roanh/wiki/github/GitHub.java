@@ -157,14 +157,15 @@ public final class GitHub{
 	/**
 	 * Attempts to find an open PR for the given commit.
 	 * @param namespace The namespace the commit belongs to.
+	 * @param repo The name of the repository.
 	 * @param sha The hash of the commit to find.
 	 * @return An open PR with the given commit.
 	 * @throws GitHubException When some GitHub API exception occurs.
 	 */
-	public final Optional<GitHubPullRequest> getPullRequestForCommit(String namespace, String sha) throws GitHubException{
+	public final Optional<GitHubPullRequest> getPullRequestForCommit(String namespace, String repo, String sha) throws GitHubException{
 		try{
 			return Arrays.stream(
-				gson.fromJson(executeGet("repos/" + namespace + "/osu-wiki/commits/" + sha + "/pulls"), GitHubPullRequest[].class)
+				gson.fromJson(executeGet("repos/" + namespace + "/" + repo + "/commits/" + sha + "/pulls"), GitHubPullRequest[].class)
 			).filter(GitHubPullRequest::isOnOfficialRepository).findFirst();
 		}catch(InterruptedException ignore){
 			Thread.currentThread().interrupt();

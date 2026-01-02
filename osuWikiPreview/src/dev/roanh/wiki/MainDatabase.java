@@ -65,7 +65,7 @@ public final class MainDatabase{
 	public static void saveState(int id, WebState state) throws DBException{
 		PullRequest pr = state.getPullRequest().orElse(new PullRequest(-1L, -1));
 		executor.insert(
-			"REPLACE INTO state (id, namespace, repo, ref, redate, master, pr_id, pr_num, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			"REPLACE INTO state (id, namespace, repo, ref, redate, master, pr_id, pr_num, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			id, state.getNamespace(), state.getRepository(), state.getRef(), state.hasRedate(), state.hasMaster(), pr.id(), pr.number(), state.getAvailableAt().getEpochSecond()
 		);
 	}

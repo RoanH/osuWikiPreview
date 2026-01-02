@@ -352,7 +352,7 @@ public class OsuWiki{
 	 * @author Roan
 	 * @param diff A diff with all changed files.
 	 * @param head The new head commit hash.
-	 * @see OsuWiki#switchBranch(String, String, boolean, OsuWeb)
+	 * @see OsuWiki#switchBranch(String, String, String, boolean, OsuWeb)
 	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head){
 		

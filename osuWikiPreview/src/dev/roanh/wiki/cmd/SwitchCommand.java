@@ -89,7 +89,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 				web,
 				args
 			);
-		}catch (GitHubUserNotFoundException ignore) {
+		}catch(GitHubUserNotFoundException ignore){
 			event.reply("Could not find a GitHub user with the given name.");
 		}
 	}

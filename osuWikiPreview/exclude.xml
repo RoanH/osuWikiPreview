@@ -41,4 +41,11 @@
     <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
   </Match>
   
+  <Match>
+    <!-- Should be JSON compliant not platform specific -->
+    <Class name="dev.roanh.wiki.github.GitHub"/>
+    <Method name="getWikiFork"/>
+    <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+  </Match>
+  
 </FindBugsFilter>

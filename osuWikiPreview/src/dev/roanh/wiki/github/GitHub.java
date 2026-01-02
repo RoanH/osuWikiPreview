@@ -46,7 +46,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-import dev.roanh.wiki.Main;
 import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.GitHubUserNotFoundException;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
@@ -71,10 +70,6 @@ public final class GitHub{
 	 */
 	private static final Gson gson;
 	/**
-	 * The instance of the GitHub API.
-	 */
-	private static final GitHub instance = new GitHub(Main.config.getGitHubToken());
-	/**
 	 * The base url for the GitHub API.
 	 */
 	private final String baseUrl;
@@ -87,7 +82,7 @@ public final class GitHub{
 	 * Constructs a new GitHub API instance.
 	 * @param token The GitHub API token.
 	 */
-	private GitHub(String token){
+	public GitHub(String token){
 		this("https://api.github.com/", token);
 	}
 	
@@ -101,18 +96,6 @@ public final class GitHub{
 		this.token = token;
 	}
 	
-	/**
-	 * Gets the instance of the GitHub API.
-	 * @return The GitHub API instance.
-	 */
-	public static final GitHub instance(){
-		return instance;
-	}
-	
-	public static void main(String[] args) throws GitHubException{
-		System.out.println(instance.getWikiFork("ppy"));
-	}
-
 	/**
 	 * Attempts to find the name of the osu! wiki fork for the given GitHub user.
 	 * @param user The GitHub user to find the osu! wiki fork for.

@@ -50,7 +50,6 @@ import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
-import dev.roanh.wiki.github.GitHub;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 
 /**
@@ -224,7 +223,7 @@ public abstract class BaseSwitchCommand extends WebCommand{
 	 */
 	private static final Optional<GitHubPullRequest> retrievePullRequest(String namespace, String sha){
 		try{
-			return GitHub.instance().getPullRequestForCommit(namespace, sha);
+			return Main.githubAPI.getPullRequestForCommit(namespace, sha);
 		}catch(GitHubException e){
 			Main.client.logError(e, "[BaseSwitchCommand] Failed to retrieve PR status from GitHub", Severity.MINOR, Priority.LOW, Detail.of("Namespace", namespace), Detail.of("Commit", sha));
 			//missing PR info should not hold back an embed (for now)

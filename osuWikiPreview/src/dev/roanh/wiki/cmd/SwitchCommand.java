@@ -28,6 +28,7 @@ import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.isla.command.slash.CommandEvent;
 import dev.roanh.isla.command.slash.CommandMap;
 import dev.roanh.isla.command.slash.SimpleAutoCompleteHandler;
+import dev.roanh.wiki.Main;
 import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.data.WebState;
@@ -35,7 +36,6 @@ import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.GitHubUserNotFoundException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
-import dev.roanh.wiki.github.GitHub;
 
 /**
  * Command to switch the active preview branch.
@@ -71,7 +71,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 		}
 
 		try{
-			Optional<String> repo = GitHub.instance().getWikiFork(name);
+			Optional<String> repo = Main.githubAPI.getWikiFork(name);
 			if(repo.isEmpty()){
 				event.reply("Could not find an osu! wiki fork for the given GitHub user.");
 				return;

@@ -22,12 +22,6 @@
   </Match>
   
   <Match>
-    <!-- For testing and this is not a true singleton -->
-    <Class name="dev.roanh.wiki.github.GitHub"/>
-    <Bug pattern="SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR"/>
-  </Match>
-  
-  <Match>
     <Or>
       <Class name="dev.roanh.wiki.github.WebhookHandler"/>
       <Class name="dev.roanh.wiki.cmd.InstanceCommand"/>

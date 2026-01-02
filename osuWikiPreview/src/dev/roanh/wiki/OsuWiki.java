@@ -45,6 +45,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
@@ -335,13 +336,17 @@ public class OsuWiki{
 	 */
 	private static void findRemote(String name, String repo) throws GitAPIException{
 		try{
-			if(!remotes.contains(name)){
-				if(git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().isEmpty()){
-					git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/" + repo + ".git")).call();
-				}
-				
-				remotes.add(name);
+			RemoteConfig remote = git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().orElse(null);
+			if(remote != null && !remote.getURIs().getFirst().getHumanishName().equals(repo)){
+				git.remoteRemove().setRemoteName(name).call();
+				remote = null;
 			}
+
+			if(remote == null){
+				git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/" + repo + ".git")).call();
+			}
+
+			remotes.add(name);
 		}catch(URISyntaxException ignore){
 			throw new InvalidRemoteException(name);
 		}

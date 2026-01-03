@@ -25,7 +25,7 @@ sourceSets{
 
 dependencies{
 	//Infinity
-	implementation "dev.roanh.infinitycore:infinitycore-io:4.22"
+	implementation "dev.roanh.infinitycore:infinitycore-io:4.23"
 
 	//Isla Lib
 	implementation "dev.roanh.islalib:islalib:8.0"

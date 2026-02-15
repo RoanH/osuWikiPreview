@@ -29,7 +29,7 @@ dependencies{
 	implementation "dev.roanh.infinitycore:infinitycore-http:4.23"
 
 	//Isla Lib
-	implementation "dev.roanh.islalib:islalib:8.0"
+	implementation "dev.roanh.islalib:islalib:8.1"
 
 	//osu! API
 	implementation "dev.roanh.osuapi:osuapi:3.9"

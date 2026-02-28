@@ -33,7 +33,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import io.prometheus.client.Counter;
+import io.prometheus.metrics.core.metrics.Counter;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.infinity.http.HttpParams;
@@ -58,11 +58,11 @@ public class LoginServer{
 	/**
 	 * Number of login session started.
 	 */
-	private static final Counter loginStarted = Counter.build("wikipreview_login_started", "Number of login URLs created").register();
+	private static final Counter loginStarted = Counter.builder().name("wikipreview_login_started").help("Number of login URLs created").register();
 	/**
 	 * Result of login attempts.
 	 */
-	private static final Counter loginAttempts = Counter.build("wikipreview_login_result", "Login activity by result").labelNames("result").register();
+	private static final Counter loginAttempts = Counter.builder().name("wikipreview_login_result").help("Login activity by result").labelNames("result").register();
 	/**
 	 * The server used to handle web requests.
 	 */
@@ -162,7 +162,7 @@ public class LoginServer{
 		}else{
 			LoginInfo info = loginSessions.remove(state);
 			if(info == null){
-				loginAttempts.labels("timeout").inc();
+				loginAttempts.labelValues("timeout").inc();
 				return RequestHandler.page(Pages.getLoginTimeoutPage());
 			}
 
@@ -171,11 +171,11 @@ public class LoginServer{
 				FullHttpResponse resp = RequestHandler.status(HttpResponseStatus.FOUND);
 				resp.headers().add(HttpHeaderNames.LOCATION, info.redirect());
 				resp.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(session));
-				loginAttempts.labels("success").inc();
+				loginAttempts.labelValues("success").inc();
 				return resp;
 			}catch(InsufficientPermissionsException ignore){
 				//user changed the requested scopes
-				loginAttempts.labels("invalid").inc();
+				loginAttempts.labelValues("invalid").inc();
 				return RequestHandler.badRequest();
 			}
 		}

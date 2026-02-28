@@ -31,10 +31,10 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import dev.roanh.infinity.io.netty.http.HttpBody;
-import dev.roanh.infinity.io.netty.http.WebServer;
-import dev.roanh.infinity.io.netty.http.handler.BodyHandler;
-import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.infinity.http.HttpBody;
+import dev.roanh.infinity.http.WebServer;
+import dev.roanh.infinity.http.handler.BodyHandler;
+import dev.roanh.infinity.http.handler.RequestHandler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.Main;
@@ -80,7 +80,7 @@ public class WebhookHandler implements BodyHandler{
 		this.server = new WebServer(port);
 		this.secret = GitHub.createSigningKey(secret);
 		server.setExceptionHandler(t->Main.client.logError(t, "[WebhookHandler] Unhandled exception: " + t.getMessage(), Severity.MAJOR, Priority.HIGH));
-		server.createContext("/", false, (request, path, data)->RequestHandler.forbidden());
+		server.createContext("/", false, (_, _, _)->RequestHandler.forbidden());
 		server.createContext(HttpMethod.POST, "/", this);
 	}
 	

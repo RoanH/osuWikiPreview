@@ -36,9 +36,9 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import io.prometheus.client.Counter;
 
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.infinity.io.netty.http.HttpParams;
-import dev.roanh.infinity.io.netty.http.WebServer;
-import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.infinity.http.HttpParams;
+import dev.roanh.infinity.http.WebServer;
+import dev.roanh.infinity.http.handler.RequestHandler;
 import dev.roanh.infinity.util.Scheduler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;

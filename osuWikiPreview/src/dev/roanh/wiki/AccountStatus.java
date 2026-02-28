@@ -52,7 +52,7 @@ public final class AccountStatus{
 	 * @param loginServer The login server to use.
 	 */
 	public static void init(DiscordBot bot, LoginServer loginServer){
-		bot.registerButtonHandler("account:osu", (args, event)->handleLinking(event, loginServer));
+		bot.registerButtonHandler("account:osu", (_, event)->handleLinking(event, loginServer));
 	}
 	
 	/**

@@ -164,7 +164,7 @@ public class OsuWiki{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public synchronized static SwitchResult switchBranch(String name, String repo, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		try(Timer timer = switchTime.startTimer()){
+		try(Timer _ = switchTime.startTimer()){
 			refs.add(ref);
 			
 			//update master copy
@@ -199,7 +199,7 @@ public class OsuWiki{
 		forcePush(instance.getWikiSyncBranch());
 
 		//update the website wiki
-		try(Timer timer = webSyncTime.startTimer()){
+		try(Timer _ = webSyncTime.startTimer()){
 			ObjectId to = getHead();
 			instance.runWikiUpdate("master", instance.getWikiSyncBranch());
 
@@ -227,7 +227,7 @@ public class OsuWiki{
 	 * @throws GitAPIException When some git exception occurs.
 	 */
 	private static List<DiffEntry> computeDiff(ObjectId from, ObjectId to) throws IOException, GitAPIException{
-		try(Timer timer = diffTime.startTimer()){
+		try(Timer _ = diffTime.startTimer()){
 			Repository repo = git.getRepository();
 			try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
 				//attempt to find the merge base of both commits

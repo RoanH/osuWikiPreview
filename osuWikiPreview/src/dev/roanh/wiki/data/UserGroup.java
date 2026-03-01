@@ -52,7 +52,15 @@ public enum UserGroup{
 	/**
 	 * Beatmap spotlight curators.
 	 */
-	BSC(1 << 5, "Beatmap Spotlight Curators");
+	BSC(1 << 5, "Beatmap Spotlight Curators"),
+	/**
+	 * osu! developers.
+	 */
+	DEV(1 << 6, "Developers"),
+	/**
+	 * Technical support team.
+	 */
+	SPT(1 << 7, "Technical Support Team");
 	
 	/**
 	 * The numerical ID of this group.
@@ -142,8 +150,10 @@ public enum UserGroup{
 			return LVD;
 		case BSC:
 			return BSC;
-		case SPT:
 		case DEV:
+			return DEV;
+		case SPT:
+			return SPT;
 		case PPY:
 		case FA:
 		case DEFAULT:

@@ -53,8 +53,8 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.slf4j.LoggerFactory;
 
-import io.prometheus.client.Summary;
-import io.prometheus.client.Summary.Timer;
+import io.prometheus.metrics.core.datapoints.Timer;
+import io.prometheus.metrics.core.metrics.Summary;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.exception.MergeConflictException;
@@ -71,15 +71,15 @@ public class OsuWiki{
 	/**
 	 * Summary of the time it takes to switch and update the osu! web instance.
 	 */
-	private static final Summary switchTime = Summary.build("wikipreview_git_switch_time", "Time spent switching and syncing the web instance.").register();
+	private static final Summary switchTime = Summary.builder().name("wikipreview_git_switch_time").help("Time spent switching and syncing the web instance.").register();
 	/**
 	 * Summary of the time it takes to update the osu! web instance after a switch.
 	 */
-	private static final Summary webSyncTime = Summary.build("wikipreview_git_web_sync_time", "Time spent syncing the web instance.").register();
+	private static final Summary webSyncTime = Summary.builder().name("wikipreview_git_web_sync_time").help("Time spent syncing the web instance.").register();
 	/**
 	 * Summary of the time it takes to compute the repository diff after a switch.
 	 */
-	private static final Summary diffTime = Summary.build("wikipreview_git_diff_time", "Time spent computing repository diffs.").register();
+	private static final Summary diffTime = Summary.builder().name("wikipreview_git_diff_time").help("Time spent computing repository diffs.").register();
 	/**
 	 * Wiki repository bound git instance.
 	 */

@@ -32,7 +32,7 @@ dependencies{
 	implementation "dev.roanh.islalib:islalib:8.1"
 
 	//osu! API
-	implementation "dev.roanh.osuapi:osuapi:3.9"
+	implementation "dev.roanh.osuapi:osuapi:3.10"
 	
 	//JGit
 	implementation "org.eclipse.jgit:org.eclipse.jgit:7.5.0.202512021534-r"

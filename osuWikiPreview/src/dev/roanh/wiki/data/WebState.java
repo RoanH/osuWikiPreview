@@ -41,6 +41,10 @@ public class WebState{
 	 */
 	private final String namespace;
 	/**
+	 * The name of the osu! wiki repository.
+	 */
+	private final String repo;
+	/**
 	 * The reference (branch/sha/tag) that is currently checked out.
 	 */
 	private final String ref;
@@ -71,6 +75,7 @@ public class WebState{
 		long prId = rs.getLong("pr_id");
 		pr = prId == -1L ? null : new PullRequest(prId, rs.getInt("pr_num"));
 		namespace = rs.getString("namespace");
+		repo = rs.getString("repo");
 		ref = rs.getString("ref");
 		redate = rs.getBoolean("redate");
 		master = rs.getBoolean("master");
@@ -80,12 +85,14 @@ public class WebState{
 	/**
 	 * Constructs a new web state.
 	 * @param namespace The namespace for the new state.
+	 * @param repo The osu! wiki repository name.
 	 * @param ref The ref for the new state (commit/branch/tag).
 	 * @param redate True to redate newsposts.
 	 * @param master True to merge ppy/master into the preview.
 	 */
-	private WebState(String namespace, String ref, boolean redate, boolean master){
+	private WebState(String namespace, String repo, String ref, boolean redate, boolean master){
 		this.namespace = namespace;
+		this.repo = repo;
 		this.ref = ref;
 		this.redate = redate;
 		this.master = master;
@@ -98,7 +105,15 @@ public class WebState{
 	 * @return The GitHub page for the namespace and reference.
 	 */
 	public String getGitHubTree(){
-		return "https://github.com/" + namespace + "/osu-wiki/tree/" + ref;
+		return "https://github.com/" + namespace + "/" + repo + "/tree/" + ref;
+	}
+	
+	/**
+	 * Gets the name of the osu! wiki fork repository.
+	 * @return The fork repository name.
+	 */
+	public String getRepository(){
+		return repo;
 	}
 	
 	/**
@@ -226,18 +241,19 @@ public class WebState{
 	 * @return The constructed web state.
 	 */
 	public static final WebState forNewspostPreview(OsuWeb web){
-		return new WebState("RoanH", web.getWikiSyncBranch(), true, false);
+		return new WebState("RoanH", "osu-wiki", web.getWikiSyncBranch(), true, false);
 	}
 	
 	/**
 	 * Constructs a new web state for showing the given ref.
 	 * @param namespace The namespace for the ref.
+	 * @param repo The osu! wiki repository name.
 	 * @param ref The ref to preview.
 	 * @param redate True to redate any news.
 	 * @param master True to merge ppy/master into the preview.
 	 * @return The constructed web state.
 	 */
-	public static final WebState forRef(String namespace, String ref, boolean redate, boolean master){
-		return new WebState(namespace, ref, redate, master);
+	public static final WebState forRef(String namespace, String repo, String ref, boolean redate, boolean master){
+		return new WebState(namespace, repo, ref, redate, master);
 	}
 }

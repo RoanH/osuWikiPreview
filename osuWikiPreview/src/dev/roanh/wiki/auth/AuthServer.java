@@ -22,12 +22,12 @@ package dev.roanh.wiki.auth;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.prometheus.client.Counter;
+import io.prometheus.metrics.core.metrics.Counter;
 
 import dev.roanh.infinity.db.concurrent.DBException;
-import dev.roanh.infinity.io.netty.http.HttpParams;
-import dev.roanh.infinity.io.netty.http.WebServer;
-import dev.roanh.infinity.io.netty.http.handler.RequestHandler;
+import dev.roanh.infinity.http.HttpParams;
+import dev.roanh.infinity.http.WebServer;
+import dev.roanh.infinity.http.handler.RequestHandler;
 import dev.roanh.isla.reporting.Priority;
 import dev.roanh.isla.reporting.Severity;
 import dev.roanh.wiki.InstanceManager;
@@ -44,11 +44,15 @@ public class AuthServer{
 	/**
 	 * Metric for authentication request statuses.
 	 */
-	private static final Counter authRequests = Counter.build("wikipreview_auth_request", "Number auth requests by result").labelNames("result").register();
+	private static final Counter authRequests = Counter.builder().name("wikipreview_auth_request").help("Number auth requests by result").labelNames("result").register();
 	/**
 	 * The header used to pass the instance that was attempted to be accessed.
 	 */
 	private static final String INSTANCE_HEADER = "Instance-Domain";
+	/**
+	 * The header used to pass the original URI that was attempted to be accessed.
+	 */
+	private static final String ORIGINAL_URI_HEADER = "X-Original-URI";
 	/**
 	 * The HTTP server used to communicate with NGINX.
 	 */
@@ -84,7 +88,11 @@ public class AuthServer{
 	 * @see #handleAuthRequest(FullHttpRequest, String, HttpParams)
 	 */
 	private FullHttpResponse handleLoginErrorPage(FullHttpRequest request, String path, HttpParams data) throws DBException{
-		return RequestHandler.page(Pages.getPrivateModePage(SessionManager.getUserFromSession(request)));
+		return RequestHandler.page(Pages.getPrivateModePage(
+			SessionManager.getUserFromSession(request),
+			request.headers().get(INSTANCE_HEADER),
+			request.headers().get(ORIGINAL_URI_HEADER)
+		));
 	}
 	
 	/**
@@ -99,21 +107,21 @@ public class AuthServer{
 	private FullHttpResponse handleAuthRequest(FullHttpRequest request, String path, HttpParams data) throws DBException{
 		Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
 		if(!instance.isPrivateMode()){
-			authRequests.labels("public").inc();
+			authRequests.labelValues("public").inc();
 			return RequestHandler.ok();
 		}
-		
+
 		User user = SessionManager.getUserFromSession(request);
 		if(user == null){
-			authRequests.labels("private_not_logged_in").inc();
+			authRequests.labelValues("private_not_logged_in").inc();
 			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
 		}
-		
+
 		if(instance.getAccessList().contains(user)){
-			authRequests.labels("private_on_acl").inc();
+			authRequests.labelValues("private_on_acl").inc();
 			return RequestHandler.ok();
 		}else{
-			authRequests.labels("private_not_on_acl").inc();
+			authRequests.labelValues("private_not_on_acl").inc();
 			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
 		}
 	}

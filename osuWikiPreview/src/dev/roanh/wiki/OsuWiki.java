@@ -45,6 +45,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
@@ -52,8 +53,8 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.slf4j.LoggerFactory;
 
-import io.prometheus.client.Summary;
-import io.prometheus.client.Summary.Timer;
+import io.prometheus.metrics.core.datapoints.Timer;
+import io.prometheus.metrics.core.metrics.Summary;
 
 import dev.roanh.infinity.db.concurrent.DBException;
 import dev.roanh.wiki.exception.MergeConflictException;
@@ -70,15 +71,15 @@ public class OsuWiki{
 	/**
 	 * Summary of the time it takes to switch and update the osu! web instance.
 	 */
-	private static final Summary switchTime = Summary.build("wikipreview_git_switch_time", "Time spent switching and syncing the web instance.").register();
+	private static final Summary switchTime = Summary.builder().name("wikipreview_git_switch_time").help("Time spent switching and syncing the web instance.").register();
 	/**
 	 * Summary of the time it takes to update the osu! web instance after a switch.
 	 */
-	private static final Summary webSyncTime = Summary.build("wikipreview_git_web_sync_time", "Time spent syncing the web instance.").register();
+	private static final Summary webSyncTime = Summary.builder().name("wikipreview_git_web_sync_time").help("Time spent syncing the web instance.").register();
 	/**
 	 * Summary of the time it takes to compute the repository diff after a switch.
 	 */
-	private static final Summary diffTime = Summary.build("wikipreview_git_diff_time", "Time spent computing repository diffs.").register();
+	private static final Summary diffTime = Summary.builder().name("wikipreview_git_diff_time").help("Time spent computing repository diffs.").register();
 	/**
 	 * Wiki repository bound git instance.
 	 */
@@ -151,6 +152,7 @@ public class OsuWiki{
 	/**
 	 * Switches the site to the given ref from the given namespace.
 	 * @param name The namespace for the ref (user / organisation).
+	 * @param repo The osu! wiki repository name.
 	 * @param ref The reference to switch to.
 	 * @param mergeMaster Whether to merge ppy/master into the ref before updating the site.
 	 * @param instance The osu! web instance to update with the changes.
@@ -161,15 +163,15 @@ public class OsuWiki{
 	 * @throws WebException When a web exception occurs.
 	 * @throws DBException When a database exception occurs.
 	 */
-	public synchronized static SwitchResult switchBranch(String name, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		try(Timer timer = switchTime.startTimer()){
+	public synchronized static SwitchResult switchBranch(String name, String repo, String ref, boolean mergeMaster, OsuWeb instance) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
+		try(Timer _ = switchTime.startTimer()){
 			refs.add(ref);
 			
 			//update master copy
 			ObjectId from = updateMaster();
 
 			//reset to the new branch
-			findRemote(name);
+			findRemote(name, repo);
 			forceFetch(name);
 			reset(name, ref);
 			
@@ -197,7 +199,7 @@ public class OsuWiki{
 		forcePush(instance.getWikiSyncBranch());
 
 		//update the website wiki
-		try(Timer timer = webSyncTime.startTimer()){
+		try(Timer _ = webSyncTime.startTimer()){
 			ObjectId to = getHead();
 			instance.runWikiUpdate("master", instance.getWikiSyncBranch());
 
@@ -225,7 +227,7 @@ public class OsuWiki{
 	 * @throws GitAPIException When some git exception occurs.
 	 */
 	private static List<DiffEntry> computeDiff(ObjectId from, ObjectId to) throws IOException, GitAPIException{
-		try(Timer timer = diffTime.startTimer()){
+		try(Timer _ = diffTime.startTimer()){
 			Repository repo = git.getRepository();
 			try(ObjectReader reader = repo.newObjectReader(); RevWalk rev = new RevWalk(repo)){
 				//attempt to find the merge base of both commits
@@ -329,17 +331,22 @@ public class OsuWiki{
 	/**
 	 * Finds the remote with the given name or creates it.
 	 * @param name The name of the remote.
+	 * @param repo The osu! wiki repository name.
 	 * @throws GitAPIException When a git exception occurs.
 	 */
-	private static void findRemote(String name) throws GitAPIException{
+	private static void findRemote(String name, String repo) throws GitAPIException{
 		try{
-			if(!remotes.contains(name)){
-				if(git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().isEmpty()){
-					git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/osu-wiki.git")).call();
-				}
-				
-				remotes.add(name);
+			RemoteConfig remote = git.remoteList().call().stream().filter(r->r.getName().equals(name)).findFirst().orElse(null);
+			if(remote != null && !remote.getURIs().getFirst().getHumanishName().equals(repo)){
+				git.remoteRemove().setRemoteName(name).call();
+				remote = null;
 			}
+
+			if(remote == null){
+				git.remoteAdd().setName(name).setUri(new URIish("git@github.com:" + name + "/" + repo + ".git")).call();
+			}
+
+			remotes.add(name);
 		}catch(URISyntaxException ignore){
 			throw new InvalidRemoteException(name);
 		}
@@ -350,7 +357,7 @@ public class OsuWiki{
 	 * @author Roan
 	 * @param diff A diff with all changed files.
 	 * @param head The new head commit hash.
-	 * @see OsuWiki#switchBranch(String, String, boolean, OsuWeb)
+	 * @see OsuWiki#switchBranch(String, String, String, boolean, OsuWeb)
 	 */
 	public static final record SwitchResult(List<DiffEntry> diff, String head){
 		

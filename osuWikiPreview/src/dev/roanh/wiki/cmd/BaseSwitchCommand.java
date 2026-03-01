@@ -44,6 +44,7 @@ import dev.roanh.wiki.OsuWiki.SwitchResult;
 import dev.roanh.wiki.SwitchHelper;
 import dev.roanh.wiki.data.PullRequest;
 import dev.roanh.wiki.data.WebState;
+import dev.roanh.wiki.exception.GitHubException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 
@@ -70,7 +71,7 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 			event.replyEmbeds(createEmbed(diff, target, web));
 			InstanceStatus.updateOverview();
 		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
-			event.reply("Could not find the wiki repository for the given namespace, is it named `osu-wiki`?");
+			event.reply("Could not find the wiki repository for the given namespace.");
 			ignore.printStackTrace();
 		}catch(JGitInternalException ignore){
 			if(ignore.getMessage().startsWith("Invalid ref name")){
@@ -97,8 +98,9 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 //	 * @throws DBException When a database exception occurs.
 //	 * @throws WebException When a web exception occurs.
 //	 * @throws MergeConflictException When a merge is requested which results in a conflict.
+//	 * @throws GitHubException When a GitHub exception occurs.
 //	 */
-	protected abstract WebState handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException;
+	protected abstract WebState handleSwitch(OsuWeb web, CommandMap args, CommandEvent event) throws GitAPIException, IOException, DBException, WebException, MergeConflictException, GitHubException;
 	
 	/**
 	 * Switches the active preview branch by pushing a file newspost file to ppy/master.
@@ -130,7 +132,7 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 	 * @throws MergeConflictException When a merge is requested which results in a conflict.
 	 */
 	protected void switchBranch(CommandEvent event, WebState state, OsuWeb web, CommandMap args) throws MergeConflictException, GitAPIException, IOException, DBException, WebException{
-		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRef(), state.hasMaster(), web));
+		switchBranch(event, state, web, OsuWiki.switchBranch(state.getNamespace(), state.getRepository(), state.getRef(), state.hasMaster(), web));
 	}
 	
 //	private void switchBranch();
@@ -145,7 +147,7 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 	 */
 	private void switchBranchOld(CommandEvent event, WebState state, OsuWeb web, SwitchResult diff) throws DBException{
 		if(!state.isInternalBranch()){
-			retrievePullRequest(state.getNamespace(), diff.head()).ifPresent(state::setPullRequest);
+			retrievePullRequest(state.getNamespace(), state.getRepository(), diff.head()).ifPresent(state::setPullRequest);
 		}
 		
 		state.refreshClaim(DEFAULT_CLAIM_TIME);

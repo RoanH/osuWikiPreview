@@ -50,6 +50,7 @@ import dev.roanh.wiki.data.GroupSet;
 import dev.roanh.wiki.data.User;
 import dev.roanh.wiki.event.RefreshPreviewOnNewCommit;
 import dev.roanh.wiki.exception.WebException;
+import dev.roanh.wiki.github.GitHub;
 import dev.roanh.wiki.github.WebhookHandler;
 
 /**
@@ -81,6 +82,10 @@ public class Main{
 	 * General application configuration.
 	 */
 	public static final Config config = new Config(client.getConfig());
+	/**
+	 * The instance of the GitHub API.
+	 */
+	public static final GitHub githubAPI = new GitHub(Main.config.getGitHubToken());
 	
 	/**
 	 * Starts the Discord bot.

@@ -54,7 +54,7 @@ public record Config(Configuration config, String domain){
 	 * @return The created session builder.
 	 */
 	public OAuthSessionBuilder getIdentitySessionBuilder(){
-		return OsuAPI.oauth(config.readInt("osu-client-id"), config.readString("osu-client-secret")).setCallback("https://" + domain() + "/").addScopes(Scope.IDENTIFY);
+		return OsuAPI.oauth(config.readInt("osu-client-id"), config.readString("osu-client-secret")).setCallback("https://" + domain() + "/auth").addScopes(Scope.IDENTIFY);
 	}
 
 	/**
@@ -72,6 +72,14 @@ public record Config(Configuration config, String domain){
 	 */
 	public DBContext getDatabaseContext(String schema){
 		return new DBContext(config.readString("db-url") + schema, "osuweb", config.readString("db-pass"));
+	}
+	
+	/**
+	 * Gets the GitHub API access token.
+	 * @return The GitHub API access token.
+	 */
+	public String getGitHubToken(){
+		return config.readString("github-token");
 	}
 	
 	/**

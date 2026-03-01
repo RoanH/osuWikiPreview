@@ -22,6 +22,7 @@ package dev.roanh.wiki.github;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 import dev.roanh.wiki.exception.GitHubException;
+import dev.roanh.wiki.exception.GitHubUserNotFoundException;
 import dev.roanh.wiki.github.obj.GitHubBranch;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 import dev.roanh.wiki.github.obj.GitHubRepository;
@@ -46,17 +48,32 @@ import dev.roanh.wiki.github.obj.UserType;
 
 @WireMockTest(httpPort = 12345)
 public class GitHubTest{
-	private static final GitHub github = new GitHub("http://localhost:12345/");
+	private static final GitHub github = new GitHub("http://localhost:12345/", "testtoken");
 	
 	@BeforeEach
 	public void setup() throws IOException{
 		WireMock.stubFor(WireMock.any(WireMock.anyUrl()).atPriority(10).willReturn(WireMock.serverError()));
 		WireMock.stubFor(WireMock.get("/repos/itsmehoaq/osu-wiki/commits/1ea83f97f8fa13a679417e9687b1305215199005/pulls").willReturn(readJson("pr_for_commit")));
+		WireMock.stubFor(WireMock.post("/graphql").withHeader("Authorization", WireMock.equalTo("bearer testtoken")).withRequestBody(WireMock.containing("RoanH")).willReturn(readJson("forks_for_user")));
+		WireMock.stubFor(WireMock.post("/graphql").withHeader("Authorization", WireMock.equalTo("bearer testtoken")).withRequestBody(WireMock.containing("ppy")).willReturn(readJson("forks_for_user_no_user")));
+	}
+	
+	@Test
+	public void getWikiFork() throws GitHubException{
+		Optional<String> fork = github.getWikiFork("RoanH");
+		assertTrue(fork.isPresent());
+		assertEquals("osu-wiki-edit", fork.get());
+	}
+	
+	@Test
+	public void getWikiForkNoUser(){
+		//organisations are not users
+		assertThrows(GitHubUserNotFoundException.class, ()->github.getWikiFork("ppy"), "No such user: ppy");
 	}
 	
 	@Test
 	public void getPullRequestForCommit() throws GitHubException{
-		Optional<GitHubPullRequest> found = github.getPullRequestForCommit("itsmehoaq", "1ea83f97f8fa13a679417e9687b1305215199005");
+		Optional<GitHubPullRequest> found = github.getPullRequestForCommit("itsmehoaq", "osu-wiki", "1ea83f97f8fa13a679417e9687b1305215199005");
 		assertTrue(found.isPresent());
 		
 		GitHubPullRequest pr = found.get();

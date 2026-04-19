@@ -20,20 +20,20 @@
 package dev.roanh.wiki.exception;
 
 /**
- * Exception thrown when a requested GitHub user could not be found.
+ * Exception thrown when a requested GitHub user/organisation could not be found.
  * @author Roan
  */
-public class GitHubUserNotFoundException extends RuntimeException{
+public class GitHubRepositoryOwnerNotFoundException extends RuntimeException{
 	/**
 	 * Serial ID.
 	 */
 	private static final long serialVersionUID = 8556652121895691187L;
 	
 	/**
-	 * Constructs a new user not found exception.
-	 * @param user The GitHub user that could not be found.
+	 * Constructs a new user/organisation not found exception.
+	 * @param user The GitHub user/organisation that could not be found.
 	 */
-	public GitHubUserNotFoundException(String user){
-		super("No such user: " + user);
+	public GitHubRepositoryOwnerNotFoundException(String user){
+		super("No such user/organisation: " + user);
 	}
 }

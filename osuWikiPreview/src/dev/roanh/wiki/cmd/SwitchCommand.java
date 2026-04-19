@@ -33,7 +33,7 @@ import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.GitHubException;
-import dev.roanh.wiki.exception.GitHubUserNotFoundException;
+import dev.roanh.wiki.exception.GitHubRepositoryOwnerNotFoundException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 
@@ -48,8 +48,8 @@ public class SwitchCommand extends BaseSwitchCommand{
 	 */
 	public SwitchCommand(){
 		super("switch", "Switch the preview site to a different branch.");
-		addOptionString("ref", "The ref to switch to in the given name space (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
-		addOptionOptionalString("user", "The GitHub user the osu! wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
+		addOptionString("ref", "The ref to switch to in the given user namespace (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
+		addOptionOptionalString("user", "The GitHub user/organisation the osu! wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 		addOptionOptionalBoolean("redate", "Redate future news to the current date (defaults to true).");
 		addOptionOptionalBoolean("master", "If true ppy/master will be merged into the given target ref (defaults to false).");
 	}
@@ -73,7 +73,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 		try{
 			Optional<String> repo = Main.githubAPI.getWikiFork(name);
 			if(repo.isEmpty()){
-				event.reply("Could not find an osu! wiki fork for the given GitHub user.");
+				event.reply("Could not find an osu! wiki fork for the given GitHub user/organisation.");
 				return;
 			}
 
@@ -89,8 +89,8 @@ public class SwitchCommand extends BaseSwitchCommand{
 				web,
 				args
 			);
-		}catch(GitHubUserNotFoundException ignore){
-			event.reply("Could not find a GitHub user with the given name.");
+		}catch(GitHubRepositoryOwnerNotFoundException ignore){
+			event.reply("Could not find a GitHub user/organisation with the given name.");
 		}
 	}
 }

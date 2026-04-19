@@ -302,7 +302,9 @@ public class OsuWiki{
 	 * @throws GitAPIException When a git exception occurs.
 	 */
 	private static void reset(String name, String ref) throws GitAPIException{
-		if(!COMMIT_REGEX.matcher(ref).matches()){
+		if(COMMIT_REGEX.matcher(ref).matches()){
+			ref += "^{commit}";
+		}else{
 			ref = name + "/" + ref;
 		}
 		

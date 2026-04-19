@@ -68,7 +68,7 @@ public class GitHubTest{
 	@Test
 	public void getWikiForkNoUser(){
 		//organisations are not users
-		assertThrows(GitHubRepositoryOwnerNotFoundException.class, ()->github.getWikiFork("ppy"), "No such user: ppy");
+		assertThrows(GitHubRepositoryOwnerNotFoundException.class, ()->github.getWikiFork("ppy"), "No such user/organisation: ppy");
 	}
 	
 	@Test

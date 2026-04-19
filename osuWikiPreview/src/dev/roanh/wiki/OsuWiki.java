@@ -48,7 +48,6 @@ import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.TagOpt;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
@@ -337,7 +336,7 @@ public class OsuWiki{
 	 * @throws GitAPIException When a git exception occurs.
 	 */
 	private static void forceFetch(String remote) throws GitAPIException{
-		git.fetch().setTransportConfigCallback(transport).setRemote(remote).setForceUpdate(true).setRemoveDeletedRefs(true).setTagOpt(TagOpt.FETCH_TAGS).call();
+		git.fetch().setTransportConfigCallback(transport).setRemote(remote).setForceUpdate(true).setRemoveDeletedRefs(true).call();
 	}
 	
 	/**

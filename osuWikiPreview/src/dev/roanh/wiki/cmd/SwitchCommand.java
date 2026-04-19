@@ -48,7 +48,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 	 */
 	public SwitchCommand(){
 		super("switch", "Switch the preview site to a different branch.");
-		addOptionString("ref", "The ref to switch to in the given user namespace (branch/hash/tag) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
+		addOptionString("ref", "The ref to switch to in the given user namespace (branch/hash) or a namespace:ref string.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRefs));
 		addOptionOptionalString("user", "The GitHub user/organisation the osu! wiki fork is under, defaults to your Discord name.", 100, new SimpleAutoCompleteHandler(OsuWiki::getRecentRemotes));
 		addOptionOptionalBoolean("redate", "Redate future news to the current date (defaults to true).");
 		addOptionOptionalBoolean("master", "If true ppy/master will be merged into the given target ref (defaults to false).");

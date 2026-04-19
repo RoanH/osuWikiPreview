@@ -73,7 +73,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 		try{
 			Optional<String> repo = Main.githubAPI.getWikiFork(name);
 			if(repo.isEmpty()){
-				event.reply("Could not find an osu! wiki fork for the given GitHub user.");
+				event.reply("Could not find an osu! wiki fork for the given GitHub user/organisation.");
 				return;
 			}
 
@@ -90,7 +90,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 				args
 			);
 		}catch(GitHubRepositoryOwnerNotFoundException ignore){
-			event.reply("Could not find a GitHub user with the given name.");
+			event.reply("Could not find a GitHub user/organisation with the given name.");
 		}
 	}
 }

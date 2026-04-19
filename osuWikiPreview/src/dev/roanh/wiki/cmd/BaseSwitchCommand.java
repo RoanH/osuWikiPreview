@@ -71,7 +71,7 @@ public abstract class BaseSwitchCommand/* extends WebCommand*/{
 			event.replyEmbeds(createEmbed(diff, target, web));
 			InstanceStatus.updateOverview();
 		}catch(InvalidRemoteException | NoRemoteRepositoryException ignore){
-			event.reply("Could not find the wiki repository for the given namespace.");
+			event.reply("Could not find the wiki repository for the given owner.");
 			ignore.printStackTrace();
 		}catch(JGitInternalException ignore){
 			if(ignore.getMessage().startsWith("Invalid ref name")){

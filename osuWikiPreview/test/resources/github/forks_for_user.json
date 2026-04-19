@@ -1,6 +1,6 @@
 {
     "data": {
-        "user": {
+        "repositoryOwner": {
             "repositories": {
                 "nodes": [{
                         "name": "pircbotx",

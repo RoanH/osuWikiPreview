@@ -47,7 +47,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import dev.roanh.wiki.exception.GitHubException;
-import dev.roanh.wiki.exception.GitHubUserNotFoundException;
+import dev.roanh.wiki.exception.GitHubRepositoryOwnerNotFoundException;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 import dev.roanh.wiki.github.obj.IssueState;
 import dev.roanh.wiki.github.obj.UserType;
@@ -97,45 +97,47 @@ public final class GitHub{
 	}
 	
 	/**
-	 * Attempts to find the name of the osu! wiki fork for the given GitHub user.
-	 * @param user The GitHub user to find the osu! wiki fork for.
-	 * @return The name of the osu! wiki fork for the given user if found.
+	 * Attempts to find the name of the osu! wiki fork for the given GitHub user/organisation.
+	 * @param owner The GitHub user/organisation to find the osu! wiki fork for.
+	 * @return The name of the osu! wiki fork for the given user/organisation if found.
 	 * @throws GitHubException When some GitHub API exception occurs.
-	 * @throws GitHubUserNotFoundException When the given user does not exist (or is an organisation).
+	 * @throws GitHubRepositoryOwnerNotFoundException When the given user/organisation does not exist.
 	 */
-	public final Optional<String> getWikiFork(String user) throws GitHubException, GitHubUserNotFoundException{
+	public final Optional<String> getWikiFork(String owner) throws GitHubException, GitHubRepositoryOwnerNotFoundException{
 		try{
 			JsonObject response = gson.fromJson(
 				executeGraphQL(
 					"""
 					query{
-					  user(login: "%s"){
-					    repositories(
-					      first: 100,
-					      isFork: true,
-					      ownerAffiliations: OWNER,
-					      orderBy: {
-					        field: PUSHED_AT,
-					        direction: DESC
-					      }
-					    ){
-					      nodes{
-					        name,
-					        parent{
-					          nameWithOwner
+					  repositoryOwner(login: "%s"){
+					    ... on RepositoryOwner {
+					      repositories(
+					        first: 100,
+					        isFork: true,
+					        ownerAffiliations: OWNER,
+					        orderBy: {
+					          field: PUSHED_AT,
+					          direction: DESC
+					        }
+					      ){
+					        nodes{
+					          name,
+					          parent{
+					            nameWithOwner
+					          }
 					        }
 					      }
 					    }
 					  }
 					}
-					""".formatted(user.replace("\"", "\\\""))
+					""".formatted(owner.replace("\"", "\\\""))
 				),
 				JsonObject.class
 			);
 			
-			JsonElement userData = response.getAsJsonObject("data").get("user");
+			JsonElement userData = response.getAsJsonObject("data").get("repositoryOwner");
 			if(userData.isJsonNull()){
-				throw new GitHubUserNotFoundException(user);
+				throw new GitHubRepositoryOwnerNotFoundException(owner);
 			}
 			
 			for(JsonElement item : userData.getAsJsonObject().getAsJsonObject("repositories").getAsJsonArray("nodes").asList()){

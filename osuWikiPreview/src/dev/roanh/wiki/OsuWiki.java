@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Pattern;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
@@ -80,6 +81,10 @@ public class OsuWiki{
 	 * Summary of the time it takes to compute the repository diff after a switch.
 	 */
 	private static final Summary diffTime = Summary.builder().name("wikipreview_git_diff_time").help("Time spent computing repository diffs.").register();
+	/**
+	 * Regex for commit hashes.
+	 */
+	private static final Pattern COMMIT_REGEX = Pattern.compile("[a-z0-9]{40}");
 	/**
 	 * Wiki repository bound git instance.
 	 */
@@ -296,7 +301,13 @@ public class OsuWiki{
 	 * @throws GitAPIException When a git exception occurs.
 	 */
 	private static void reset(String name, String ref) throws GitAPIException{
-		git.reset().setMode(ResetType.HARD).setRef(name + "/" + ref).call();
+		if(COMMIT_REGEX.matcher(ref).matches()){
+			ref += "^{commit}";
+		}else{
+			ref = name + "/" + ref;
+		}
+		
+		git.reset().setMode(ResetType.HARD).setRef(ref).call();
 	}
 	
 	/**

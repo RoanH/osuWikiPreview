@@ -33,7 +33,7 @@ import dev.roanh.wiki.OsuWeb;
 import dev.roanh.wiki.OsuWiki;
 import dev.roanh.wiki.data.WebState;
 import dev.roanh.wiki.exception.GitHubException;
-import dev.roanh.wiki.exception.GitHubUserNotFoundException;
+import dev.roanh.wiki.exception.GitHubRepositoryOwnerNotFoundException;
 import dev.roanh.wiki.exception.MergeConflictException;
 import dev.roanh.wiki.exception.WebException;
 
@@ -89,7 +89,7 @@ public class SwitchCommand extends BaseSwitchCommand{
 				web,
 				args
 			);
-		}catch(GitHubUserNotFoundException ignore){
+		}catch(GitHubRepositoryOwnerNotFoundException ignore){
 			event.reply("Could not find a GitHub user with the given name.");
 		}
 	}

@@ -38,7 +38,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 import dev.roanh.wiki.exception.GitHubException;
-import dev.roanh.wiki.exception.GitHubUserNotFoundException;
+import dev.roanh.wiki.exception.GitHubRepositoryOwnerNotFoundException;
 import dev.roanh.wiki.github.obj.GitHubBranch;
 import dev.roanh.wiki.github.obj.GitHubPullRequest;
 import dev.roanh.wiki.github.obj.GitHubRepository;
@@ -68,7 +68,7 @@ public class GitHubTest{
 	@Test
 	public void getWikiForkNoUser(){
 		//organisations are not users
-		assertThrows(GitHubUserNotFoundException.class, ()->github.getWikiFork("ppy"), "No such user: ppy");
+		assertThrows(GitHubRepositoryOwnerNotFoundException.class, ()->github.getWikiFork("ppy"), "No such user: ppy");
 	}
 	
 	@Test

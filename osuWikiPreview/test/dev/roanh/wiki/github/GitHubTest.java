@@ -55,7 +55,7 @@ public class GitHubTest{
 		WireMock.stubFor(WireMock.any(WireMock.anyUrl()).atPriority(10).willReturn(WireMock.serverError()));
 		WireMock.stubFor(WireMock.get("/repos/itsmehoaq/osu-wiki/commits/1ea83f97f8fa13a679417e9687b1305215199005/pulls").willReturn(readJson("pr_for_commit")));
 		WireMock.stubFor(WireMock.post("/graphql").withHeader("Authorization", WireMock.equalTo("bearer testtoken")).withRequestBody(WireMock.containing("RoanH")).willReturn(readJson("forks_for_user")));
-		WireMock.stubFor(WireMock.post("/graphql").withHeader("Authorization", WireMock.equalTo("bearer testtoken")).withRequestBody(WireMock.containing("ppy")).willReturn(readJson("forks_for_user_no_user")));
+		WireMock.stubFor(WireMock.post("/graphql").withHeader("Authorization", WireMock.equalTo("bearer testtoken")).withRequestBody(WireMock.containing("nonexistent")).willReturn(readJson("forks_for_user_no_user")));
 	}
 	
 	@Test
@@ -67,8 +67,7 @@ public class GitHubTest{
 	
 	@Test
 	public void getWikiForkNoUser(){
-		//organisations are not users
-		assertThrows(GitHubRepositoryOwnerNotFoundException.class, ()->github.getWikiFork("ppy"), "No such user/organisation: ppy");
+		assertThrows(GitHubRepositoryOwnerNotFoundException.class, ()->github.getWikiFork("nonexistent"), "No such user/organisation: nonexistent");
 	}
 	
 	@Test

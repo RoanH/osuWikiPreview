@@ -19,7 +19,6 @@
  */
 package dev.roanh.wiki.auth;
 
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.prometheus.metrics.core.metrics.Counter;
 
@@ -64,8 +63,8 @@ public class AuthServer{
 	public AuthServer(int port){
 		server = new WebServer(port);
 		server.setExceptionHandler(t->Main.client.logError(t, "[AuthServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
-		server.createContext("/login", true, this::handleLoginErrorPage);
-		server.createContext("/auth", true, this::handleAuthRequest);
+		server.createContext("/login", true, null, this::handleLoginErrorPage);
+		server.createContext("/auth", true, null, this::handleAuthRequest);
 	}
 	
 	/**
@@ -79,38 +78,34 @@ public class AuthServer{
 	 * Handles the error page request generated when a user does not have access to an instance.
 	 * <p>
 	 * This gives the user some basic information and tells them to login or request access.
-	 * @param request The error page request.
-	 * @param path The path, always /login.
 	 * @param data The request data.
 	 * @return The response page.
 	 * @throws DBException When a database exception occurs.
-	 * @see #handleAuthRequest(FullHttpRequest, String, HttpParams)
+	 * @see #handleAuthRequest(HttpParams)
 	 */
-	private FullHttpResponse handleLoginErrorPage(FullHttpRequest request, String path, HttpParams data) throws DBException{
+	private FullHttpResponse handleLoginErrorPage(HttpParams data) throws DBException{
 		return RequestHandler.page(Pages.getPrivateModePage(
-			SessionManager.getUserFromSession(request),
-			request.headers().get(INSTANCE_HEADER),
-			request.headers().get(ORIGINAL_URI_HEADER)
+			SessionManager.getUserFromSession(data),
+			data.getHeader(INSTANCE_HEADER),
+			data.getHeader(ORIGINAL_URI_HEADER)
 		));
 	}
 	
 	/**
 	 * Handles a request from NGINX to check if a user has access to a specific instance.
-	 * @param request The authentication request.
-	 * @param path The request path, always /auth.
 	 * @param data The request data.
 	 * @return The response page, either OK if the user has access or UNAUTHORIZED if they do not.
 	 * @throws DBException When a database exception occurs.
-	 * @see #handleLoginErrorPage(FullHttpRequest, String, HttpParams)
+	 * @see #handleLoginErrorPage(HttpParams)
 	 */
-	private FullHttpResponse handleAuthRequest(FullHttpRequest request, String path, HttpParams data) throws DBException{
-		Instance instance = InstanceManager.getInstanceByDomain(request.headers().get(INSTANCE_HEADER)).getInstance();
+	private FullHttpResponse handleAuthRequest(HttpParams data) throws DBException{
+		Instance instance = InstanceManager.getInstanceByDomain(data.getHeader(INSTANCE_HEADER)).getInstance();
 		if(!instance.isPrivateMode()){
 			authRequests.labelValues("public").inc();
 			return RequestHandler.ok();
 		}
 
-		User user = SessionManager.getUserFromSession(request);
+		User user = SessionManager.getUserFromSession(data);
 		if(user == null){
 			authRequests.labelValues("private_not_logged_in").inc();
 			return RequestHandler.unauthorized();

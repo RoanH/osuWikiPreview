@@ -22,13 +22,11 @@ package dev.roanh.wiki.auth;
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 
 import dev.roanh.infinity.db.concurrent.DBException;
+import dev.roanh.infinity.http.HttpParams;
 import dev.roanh.infinity.util.Base64;
 import dev.roanh.osuapi.user.UserExtended;
 import dev.roanh.wiki.InstanceManager;
@@ -64,17 +62,13 @@ public final class SessionManager{
 	 * @return The user for the given request if any, else null.
 	 * @throws DBException When a database exception occurs.
 	 */
-	protected static User getUserFromSession(FullHttpRequest request) throws DBException{
-		String header = request.headers().get(HttpHeaderNames.COOKIE);
-		if(header != null){
-			for(Cookie cookie : ServerCookieDecoder.STRICT.decode(header)){
-				if(cookie.name().equals(SESSION_HEADER)){
-					return getUserFromSession(cookie);
-				}
-			}
+	protected static User getUserFromSession(HttpParams request) throws DBException{
+		Cookie cookie = request.getCookie(SESSION_HEADER);
+		if(cookie != null){
+			return getUserFromSession(cookie);
+		}else{
+			return null;
 		}
-		
-		return null;
 	}
 	
 	/**

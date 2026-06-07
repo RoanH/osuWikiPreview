@@ -27,7 +27,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -86,20 +85,20 @@ public class LoginServer{
 		
 		server = new WebServer(config.getLoginServerPort());
 		server.setExceptionHandler(t->Main.client.logError(t, "[LoginServer] Unhandled exception", Severity.MAJOR, Priority.HIGH));
-		server.createContext("/login", true, this::handleLoginRequest);
-		server.createContext("/auth", true, this::handleAuthAttempt);
-		server.createContext("/", true, this::handleRootVisit);
+		server.createContext("/login", true, null, this::handleLoginRequest);
+		server.createContext("/auth", true, null, this::handleAuthAttempt);
+		server.createContext("/", true, null, this::handleRootVisit);
 		
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("css/style.css")){
-			server.createContext("/style.css", true, RequestHandler.sendPage(in));
+			server.createContext("/style.css", true, null, RequestHandler.sendPage(in));
 		}
 		
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("img/background.png")){
-			server.createContext("/img/background.png", true, RequestHandler.sendPage(in));
+			server.createContext("/img/background.png", true, null, RequestHandler.sendPage(in));
 		}
 		
 		try(InputStream in = ClassLoader.getSystemResourceAsStream("img/icon32.png")){
-			server.createContext("/img/icon32.png", true, RequestHandler.sendPage(in));
+			server.createContext("/img/icon32.png", true, null, RequestHandler.sendPage(in));
 		}
 	}
 	
@@ -125,12 +124,10 @@ public class LoginServer{
 	
 	/**
 	 * handles a request to login and redirects to the osu! authorisation page.
-	 * @param request The incoming HTTP request.
-	 * @param path The request path (always /login).
 	 * @param data The request data.
 	 * @return The HTTP response.
 	 */
-	private final FullHttpResponse handleLoginRequest(FullHttpRequest request, String path, HttpParams data){
+	private final FullHttpResponse handleLoginRequest(HttpParams data){
 		String domain = data.getFirst(Pages.REDIRECT_INSTANCE_PARAM);
 		OsuWeb instance = domain == null ? null : InstanceManager.getInstanceByDomain(domain);
 		String uri = data.getFirst(Pages.REDIRECT_URI_PARAM);
@@ -147,14 +144,12 @@ public class LoginServer{
 	
 	/**
 	 * Handles a visit to the authentication page with login information.
-	 * @param request The login attempt request.
-	 * @param path The request path (always /auth).
 	 * @param data The request data.
 	 * @return The response page.
 	 * @throws DBException When a database exception occurs.
 	 * @throws RequestException When an osu! API exception occurs.
 	 */
-	private final FullHttpResponse handleAuthAttempt(FullHttpRequest request, String path, HttpParams data) throws DBException, RequestException{
+	private final FullHttpResponse handleAuthAttempt(HttpParams data) throws DBException, RequestException{
 		String state = data.getFirst("state");
 		String code = data.getFirst("code");
 		if(state == null || code == null){
@@ -183,14 +178,12 @@ public class LoginServer{
 
 	/**
 	 * Handles a visit to the root page.
-	 * @param request The login attempt request (or just a root page visit).
-	 * @param path The request path (always the root /).
 	 * @param data The request data.
 	 * @return The response page.
 	 * @throws DBException When a database exception occurs.
 	 */
-	private final FullHttpResponse handleRootVisit(FullHttpRequest request, String path, HttpParams data) throws DBException{
-		return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(request)));
+	private final FullHttpResponse handleRootVisit(HttpParams data) throws DBException{
+		return RequestHandler.page(Pages.getRootPage(SessionManager.getUserFromSession(data)));
 	}
 	
 	/**

@@ -20,7 +20,6 @@
 package dev.roanh.wiki.auth;
 
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.prometheus.metrics.core.metrics.Counter;
 
 import dev.roanh.infinity.db.concurrent.DBException;
@@ -109,7 +108,7 @@ public class AuthServer{
 		User user = SessionManager.getUserFromSession(data);
 		if(user == null){
 			authRequests.labelValues("private_not_logged_in").inc();
-			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+			return RequestHandler.unauthorized();
 		}
 
 		if(instance.getAccessList().contains(user)){
@@ -117,7 +116,7 @@ public class AuthServer{
 			return RequestHandler.ok();
 		}else{
 			authRequests.labelValues("private_not_on_acl").inc();
-			return RequestHandler.status(HttpResponseStatus.UNAUTHORIZED);
+			return RequestHandler.unauthorized();
 		}
 	}
 }

@@ -25,7 +25,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.google.gson.JsonObject;
 
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -80,8 +79,8 @@ public class WebhookHandler implements BodyHandler{
 		this.server = new WebServer(port);
 		this.secret = GitHub.createSigningKey(secret);
 		server.setExceptionHandler(t->Main.client.logError(t, "[WebhookHandler] Unhandled exception: " + t.getMessage(), Severity.MAJOR, Priority.HIGH));
-		server.createContext("/", false, (_, _, _)->RequestHandler.forbidden());
-		server.createContext(HttpMethod.POST, "/", this);
+		server.createContext("/", false, null, _->RequestHandler.forbidden());
+		server.createContext(HttpMethod.POST, "/", true, null, this);
 	}
 	
 	/**
@@ -123,14 +122,14 @@ public class WebhookHandler implements BodyHandler{
 	}
 
 	@Override
-	public FullHttpResponse handle(FullHttpRequest request, HttpBody data) throws Exception{
+	public FullHttpResponse handle(HttpBody data) throws Exception{
 		String payload = data.string();
-		if(!validateSignature(payload, request.headers())){
+		if(!validateSignature(payload, data.getHeaders())){
 			return RequestHandler.status(HttpResponseStatus.FORBIDDEN);
 		}
 		
 		JsonObject requestObject = GitHub.getGson().fromJson(payload, JsonObject.class);
-		String type = request.headers().get("X-GitHub-Event");
+		String type = data.getHeader("X-GitHub-Event");
 		switch(type){
 		case "issue_comment"://pr's are also issues
 			handleIssueCommentEvent(requestObject);

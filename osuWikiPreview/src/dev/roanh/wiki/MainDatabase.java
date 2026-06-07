@@ -118,7 +118,7 @@ public final class MainDatabase{
 	 * @throws DBException When a database exception occurs.
 	 */
 	public static String getUserSession(int user) throws DBException{
-		return executor.selectFirst("SELECT `session` FROM users WHERE osu = ?", Result.STRING, user).orElse(null);
+		return executor.selectFirst("SELECT `session` FROM users WHERE osu = ?", Result.ofString("session"), user).orElse(null);
 	}
 	
 	/**

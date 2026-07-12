@@ -60,12 +60,12 @@ public abstract class WebCommand extends Command{
 		}
 		
 		original.deferReply(event->{
+			if(web.tryLock()){
+				event.reply("Already running a task, please try again later.");
+				return;
+			}
+			
 			try{
-				if(web.tryLock()){
-					event.reply("Already running a task, please try again later.");
-					return;
-				}
-				
 				executeWeb(web, args, event);
 			}catch(Exception e){
 				event.logError(e, "[WebCommand] Default failure", Severity.MAJOR, Priority.HIGH, args);

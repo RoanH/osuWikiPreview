@@ -152,6 +152,7 @@ public class InstanceManager{
 			out.println("CLIENT_CHECK_VERSION=false");
 			out.println("ALLOW_REGISTRATION=false");
 			out.println("IS_DEVELOPMENT_DEPLOY=true");
+			out.println("PSYSH_TRUST_PROJECT=true");
 			out.println();
 			out.println("# MySQL");
 			out.println("DB_HOST=" + config.readString("DB_HOST"));
